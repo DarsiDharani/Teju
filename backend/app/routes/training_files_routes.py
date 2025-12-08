@@ -144,14 +144,8 @@ async def upload_question_file(
             detail="Could not validate credentials"
         )
 
-    # Verify file is a supported document format
-    allowed_extensions = ['.pdf', '.doc', '.docx']
-    file_extension = file.filename.lower()[file.filename.rfind('.'):] if '.' in file.filename.lower() else ''
-    if file_extension not in allowed_extensions:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only PDF, DOC, and DOCX files are allowed"
-        )
+    # Verify file size (10MB limit)
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
     # Verify the training exists
     training_stmt = select(models.TrainingDetail).where(
@@ -177,6 +171,13 @@ async def upload_question_file(
     # Read file content
     file_content = await file.read()
     file_size = len(file_content)
+    
+    # Check file size limit
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File size exceeds 10MB limit. File size: {file_size / (1024 * 1024):.2f}MB"
+        )
 
     # Generate unique filename
     file_extension = Path(file.filename).suffix
@@ -367,12 +368,8 @@ async def upload_solution_file(
             detail="Could not validate credentials"
         )
 
-    # Verify file is PDF
-    if not file.filename.lower().endswith('.pdf'):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only PDF files are allowed"
-        )
+    # Verify file size (10MB limit)
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
     # Verify the training is assigned to this employee
     assignment_stmt = select(models.TrainingAssignment).where(
@@ -391,6 +388,13 @@ async def upload_solution_file(
     # Read file content
     file_content = await file.read()
     file_size = len(file_content)
+    
+    # Check file size limit
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File size exceeds 10MB limit. File size: {file_size / (1024 * 1024):.2f}MB"
+        )
 
     # Generate unique filename
     file_extension = Path(file.filename).suffix

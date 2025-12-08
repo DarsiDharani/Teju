@@ -950,12 +950,6 @@
                                                     class="flex-1 bg-emerald-500 text-white font-semibold py-1.5 rounded-lg hover:bg-emerald-700 transition-colors duration-200 text-xs">
                                                 <i class="fa-solid fa-clipboard-check mr-1.5"></i>Attendance
                                             </button>
-                                            <!-- Document Management (Upload/Update) -->
-                                            <label class="flex-1 bg-indigo-500 text-white font-semibold py-1.5 rounded-lg hover:bg-indigo-700 transition-colors duration-200 text-xs cursor-pointer text-center relative">
-                                                <i class="fa-solid fa-file-upload mr-1.5"></i>{{ hasQuestionFile(training.id) ? 'Update' : 'Upload' }} Document
-                                                <input type="file" accept=".pdf,.doc,.docx" (change)="uploadQuestionFile(training.id, $event)" class="hidden">
-                                                <span *ngIf="hasQuestionFile(training.id)" class="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full border border-white"></span>
-                                            </label>
                                             <!-- View Solutions -->
                                             <button (click)="viewSolutions(training.id)" class="flex-1 bg-teal-500 text-white font-semibold py-1.5 rounded-lg hover:bg-teal-700 transition-colors duration-200 text-xs">
                                                 <i class="fa-solid fa-eye mr-1.5"></i>Solutions
@@ -1071,6 +1065,23 @@
                                 </div>
                             </div>
                         
+                            <div class="pt-4 border-t border-slate-300/80">
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Upload Assignment File (Optional)</label>
+                                <div class="flex items-center gap-3">
+                                    <label class="flex-1 px-4 py-2.5 bg-white rounded-lg border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors flex items-center gap-2">
+                                        <i class="fa-solid fa-file-upload text-slate-600"></i>
+                                        <span class="text-slate-700" *ngIf="!assignmentFile">Choose file to upload...</span>
+                                        <span class="text-slate-700" *ngIf="assignmentFile">{{ assignmentFile.name }}</span>
+                                        <input type="file" (change)="onAssignmentFileSelected($event)" class="hidden" accept="*/*">
+                                    </label>
+                                    <button *ngIf="assignmentFile" (click)="assignmentFile = null" class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Remove file">
+                                        <i class="fa-solid fa-times"></i>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">
+                                    <i class="fa-solid fa-info-circle mr-1"></i>Maximum file size: 10MB. All file types are accepted.
+                                </p>
+                            </div>
                             <div class="flex items-center justify-end space-x-3 mt-8 pt-4 border-t border-slate-300/80">
                                 <button (click)="setTrainerZoneView('overview')" class="px-5 py-2 text-slate-700 bg-slate-200 hover:bg-slate-300 font-semibold rounded-lg transition-colors duration-200">Cancel</button>
                                 <button (click)="submitAssignment()" class="px-5 py-2 bg-violet-600 text-white rounded-lg font-semibold hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all duration-200 shadow-md">

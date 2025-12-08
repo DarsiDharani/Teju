@@ -356,6 +356,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     description: '',
     questions: []
   };
+  assignmentFile: File | null = null; // File to upload with assignment
   
   defaultFeedbackQuestions: FeedbackQuestion[] = [
     { text: "How would you rate your overall experience with this training?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
@@ -3352,11 +3353,16 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             this.assignmentSharedBy.set(this.newAssignment.trainingId, response.trainer_username);
           }
         }
-        this.toastService.success('Assignment shared successfully!');
-        this.setTrainerZoneView('overview');
-        // Refresh the trainings to update the UI
-        if (this.activeTab === 'trainerZone') {
-          this.fetchScheduledTrainings();
+        // Upload file if provided
+        if (this.assignmentFile && this.newAssignment.trainingId) {
+          this.uploadAssignmentFile(this.newAssignment.trainingId, this.assignmentFile);
+        } else {
+          this.toastService.success('Assignment shared successfully!');
+          this.setTrainerZoneView('overview');
+          // Refresh the trainings to update the UI
+          if (this.activeTab === 'trainerZone') {
+            this.fetchScheduledTrainings();
+          }
         }
       },
       error: (err) => {
@@ -3606,14 +3612,61 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   // --- File Management Methods ---
+  uploadAssignmentFile(trainingId: number, file: File): void {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      this.toastService.error('File size exceeds 10MB limit');
+      return;
+    }
+
+    const token = this.authService.getToken();
+    if (!token) {
+      this.toastService.error('Authentication error. Please log in again.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('training_id', trainingId.toString());
+
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.post(this.apiService.uploadQuestionFileUrl, formData, { headers }).subscribe({
+      next: (response: any) => {
+        this.toastService.success('Assignment and file uploaded successfully!');
+        this.questionFilesUploaded.set(trainingId, true);
+        this.resetNewAssignmentForm();
+        this.setTrainerZoneView('overview');
+        // Refresh the trainings to update the UI
+        if (this.activeTab === 'trainerZone') {
+          this.fetchScheduledTrainings();
+        }
+      },
+      error: (err) => {
+        console.error('Failed to upload file:', err);
+        this.toastService.error(err.error?.detail || 'Failed to upload file');
+        this.resetNewAssignmentForm();
+        this.setTrainerZoneView('overview');
+      }
+    });
+  }
+
+  onAssignmentFileSelected(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const file = target?.files?.[0];
+    if (file) {
+      this.assignmentFile = file;
+    }
+  }
+
   uploadQuestionFile(trainingId: number, event: any): void {
     const file = event.target.files[0];
     if (!file) return;
 
-    const allowedExtensions = ['.pdf', '.doc', '.docx'];
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    if (!allowedExtensions.includes(fileExtension)) {
-      this.toastService.error('Only PDF, DOC, and DOCX files are allowed');
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      this.toastService.error('File size exceeds 10MB limit');
+      event.target.value = '';
       return;
     }
 

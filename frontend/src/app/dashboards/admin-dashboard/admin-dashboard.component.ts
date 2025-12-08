@@ -33,8 +33,20 @@ interface Training {
   id: number;
   training_name: string;
   trainer_name: string;
-  training_date?: string;
+  email?: string;
+  division?: string;
+  department?: string;
+  competency?: string;
   skill?: string;
+  skill_category?: string;
+  training_topics?: string;
+  prerequisites?: string;
+  training_date?: string;
+  duration?: string;
+  time?: string;
+  training_type?: string;
+  seats?: string;
+  assessment_details?: string;
   assigned_count: number;
   attended_count: number;
   completion_rate: number;
@@ -129,21 +141,27 @@ export class AdminDashboardComponent implements OnInit {
   trainingSkillFilter: string = '';
   showCreateTrainingModal: boolean = false;
   showEditTrainingModal: boolean = false;
+  showTrainingDetailModal: boolean = false;
   selectedTraining: Training | null = null;
   selectedTrainings: Set<number> = new Set<number>(); // Track selected training IDs for bulk delete
   isSelectAllTrainings: boolean = false;
+  skillCategoryLevels: string[] = ['L1', 'L2', 'L3', 'L4', 'L5'];
   newTraining: any = {
     training_name: '',
     trainer_name: '',
-    skill: '',
+    email: '',
+    division: '',
+    department: '',
     competency: '',
+    skill: '',
+    skill_category: '',
+    training_topics: '',
+    prerequisites: '',
     training_date: '',
     duration: '',
     time: '',
     training_type: '',
     seats: '',
-    training_topics: '',
-    prerequisites: '',
     assessment_details: ''
   };
   
@@ -526,15 +544,19 @@ export class AdminDashboardComponent implements OnInit {
     this.newTraining = {
       training_name: '',
       trainer_name: '',
-      skill: '',
+      email: '',
+      division: '',
+      department: '',
       competency: '',
+      skill: '',
+      skill_category: '',
+      training_topics: '',
+      prerequisites: '',
       training_date: '',
       duration: '',
       time: '',
       training_type: '',
       seats: '',
-      training_topics: '',
-      prerequisites: '',
       assessment_details: ''
     };
     this.showCreateTrainingModal = true;
@@ -546,7 +568,27 @@ export class AdminDashboardComponent implements OnInit {
       return;
     }
 
-    this.http.post(this.apiService.adminTrainingsUrl, this.newTraining, { headers: this.getHeaders() })
+    // Prepare payload with all fields, converting empty strings to null for optional fields
+    const payload = {
+      division: this.newTraining.division || null,
+      department: this.newTraining.department || null,
+      competency: this.newTraining.competency || null,
+      skill: this.newTraining.skill || null,
+      training_name: this.newTraining.training_name,
+      training_topics: this.newTraining.training_topics || null,
+      prerequisites: this.newTraining.prerequisites || null,
+      skill_category: this.newTraining.skill_category || null,
+      trainer_name: this.newTraining.trainer_name,
+      email: this.newTraining.email || null,
+      training_date: this.newTraining.training_date || null,
+      duration: this.newTraining.duration || null,
+      time: this.newTraining.time || null,
+      training_type: this.newTraining.training_type || null,
+      seats: this.newTraining.seats || null,
+      assessment_details: this.newTraining.assessment_details || null
+    };
+
+    this.http.post(this.apiService.adminTrainingsUrl, payload, { headers: this.getHeaders() })
       .subscribe({
         next: () => {
           this.toastService.show('Training created successfully', 'success');
@@ -569,15 +611,37 @@ export class AdminDashboardComponent implements OnInit {
     this.showEditTrainingModal = true;
   }
 
+  openTrainingDetailModal(training: Training): void {
+    this.selectedTraining = { ...training };
+    this.showTrainingDetailModal = true;
+  }
+
+  closeTrainingDetailModal(): void {
+    this.showTrainingDetailModal = false;
+    this.selectedTraining = null;
+  }
+
   updateTraining(): void {
     if (!this.selectedTraining) return;
 
-    // Prepare update data from selectedTraining
+    // Prepare update data from selectedTraining with all fields
     const updateData: any = {
       training_name: this.selectedTraining.training_name,
       trainer_name: this.selectedTraining.trainer_name,
-      skill: this.selectedTraining.skill || '',
-      training_date: this.selectedTraining.training_date || ''
+      email: this.selectedTraining.email || null,
+      division: this.selectedTraining.division || null,
+      department: this.selectedTraining.department || null,
+      competency: this.selectedTraining.competency || null,
+      skill: this.selectedTraining.skill || null,
+      skill_category: this.selectedTraining.skill_category || null,
+      training_topics: this.selectedTraining.training_topics || null,
+      prerequisites: this.selectedTraining.prerequisites || null,
+      training_date: this.selectedTraining.training_date || null,
+      duration: this.selectedTraining.duration || null,
+      time: this.selectedTraining.time || null,
+      training_type: this.selectedTraining.training_type || null,
+      seats: this.selectedTraining.seats || null,
+      assessment_details: this.selectedTraining.assessment_details || null
     };
 
     this.http.put(this.apiService.adminTrainingUrl(this.selectedTraining.id), updateData, { headers: this.getHeaders() })

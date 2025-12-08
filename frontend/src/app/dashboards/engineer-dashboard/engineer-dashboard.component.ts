@@ -302,6 +302,7 @@ export class EngineerDashboardComponent implements OnInit {
     description: '',
     questions: []
   };
+  assignmentFile: File | null = null; // File to upload with assignment
   defaultFeedbackQuestions: FeedbackQuestion[] = [
     { text: "How would you rate your overall experience with this training?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
     { text: "Was the content relevant and applicable to your role?", options: ['Yes', 'No', 'Partially'], isDefault: true },
@@ -1800,6 +1801,7 @@ export class EngineerDashboardComponent implements OnInit {
       description: '',
       questions: []
     };
+    this.assignmentFile = null;
   }
 
   submitAssignment(): void {
@@ -1855,9 +1857,14 @@ export class EngineerDashboardComponent implements OnInit {
             this.assignmentSharedBy.set(this.newAssignment.trainingId, response.trainer_username);
           }
         }
-        this.toastService.success('Assignment shared successfully!');
-        this.resetNewAssignmentForm();
-        this.setTrainerZoneView('overview');
+        // Upload file if provided
+        if (this.assignmentFile && this.newAssignment.trainingId) {
+          this.uploadAssignmentFile(this.newAssignment.trainingId, this.assignmentFile);
+        } else {
+          this.toastService.success('Assignment shared successfully!');
+          this.resetNewAssignmentForm();
+          this.setTrainerZoneView('overview');
+        }
       },
       error: (err) => {
         console.error('Failed to share assignment:', err);
@@ -2270,6 +2277,7 @@ export class EngineerDashboardComponent implements OnInit {
   showAssignmentModal: boolean = false;
   showFeedbackModal: boolean = false;
   showExamModal: boolean = false;
+  showTakeAssignmentDropdown: Map<number, boolean> = new Map(); // Track dropdown state for each training
   userAnswers: UserAnswer[] = [];
   assignmentResult: AssignmentResult | null = null;
   showResultModal: boolean = false;
@@ -2491,6 +2499,31 @@ export class EngineerDashboardComponent implements OnInit {
       textAnswer: ''
     }));
     this.showExamModal = true;
+  }
+
+  toggleTakeAssignmentDropdown(trainingId: number): void {
+    const currentState = this.showTakeAssignmentDropdown.get(trainingId) || false;
+    // Close all other dropdowns
+    this.showTakeAssignmentDropdown.forEach((_, id) => {
+      if (id !== trainingId) {
+        this.showTakeAssignmentDropdown.set(id, false);
+      }
+    });
+    this.showTakeAssignmentDropdown.set(trainingId, !currentState);
+  }
+
+  closeAllTakeAssignmentDropdowns(): void {
+    this.showTakeAssignmentDropdown.forEach((_, id) => {
+      this.showTakeAssignmentDropdown.set(id, false);
+    });
+  }
+
+  onAssignmentFileSelected(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const file = target?.files?.[0];
+    if (file) {
+      this.assignmentFile = file;
+    }
   }
 
   takeExam(training: TrainingDetail): void {
@@ -3172,14 +3205,49 @@ export class EngineerDashboardComponent implements OnInit {
   solutionsList: any[] = [];
   isLoadingSolutions: boolean = false;
 
+  uploadAssignmentFile(trainingId: number, file: File): void {
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      this.toastService.error('File size exceeds 10MB limit');
+      return;
+    }
+
+    const token = this.authService.getToken();
+    if (!token) {
+      this.toastService.error('Authentication error. Please log in again.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('training_id', trainingId.toString());
+
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.post(this.apiService.uploadQuestionFileUrl, formData, { headers }).subscribe({
+      next: (response: any) => {
+        this.toastService.success('Assignment and file uploaded successfully!');
+        this.questionFilesUploaded.set(trainingId, true);
+        this.resetNewAssignmentForm();
+        this.setTrainerZoneView('overview');
+      },
+      error: (err) => {
+        console.error('Failed to upload file:', err);
+        this.toastService.error(err.error?.detail || 'Failed to upload file');
+        this.resetNewAssignmentForm();
+        this.setTrainerZoneView('overview');
+      }
+    });
+  }
+
   uploadQuestionFile(trainingId: number, event: any): void {
     const file = event.target.files[0];
     if (!file) return;
 
-    const allowedExtensions = ['.pdf', '.doc', '.docx'];
-    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    if (!allowedExtensions.includes(fileExtension)) {
-      this.toastService.error('Only PDF, DOC, and DOCX files are allowed');
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      this.toastService.error('File size exceeds 10MB limit');
+      event.target.value = '';
       return;
     }
 
@@ -3281,9 +3349,10 @@ export class EngineerDashboardComponent implements OnInit {
     const file = event.target.files[0];
     if (!file) return;
 
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-      this.toastService.error('Only PDF files are allowed');
-      event.target.value = ''; // Reset file input
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_FILE_SIZE) {
+      this.toastService.error('File size exceeds 10MB limit');
+      event.target.value = '';
       return;
     }
 

@@ -110,9 +110,7 @@
     </aside>
 
     <!-- Main Content Area: Flexible container that adapts based on active tab -->
-    <div class="flex-1 flex flex-col">
-
-        <main class="flex-1 p-6 overflow-y-auto bg-gradient-to-br from-sky-100 to-cyan-500">
+    <div class="flex-1 p-6 overflow-y-auto bg-gradient-to-br from-sky-100 to-cyan-500">
             <!-- Dashboard Tab -->
             <div *ngIf="activeTab === 'dashboard'" @fadeIn class="space-y-4">
             <!-- Loading State -->
@@ -452,72 +450,106 @@
                         <table class="w-full">
                             <thead class="bg-gradient-to-r from-slate-50 to-blue-50/50">
                                 <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-12">
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-12">
                                         <input type="checkbox" 
                                                [checked]="isSelectAllTrainings" 
                                                (change)="toggleSelectAllTrainings()"
                                                class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
                                     </th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Training Name</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Trainer</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Skill</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Date</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Assigned</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Completion</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Training Name</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Trainer</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Email</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Division</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Department</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Competency</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Skill</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Category</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Date</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Time</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Duration</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Type</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Seats</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Topics</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Assigned</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Completion</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200/60">
                                 <tr *ngFor="let training of trainings" 
                                     class="hover:bg-blue-50/30 transition-colors"
                                     [ngClass]="{'bg-blue-100/50': isTrainingSelected(training.id)}">
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <td class="px-4 py-3 whitespace-nowrap">
                                         <input type="checkbox" 
                                                [checked]="isTrainingSelected(training.id)" 
                                                (change)="toggleTrainingSelection(training)"
                                                class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <td class="px-4 py-3">
                                         <div class="flex items-center gap-2">
-                                            <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+                                            <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                                                 <i class="fa-solid fa-book text-white text-xs"></i>
                                             </div>
                                             <span class="text-sm font-semibold text-slate-900">{{ training.training_name }}</span>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium">{{ training.trainer_name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-3 py-1.5 text-xs font-bold rounded-full shadow-sm bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300">{{ training.skill || 'N/A' }}</span>
+                                    <td class="px-4 py-3 text-sm text-slate-700 font-medium">{{ training.trainer_name || 'N/A' }}</td>
+                                    <td class="px-4 py-3 text-sm text-slate-600">{{ training.email || 'N/A' }}</td>
+                                    <td class="px-4 py-3 text-sm text-slate-600">{{ training.division || 'N/A' }}</td>
+                                    <td class="px-4 py-3 text-sm text-slate-600">{{ training.department || 'N/A' }}</td>
+                                    <td class="px-4 py-3 text-sm text-slate-600">{{ training.competency || 'N/A' }}</td>
+                                    <td class="px-4 py-3">
+                                        <span *ngIf="training.skill" class="px-2 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300">{{ training.skill }}</span>
+                                        <span *ngIf="!training.skill" class="text-sm text-slate-400">N/A</span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium">{{ training.training_date ? (training.training_date | date:'shortDate') : 'TBD' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-xs font-bold rounded-full border border-blue-300 shadow-sm">{{ training.assigned_count }}</span>
+                                    <td class="px-4 py-3">
+                                        <span *ngIf="training.skill_category" class="px-2 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-violet-100 to-violet-200 text-violet-800 border border-violet-300">{{ training.skill_category }}</span>
+                                        <span *ngIf="!training.skill_category" class="text-sm text-slate-400">N/A</span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <td class="px-4 py-3 text-sm text-slate-700">{{ training.training_date ? (training.training_date | date:'shortDate') : 'TBD' }}</td>
+                                    <td class="px-4 py-3 text-sm text-slate-600">{{ training.time || 'TBD' }}</td>
+                                    <td class="px-4 py-3 text-sm text-slate-600">{{ training.duration || 'N/A' }}</td>
+                                    <td class="px-4 py-3">
+                                        <span *ngIf="training.training_type" class="px-2 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-sky-100 to-sky-200 text-sky-800 border border-sky-300">{{ training.training_type }}</span>
+                                        <span *ngIf="!training.training_type" class="text-sm text-slate-400">N/A</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-slate-600">{{ training.seats || 'N/A' }}</td>
+                                    <td class="px-4 py-3 max-w-xs">
+                                        <p class="text-xs text-slate-600 truncate" [title]="training.training_topics || 'N/A'">{{ training.training_topics || 'N/A' }}</p>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-xs font-bold rounded-full border border-blue-300">{{ training.assigned_count }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="flex items-center gap-2">
-                                            <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                            <div class="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden min-w-[50px]">
                                                 <div class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full" [style.width.%]="training.completion_rate"></div>
                                             </div>
                                             <span class="text-xs font-bold text-slate-700">{{ training.completion_rate }}%</span>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <div class="flex items-center gap-2">
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                        <div class="flex items-center gap-1">
+                                            <button (click)="openTrainingDetailModal(training)" 
+                                                    class="p-1.5 bg-sky-100 hover:bg-sky-200 text-sky-700 rounded-lg transition-all hover:scale-110" 
+                                                    title="View Details">
+                                                <i class="fa-solid fa-eye text-xs"></i>
+                                            </button>
                                             <button (click)="openEditTrainingModal(training)" 
-                                                    class="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all hover:scale-110" 
+                                                    class="p-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all hover:scale-110" 
                                                     title="Edit Training">
-                                                <i class="fa-solid fa-edit"></i>
+                                                <i class="fa-solid fa-edit text-xs"></i>
                                             </button>
                                             <button (click)="deleteTraining(training)" 
-                                                    class="p-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-all hover:scale-110" 
+                                                    class="p-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-all hover:scale-110" 
                                                     title="Delete Training">
-                                                <i class="fa-solid fa-trash"></i>
+                                                <i class="fa-solid fa-trash text-xs"></i>
                                             </button>
                                         </div>
                                     </td>
                                 </tr>
                                 <tr *ngIf="trainings.length === 0">
-                                    <td colspan="8" class="px-6 py-12 text-center">
+                                    <td colspan="18" class="px-6 py-12 text-center">
                                         <div class="flex flex-col items-center gap-3">
                                             <i class="fa-solid fa-book-open text-slate-300 text-4xl"></i>
                                             <p class="text-slate-500 font-medium">No trainings found</p>
@@ -783,7 +815,7 @@
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 </div>
 
 <!-- Create User Modal -->
@@ -873,31 +905,81 @@
                 <i class="fa-solid fa-times text-slate-600"></i>
             </button>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-            <input type="text" [(ngModel)]="newTraining.training_name" placeholder="Training Name *" 
-                   class="col-span-2 px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="text" [(ngModel)]="newTraining.trainer_name" placeholder="Trainer Name *" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="text" [(ngModel)]="newTraining.skill" placeholder="Skill" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="text" [(ngModel)]="newTraining.competency" placeholder="Competency" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="date" [(ngModel)]="newTraining.training_date" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="text" [(ngModel)]="newTraining.duration" placeholder="Duration" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="text" [(ngModel)]="newTraining.time" placeholder="Time" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="text" [(ngModel)]="newTraining.training_type" placeholder="Training Type" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="text" [(ngModel)]="newTraining.seats" placeholder="Seats" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <textarea [(ngModel)]="newTraining.training_topics" placeholder="Training Topics" rows="3" 
-                      class="col-span-2 px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
-            <textarea [(ngModel)]="newTraining.prerequisites" placeholder="Prerequisites" rows="3" 
-                      class="col-span-2 px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
-            <textarea [(ngModel)]="newTraining.assessment_details" placeholder="Assessment Details" rows="3" 
-                      class="col-span-2 px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+        <div class="space-y-6">
+            <!-- Core Details -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Core Details</legend>
+                <div class="space-y-4 mt-2">
+                    <input type="text" [(ngModel)]="newTraining.training_name" placeholder="Training Name *" 
+                           class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <textarea [(ngModel)]="newTraining.training_topics" placeholder="Training Topics" rows="3" 
+                              class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                </div>
+            </fieldset>
+
+            <!-- Classification -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Classification</legend>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <input type="text" [(ngModel)]="newTraining.division" placeholder="Division" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="text" [(ngModel)]="newTraining.department" placeholder="Department" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="text" [(ngModel)]="newTraining.competency" placeholder="Competency" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="text" [(ngModel)]="newTraining.skill" placeholder="Skill" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <select [(ngModel)]="newTraining.skill_category" 
+                            class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                        <option value="">Select Skill Category</option>
+                        <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <!-- Trainer Information -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Trainer Information</legend>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <input type="text" [(ngModel)]="newTraining.trainer_name" placeholder="Trainer Name *" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="email" [(ngModel)]="newTraining.email" placeholder="Trainer Email" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                </div>
+            </fieldset>
+
+            <!-- Logistics & Scheduling -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Logistics & Scheduling</legend>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <input type="date" [(ngModel)]="newTraining.training_date" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="time" [(ngModel)]="newTraining.time" placeholder="Time" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="text" [(ngModel)]="newTraining.duration" placeholder="Duration (e.g., 2 hours)" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <select [(ngModel)]="newTraining.training_type" 
+                            class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                        <option value="">Select Training Type</option>
+                        <option>Online</option>
+                        <option>In-Person</option>
+                        <option>Hybrid</option>
+                    </select>
+                    <input type="text" [(ngModel)]="newTraining.seats" placeholder="Available Seats" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                </div>
+            </fieldset>
+
+            <!-- Additional Information -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Additional Information</legend>
+                <div class="space-y-4 mt-2">
+                    <input type="text" [(ngModel)]="newTraining.prerequisites" placeholder="Prerequisites" 
+                           class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <textarea [(ngModel)]="newTraining.assessment_details" placeholder="Assessment Details" rows="3" 
+                              class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                </div>
+            </fieldset>
         </div>
         <div class="mt-8 flex gap-4">
             <button (click)="createTraining()" 
@@ -921,15 +1003,81 @@
                 <i class="fa-solid fa-times text-slate-600"></i>
             </button>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-            <input type="text" [(ngModel)]="selectedTraining.training_name" placeholder="Training Name *" 
-                   class="col-span-2 px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="text" [(ngModel)]="selectedTraining.trainer_name" placeholder="Trainer Name *" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="text" [(ngModel)]="selectedTraining.skill" placeholder="Skill" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
-            <input type="date" [(ngModel)]="selectedTraining.training_date" 
-                   class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+        <div class="space-y-6">
+            <!-- Core Details -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Core Details</legend>
+                <div class="space-y-4 mt-2">
+                    <input type="text" [(ngModel)]="selectedTraining.training_name" placeholder="Training Name *" 
+                           class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <textarea [(ngModel)]="selectedTraining.training_topics" placeholder="Training Topics" rows="3" 
+                              class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                </div>
+            </fieldset>
+
+            <!-- Classification -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Classification</legend>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <input type="text" [(ngModel)]="selectedTraining.division" placeholder="Division" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="text" [(ngModel)]="selectedTraining.department" placeholder="Department" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="text" [(ngModel)]="selectedTraining.competency" placeholder="Competency" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="text" [(ngModel)]="selectedTraining.skill" placeholder="Skill" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <select [(ngModel)]="selectedTraining.skill_category" 
+                            class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                        <option value="">Select Skill Category</option>
+                        <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
+                    </select>
+                </div>
+            </fieldset>
+
+            <!-- Trainer Information -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Trainer Information</legend>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <input type="text" [(ngModel)]="selectedTraining.trainer_name" placeholder="Trainer Name *" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="email" [(ngModel)]="selectedTraining.email" placeholder="Trainer Email" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                </div>
+            </fieldset>
+
+            <!-- Logistics & Scheduling -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Logistics & Scheduling</legend>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <input type="date" [(ngModel)]="selectedTraining.training_date" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="time" [(ngModel)]="selectedTraining.time" placeholder="Time" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <input type="text" [(ngModel)]="selectedTraining.duration" placeholder="Duration (e.g., 2 hours)" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <select [(ngModel)]="selectedTraining.training_type" 
+                            class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                        <option value="">Select Training Type</option>
+                        <option>Online</option>
+                        <option>In-Person</option>
+                        <option>Hybrid</option>
+                    </select>
+                    <input type="text" [(ngModel)]="selectedTraining.seats" placeholder="Available Seats" 
+                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                </div>
+            </fieldset>
+
+            <!-- Additional Information -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Additional Information</legend>
+                <div class="space-y-4 mt-2">
+                    <input type="text" [(ngModel)]="selectedTraining.prerequisites" placeholder="Prerequisites" 
+                           class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    <textarea [(ngModel)]="selectedTraining.assessment_details" placeholder="Assessment Details" rows="3" 
+                              class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                </div>
+            </fieldset>
         </div>
         <div class="mt-8 flex gap-4">
             <button (click)="updateTraining()" 
@@ -939,6 +1087,165 @@
             <button (click)="showEditTrainingModal = false" 
                     class="flex-1 bg-slate-200 text-slate-800 px-6 py-3 rounded-xl hover:bg-slate-300 transition-all font-semibold">
                 Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Training Detail Modal -->
+<div *ngIf="showTrainingDetailModal && selectedTraining" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" @fadeIn>
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto" @slideFadeIn>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Training Details</h2>
+            <button (click)="closeTrainingDetailModal()" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-times text-slate-600"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-6">
+            <!-- Core Information -->
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200">
+                <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-info-circle text-blue-600"></i>
+                    Core Information
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-semibold text-slate-600">Training Name</label>
+                        <p class="text-lg font-bold text-slate-800 mt-1">{{ selectedTraining.training_name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-slate-600">Training ID</label>
+                        <p class="text-lg font-bold text-slate-800 mt-1">#{{ selectedTraining.id }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-slate-600">Trainer Name</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.trainer_name }}</p>
+                    </div>
+                    <div *ngIf="selectedTraining.email">
+                        <label class="text-sm font-semibold text-slate-600">Trainer Email</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.email }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classification -->
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
+                <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-tags text-purple-600"></i>
+                    Classification
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div *ngIf="selectedTraining.division">
+                        <label class="text-sm font-semibold text-slate-600">Division</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.division }}</p>
+                    </div>
+                    <div *ngIf="selectedTraining.department">
+                        <label class="text-sm font-semibold text-slate-600">Department</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.department }}</p>
+                    </div>
+                    <div *ngIf="selectedTraining.competency">
+                        <label class="text-sm font-semibold text-slate-600">Competency</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.competency }}</p>
+                    </div>
+                    <div *ngIf="selectedTraining.skill">
+                        <label class="text-sm font-semibold text-slate-600">Skill</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.skill }}</p>
+                    </div>
+                    <div *ngIf="selectedTraining.skill_category">
+                        <label class="text-sm font-semibold text-slate-600">Skill Category</label>
+                        <span class="inline-flex items-center px-3 py-1 mt-1 bg-violet-100 text-violet-800 text-sm font-bold rounded-full border border-violet-300">
+                            <i class="fa-solid fa-layer-group mr-1"></i>{{ selectedTraining.skill_category }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule & Logistics -->
+            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200">
+                <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-alt text-emerald-600"></i>
+                    Schedule & Logistics
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-semibold text-slate-600">Training Date</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.training_date ? (selectedTraining.training_date | date:'fullDate') : 'Date TBD' }}</p>
+                    </div>
+                    <div *ngIf="selectedTraining.time">
+                        <label class="text-sm font-semibold text-slate-600">Time</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.time }}</p>
+                    </div>
+                    <div *ngIf="selectedTraining.duration">
+                        <label class="text-sm font-semibold text-slate-600">Duration</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.duration }}</p>
+                    </div>
+                    <div *ngIf="selectedTraining.training_type">
+                        <label class="text-sm font-semibold text-slate-600">Training Type</label>
+                        <span class="inline-flex items-center px-3 py-1 mt-1 bg-sky-100 text-sky-800 text-sm font-bold rounded-full border border-sky-300">
+                            <i class="fa-solid fa-display mr-1"></i>{{ selectedTraining.training_type }}
+                        </span>
+                    </div>
+                    <div *ngIf="selectedTraining.seats">
+                        <label class="text-sm font-semibold text-slate-600">Available Seats</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.seats }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Details -->
+            <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200">
+                <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-amber-600"></i>
+                    Content Details
+                </h3>
+                <div class="space-y-4">
+                    <div *ngIf="selectedTraining.training_topics">
+                        <label class="text-sm font-semibold text-slate-600">Training Topics</label>
+                        <p class="text-base text-slate-700 mt-1 whitespace-pre-wrap">{{ selectedTraining.training_topics }}</p>
+                    </div>
+                    <div *ngIf="selectedTraining.prerequisites">
+                        <label class="text-sm font-semibold text-slate-600">Prerequisites</label>
+                        <p class="text-base text-slate-700 mt-1">{{ selectedTraining.prerequisites }}</p>
+                    </div>
+                    <div *ngIf="selectedTraining.assessment_details">
+                        <label class="text-sm font-semibold text-slate-600">Assessment Details</label>
+                        <p class="text-base text-slate-700 mt-1 whitespace-pre-wrap">{{ selectedTraining.assessment_details }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl p-6 border border-slate-200">
+                <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-bar text-slate-600"></i>
+                    Statistics
+                </h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="text-sm font-semibold text-slate-600">Assigned Count</label>
+                        <p class="text-2xl font-bold text-blue-600 mt-1">{{ selectedTraining.assigned_count }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-slate-600">Attended Count</label>
+                        <p class="text-2xl font-bold text-emerald-600 mt-1">{{ selectedTraining.attended_count }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-slate-600">Completion Rate</label>
+                        <p class="text-2xl font-bold text-purple-600 mt-1">{{ selectedTraining.completion_rate }}%</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 flex gap-4">
+            <button (click)="openEditTrainingModal(selectedTraining); closeTrainingDetailModal()" 
+                    class="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl font-semibold">
+                <i class="fa-solid fa-edit mr-2"></i>Edit Training
+            </button>
+            <button (click)="closeTrainingDetailModal()" 
+                    class="flex-1 bg-slate-200 text-slate-800 px-6 py-3 rounded-xl hover:bg-slate-300 transition-all font-semibold">
+                Close
             </button>
         </div>
     </div>
