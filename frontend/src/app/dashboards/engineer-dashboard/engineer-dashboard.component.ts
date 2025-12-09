@@ -983,7 +983,9 @@ export class EngineerDashboardComponent implements OnInit {
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
     this.http.get<TrainingDetail[]>(this.apiService.getUrl('/trainings/'), { headers }).subscribe({
       next: (response) => {
-        this.allTrainings = response || [];
+        // Group duplicate trainings by training_name + date + time and combine trainer names
+        const groupedData = this.groupDuplicateTrainings(response || []);
+        this.allTrainings = groupedData;
         // Clear cache when trainings are updated
         this._myTrainingsCache = [];
         this._myTrainingsCacheKey = '';
@@ -1063,7 +1065,9 @@ export class EngineerDashboardComponent implements OnInit {
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
     this.http.get<TrainingDetail[]>(this.apiService.getUrl('/assignments/my'), { headers }).subscribe({
       next: (response) => {
-        this.assignedTrainings = (response || []).map(t => ({ ...t, assignmentType: 'personal' as const }));
+        const rawTrainings = (response || []).map(t => ({ ...t, assignmentType: 'personal' as const }));
+        // Group duplicate trainings by training_name + date + time and combine trainer names
+        this.assignedTrainings = this.groupDuplicateTrainings(rawTrainings);
         this.assignedTrainingsCalendarEvents = this.assignedTrainings
             .filter(t => t.training_date)
             .map(t => ({
@@ -1075,6 +1079,10 @@ export class EngineerDashboardComponent implements OnInit {
         this.processDashboardTrainings();
         // Check submission status for all assigned trainings
         this.checkSubmissionStatuses();
+        // Check shared status for all assigned trainings (for trainers)
+        this.assignedTrainings.forEach(training => {
+          this.checkSharedStatus(training.id);
+        });
       },
       error: (err) => {
         console.error('Failed to fetch assigned trainings:', err);
@@ -1226,43 +1234,105 @@ export class EngineerDashboardComponent implements OnInit {
     if (!token) return;
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
     
-    // Check if assignment is shared (for trainers)
-    this.http.get(this.apiService.getUrl(`/shared-content/trainer/assignments/${trainingId}`), { headers }).subscribe({
-      next: (response: any) => {
-        if (response) {
+    // First check if any related training has shared assignment
+    this.http.get(this.apiService.getUrl(`/shared-content/trainer/related-assignments/${trainingId}`), { headers }).subscribe({
+      next: (relatedResponse: any) => {
+        if (relatedResponse && relatedResponse.shared) {
           this.sharedAssignments.set(trainingId, true);
-          // Store who shared it
-          if (response.trainer_username) {
-            this.assignmentSharedBy.set(trainingId, response.trainer_username);
+          if (relatedResponse.trainer_username) {
+            this.assignmentSharedBy.set(trainingId, relatedResponse.trainer_username);
           }
         } else {
-          this.sharedAssignments.set(trainingId, false);
-          this.assignmentSharedBy.delete(trainingId);
+          // Check if this specific training has shared assignment
+          this.http.get(this.apiService.getUrl(`/shared-content/trainer/assignments/${trainingId}`), { headers }).subscribe({
+            next: (response: any) => {
+              if (response) {
+                this.sharedAssignments.set(trainingId, true);
+                if (response.trainer_username) {
+                  this.assignmentSharedBy.set(trainingId, response.trainer_username);
+                }
+              } else {
+                this.sharedAssignments.set(trainingId, false);
+                this.assignmentSharedBy.delete(trainingId);
+              }
+            },
+            error: () => {
+              this.sharedAssignments.set(trainingId, false);
+              this.assignmentSharedBy.delete(trainingId);
+            }
+          });
         }
       },
       error: () => {
-        this.sharedAssignments.set(trainingId, false);
-        this.assignmentSharedBy.delete(trainingId);
+        // Fallback to checking this specific training
+        this.http.get(this.apiService.getUrl(`/shared-content/trainer/assignments/${trainingId}`), { headers }).subscribe({
+          next: (response: any) => {
+            if (response) {
+              this.sharedAssignments.set(trainingId, true);
+              if (response.trainer_username) {
+                this.assignmentSharedBy.set(trainingId, response.trainer_username);
+              }
+            } else {
+              this.sharedAssignments.set(trainingId, false);
+              this.assignmentSharedBy.delete(trainingId);
+            }
+          },
+          error: () => {
+            this.sharedAssignments.set(trainingId, false);
+            this.assignmentSharedBy.delete(trainingId);
+          }
+        });
       }
     });
 
-    // Check if feedback is shared (for trainers)
-    this.http.get(this.apiService.getUrl(`/shared-content/trainer/feedback/${trainingId}`), { headers }).subscribe({
-      next: (response: any) => {
-        if (response) {
+    // First check if any related training has shared feedback
+    this.http.get(this.apiService.getUrl(`/shared-content/trainer/related-feedback/${trainingId}`), { headers }).subscribe({
+      next: (relatedResponse: any) => {
+        if (relatedResponse && relatedResponse.shared) {
           this.sharedFeedback.set(trainingId, true);
-          // Store who shared it
-          if (response.trainer_username) {
-            this.feedbackSharedBy.set(trainingId, response.trainer_username);
+          if (relatedResponse.trainer_username) {
+            this.feedbackSharedBy.set(trainingId, relatedResponse.trainer_username);
           }
         } else {
-          this.sharedFeedback.set(trainingId, false);
-          this.feedbackSharedBy.delete(trainingId);
+          // Check if this specific training has shared feedback
+          this.http.get(this.apiService.getUrl(`/shared-content/trainer/feedback/${trainingId}`), { headers }).subscribe({
+            next: (response: any) => {
+              if (response) {
+                this.sharedFeedback.set(trainingId, true);
+                if (response.trainer_username) {
+                  this.feedbackSharedBy.set(trainingId, response.trainer_username);
+                }
+              } else {
+                this.sharedFeedback.set(trainingId, false);
+                this.feedbackSharedBy.delete(trainingId);
+              }
+            },
+            error: () => {
+              this.sharedFeedback.set(trainingId, false);
+              this.feedbackSharedBy.delete(trainingId);
+            }
+          });
         }
       },
       error: () => {
-        this.sharedFeedback.set(trainingId, false);
-        this.feedbackSharedBy.delete(trainingId);
+        // Fallback to checking this specific training
+        this.http.get(this.apiService.getUrl(`/shared-content/trainer/feedback/${trainingId}`), { headers }).subscribe({
+          next: (response: any) => {
+            if (response) {
+              this.sharedFeedback.set(trainingId, true);
+              if (response.trainer_username) {
+                this.feedbackSharedBy.set(trainingId, response.trainer_username);
+              }
+            } else {
+              this.sharedFeedback.set(trainingId, false);
+              this.feedbackSharedBy.delete(trainingId);
+            }
+          },
+          error: () => {
+            this.sharedFeedback.set(trainingId, false);
+            this.feedbackSharedBy.delete(trainingId);
+          }
+        });
       }
     });
   }
@@ -1553,7 +1623,23 @@ export class EngineerDashboardComponent implements OnInit {
         list = list.filter(t => t.skill_category === this.trainingLevelFilter);
     }
     if (this.trainingDateFilter) {
-        list = list.filter(t => t.training_date === this.trainingDateFilter);
+        // Normalize dates for comparison (extract YYYY-MM-DD from both)
+        const normalizeDate = (date: any): string => {
+          if (!date) return '';
+          if (typeof date === 'string') {
+            const match = date.match(/^(\d{4}-\d{2}-\d{2})/);
+            return match ? match[1] : date.trim();
+          }
+          if (date instanceof Date) {
+            return date.toISOString().split('T')[0];
+          }
+          return String(date || '').trim();
+        };
+        const filterDate = normalizeDate(this.trainingDateFilter);
+        list = list.filter(t => {
+          const trainingDate = normalizeDate(t.training_date);
+          return trainingDate === filterDate;
+        });
     }
     list.sort((a, b) => {
         const dateA = a.training_date ? new Date(a.training_date).getTime() : Infinity;
@@ -1575,6 +1661,118 @@ export class EngineerDashboardComponent implements OnInit {
     return request;
   }
 
+  /**
+   * Groups duplicate trainings by training_name + date + time and combines trainer names
+   * This handles the case where Excel loader created separate records for each trainer
+   */
+  groupDuplicateTrainings(trainings: TrainingDetail[]): TrainingDetail[] {
+    const groupedMap = new Map<string, TrainingDetail[]>();
+    
+    // Normalize date to ISO string format for consistent comparison
+    const normalizeDate = (date: any): string => {
+      if (!date) return '';
+      try {
+        // If it's already a string in ISO format, use it
+        if (typeof date === 'string') {
+          // Extract just the date part (YYYY-MM-DD) if it's a full ISO string
+          const dateMatch = date.match(/^(\d{4}-\d{2}-\d{2})/);
+          if (dateMatch) return dateMatch[1];
+          return date.trim();
+        }
+        // If it's a Date object, convert to ISO string
+        if (date instanceof Date) {
+          return date.toISOString().split('T')[0];
+        }
+      } catch (e) {
+        console.warn('Error normalizing date:', date, e);
+      }
+      return String(date || '').trim();
+    };
+    
+    // Normalize time string (remove extra spaces, normalize separators)
+    const normalizeTime = (time: string | undefined): string => {
+      if (!time) return '';
+      return time.trim().replace(/\s+/g, ' ').replace(/\./g, ':');
+    };
+    
+    // Group trainings by a unique key: training_name + normalized date + normalized time
+    trainings.forEach(training => {
+      const normalizedName = (training.training_name || '').trim().toLowerCase();
+      const normalizedDate = normalizeDate(training.training_date);
+      const normalizedTime = normalizeTime(training.time);
+      const key = `${normalizedName}_${normalizedDate}_${normalizedTime}`;
+      
+      if (!groupedMap.has(key)) {
+        groupedMap.set(key, []);
+      }
+      groupedMap.get(key)!.push(training);
+    });
+    
+    // Debug: Log grouping results
+    console.log(`[GroupDuplicateTrainings] Input: ${trainings.length} trainings, Output: ${groupedMap.size} unique groups`);
+    groupedMap.forEach((group, key) => {
+      if (group.length > 1) {
+        console.log(`[GroupDuplicateTrainings] Grouped ${group.length} trainings with key: ${key}`);
+        group.forEach((t, idx) => {
+          console.log(`  [${idx + 1}] ID: ${t.id}, Trainer: ${t.trainer_name}, Date: ${t.training_date}, Time: ${t.time}`);
+        });
+      }
+    });
+    
+    // Combine grouped trainings
+    const grouped: TrainingDetail[] = [];
+    groupedMap.forEach((trainingsGroup, key) => {
+      if (trainingsGroup.length === 0) return;
+      
+      // Use the first training as base
+      const baseTraining = { ...trainingsGroup[0] };
+      
+      // Collect all unique trainer names
+      const trainerNamesSet = new Set<string>();
+      const emailSet = new Set<string>();
+      const trainingIds: number[] = [];
+      
+      trainingsGroup.forEach(t => {
+        if (t.trainer_name) {
+          // Split by comma in case trainer_name already contains multiple names
+          const names = t.trainer_name.split(',').map(n => n.trim()).filter(n => n);
+          names.forEach(name => trainerNamesSet.add(name));
+        }
+        if (t.email) {
+          const emails = t.email.split(',').map(e => e.trim()).filter(e => e);
+          emails.forEach(email => emailSet.add(email));
+        }
+        if (t.id) {
+          trainingIds.push(t.id);
+        }
+      });
+      
+      // Combine trainer names with comma separation
+      baseTraining.trainer_name = Array.from(trainerNamesSet).join(', ');
+      baseTraining.email = Array.from(emailSet).join(', ');
+      
+      // Store all related training IDs for checking shared content
+      (baseTraining as any).relatedTrainingIds = trainingIds;
+      
+      // Use the first training ID as the primary one
+      baseTraining.id = trainingIds[0];
+      
+      grouped.push(baseTraining);
+    });
+    
+    console.log(`[GroupDuplicateTrainings] Final grouped result: ${grouped.length} trainings`);
+    grouped.forEach((t, idx) => {
+      console.log(`  [${idx + 1}] ID: ${t.id}, Name: ${t.training_name}, Trainers: ${t.trainer_name}, Date: ${t.training_date}, Time: ${t.time}`);
+    });
+    
+    return grouped;
+  }
+
+  // TrackBy function for training list to improve performance and prevent duplicate rendering
+  trackByTrainingId(index: number, training: TrainingDetail): number {
+    return training.id || index;
+  }
+
   get filteredAssignedTrainings(): TrainingDetail[] {
       let list = [...(this.assignedTrainings || [])];
       if (this.assignedSearch && this.assignedSearch.trim()) {
@@ -1592,7 +1790,23 @@ export class EngineerDashboardComponent implements OnInit {
         list = list.filter(t => t.skill_category === this.assignedLevelFilter);
       }
       if (this.assignedDateFilter) {
-        list = list.filter(t => t.training_date === this.assignedDateFilter);
+        // Normalize dates for comparison (extract YYYY-MM-DD from both)
+        const normalizeDate = (date: any): string => {
+          if (!date) return '';
+          if (typeof date === 'string') {
+            const match = date.match(/^(\d{4}-\d{2}-\d{2})/);
+            return match ? match[1] : date.trim();
+          }
+          if (date instanceof Date) {
+            return date.toISOString().split('T')[0];
+          }
+          return String(date || '').trim();
+        };
+        const filterDate = normalizeDate(this.assignedDateFilter);
+        list = list.filter(t => {
+          const trainingDate = normalizeDate(t.training_date);
+          return trainingDate === filterDate;
+        });
       }
       list.sort((a, b) => {
         const dateA = a.training_date ? new Date(a.training_date).getTime() : Infinity;
@@ -1708,37 +1922,76 @@ export class EngineerDashboardComponent implements OnInit {
     const token = this.authService.getToken();
     if (token) {
       const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-      this.http.get(this.apiService.getUrl(`/shared-content/trainer/assignments/${trainingId}`), { headers }).subscribe({
-        next: (response: any) => {
-          if (response) {
-            // Assignment already exists - load it for editing
+      
+      // First check if any related training has shared assignment
+      this.http.get(this.apiService.getUrl(`/shared-content/trainer/related-assignments/${trainingId}`), { headers }).subscribe({
+        next: (relatedResponse: any) => {
+          if (relatedResponse && relatedResponse.shared) {
+            // Assignment already shared by another trainer for related training
             this.sharedAssignments.set(trainingId, true);
-            if (response.trainer_username) {
-              this.assignmentSharedBy.set(trainingId, response.trainer_username);
+            if (relatedResponse.trainer_username) {
+              this.assignmentSharedBy.set(trainingId, relatedResponse.trainer_username);
             }
-            
-            // Load existing assignment data
-            this.newAssignment.title = response.title || '';
-            this.newAssignment.description = response.description || '';
-            this.newAssignment.questions = response.questions || [];
-            
-            const currentUser = this.authService.getUsername() || this.employeeId || '';
-            if (response.trainer_username && response.trainer_username !== currentUser) {
-              this.toastService.info(`Assignment already shared by your co-trainer (${response.trainer_username}). You can update it below.`);
-            } else {
-              this.toastService.info('Loading existing assignment. You can update it below.');
-            }
-          } else {
-            this.sharedAssignments.set(trainingId, false);
+            this.toastService.warning('Assignment and feedback are already shared by your respective trainer.');
+            return; // Don't open the form
           }
-          this.setTrainerZoneView('assignmentForm');
+          
+          // Check if this specific training has shared assignment
+          this.http.get(this.apiService.getUrl(`/shared-content/trainer/assignments/${trainingId}`), { headers }).subscribe({
+            next: (response: any) => {
+              if (response) {
+                // Assignment already exists - load it for editing
+                this.sharedAssignments.set(trainingId, true);
+                if (response.trainer_username) {
+                  this.assignmentSharedBy.set(trainingId, response.trainer_username);
+                }
+                
+                // Load existing assignment data
+                this.newAssignment.title = response.title || '';
+                this.newAssignment.description = response.description || '';
+                this.newAssignment.questions = response.questions || [];
+                
+                const currentUser = this.authService.getUsername() || this.employeeId || '';
+                if (response.trainer_username && response.trainer_username !== currentUser) {
+                  this.toastService.info(`Assignment already shared by your co-trainer (${response.trainer_username}). You can update it below.`);
+                } else {
+                  this.toastService.info('Loading existing assignment. You can update it below.');
+                }
+              } else {
+                this.sharedAssignments.set(trainingId, false);
+              }
+              this.setTrainerZoneView('assignmentForm');
+            },
+            error: (err) => {
+              // If 403, check if it's because assignment exists
+              if (err.status === 403) {
+                this.toastService.warning('Unable to check assignment status. Please try again.');
+              }
+              this.setTrainerZoneView('assignmentForm');
+            }
+          });
         },
         error: (err) => {
-          // If 403, check if it's because assignment exists
-          if (err.status === 403) {
-            this.toastService.warning('Unable to check assignment status. Please try again.');
-          }
-          this.setTrainerZoneView('assignmentForm');
+          // If error checking related trainings, proceed with normal check
+          this.http.get(this.apiService.getUrl(`/shared-content/trainer/assignments/${trainingId}`), { headers }).subscribe({
+            next: (response: any) => {
+              if (response) {
+                this.sharedAssignments.set(trainingId, true);
+                if (response.trainer_username) {
+                  this.assignmentSharedBy.set(trainingId, response.trainer_username);
+                }
+                this.newAssignment.title = response.title || '';
+                this.newAssignment.description = response.description || '';
+                this.newAssignment.questions = response.questions || [];
+              } else {
+                this.sharedAssignments.set(trainingId, false);
+              }
+              this.setTrainerZoneView('assignmentForm');
+            },
+            error: () => {
+              this.setTrainerZoneView('assignmentForm');
+            }
+          });
         }
       });
     } else {
@@ -1754,39 +2007,80 @@ export class EngineerDashboardComponent implements OnInit {
     const token = this.authService.getToken();
     if (token) {
       const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-      this.http.get(this.apiService.getUrl(`/shared-content/trainer/feedback/${trainingId}`), { headers }).subscribe({
-        next: (response: any) => {
-          if (response) {
+      
+      // First check if any related training has shared feedback
+      this.http.get(this.apiService.getUrl(`/shared-content/trainer/related-feedback/${trainingId}`), { headers }).subscribe({
+        next: (relatedResponse: any) => {
+          if (relatedResponse && relatedResponse.shared) {
+            // Feedback already shared by another trainer for related training
+            this.sharedFeedback.set(trainingId, true);
+            if (relatedResponse.trainer_username) {
+              this.feedbackSharedBy.set(trainingId, relatedResponse.trainer_username);
+            }
+            this.toastService.warning('Assignment and feedback are already shared by your respective trainer.');
+            return; // Don't open the form
+          }
+          
+          // Check if this specific training has shared feedback
+          this.http.get(this.apiService.getUrl(`/shared-content/trainer/feedback/${trainingId}`), { headers }).subscribe({
+            next: (response: any) => {
+              if (response) {
             // Feedback already exists - load it for editing
             this.sharedFeedback.set(trainingId, true);
             if (response.trainer_username) {
               this.feedbackSharedBy.set(trainingId, response.trainer_username);
             }
             
-            // Load existing feedback data
-            this.newFeedback.customQuestions = (response.customQuestions || []).map((q: any) => ({
-              text: q.text || '',
-              options: q.options || [],
-              isDefault: q.isDefault || false
-            }));
-            
-            const currentUser = this.authService.getUsername() || this.employeeId || '';
-            if (response.trainer_username && response.trainer_username !== currentUser) {
-              this.toastService.info(`Feedback already shared by your co-trainer (${response.trainer_username}). You can update it below.`);
-            } else {
-              this.toastService.info('Loading existing feedback. You can update it below.');
+                // Load existing feedback data
+                this.newFeedback.customQuestions = (response.customQuestions || []).map((q: any) => ({
+                  text: q.text || '',
+                  options: q.options || [],
+                  isDefault: q.isDefault || false
+                }));
+                
+                const currentUser = this.authService.getUsername() || this.employeeId || '';
+                if (response.trainer_username && response.trainer_username !== currentUser) {
+                  this.toastService.info(`Feedback already shared by your co-trainer (${response.trainer_username}). You can update it below.`);
+                } else {
+                  this.toastService.info('Loading existing feedback. You can update it below.');
+                }
+              } else {
+                this.sharedFeedback.set(trainingId, false);
+              }
+              this.setTrainerZoneView('feedbackForm');
+            },
+            error: (err) => {
+              // If 403, check if it's because feedback exists
+              if (err.status === 403) {
+                this.toastService.warning('Unable to check feedback status. Please try again.');
+              }
+              this.setTrainerZoneView('feedbackForm');
             }
-          } else {
-            this.sharedFeedback.set(trainingId, false);
-          }
-          this.setTrainerZoneView('feedbackForm');
+          });
         },
         error: (err) => {
-          // If 403, check if it's because feedback exists
-          if (err.status === 403) {
-            this.toastService.warning('Unable to check feedback status. Please try again.');
-          }
-          this.setTrainerZoneView('feedbackForm');
+          // If error checking related trainings, proceed with normal check
+          this.http.get(this.apiService.getUrl(`/shared-content/trainer/feedback/${trainingId}`), { headers }).subscribe({
+            next: (response: any) => {
+              if (response) {
+                this.sharedFeedback.set(trainingId, true);
+                if (response.trainer_username) {
+                  this.feedbackSharedBy.set(trainingId, response.trainer_username);
+                }
+                this.newFeedback.customQuestions = (response.customQuestions || []).map((q: any) => ({
+                  text: q.text || '',
+                  options: q.options || [],
+                  isDefault: q.isDefault || false
+                }));
+              } else {
+                this.sharedFeedback.set(trainingId, false);
+              }
+              this.setTrainerZoneView('feedbackForm');
+            },
+            error: () => {
+              this.setTrainerZoneView('feedbackForm');
+            }
+          });
         }
       });
     } else {

@@ -157,3 +157,6 @@ The `--host 0.0.0.0` allows access from other machines.
 - [ ] Can access `http://<backend-ip>:8000/docs` from other PC
 - [ ] Browser console shows correct API URL
 
+
+
+

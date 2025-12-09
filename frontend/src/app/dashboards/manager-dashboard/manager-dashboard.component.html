@@ -97,41 +97,59 @@
     <div class="flex-1 flex flex-col">
 
 <div *ngIf="activeTab === 'mySkills' || activeTab === 'trainingCatalog' || activeTab === 'assignedTrainings'" class="bg-blue-600 px-6 py-3 shadow-lg rounded-2xl mx-6 mt-4">
+    <!-- My Skills Filter Bar: Toggle between core skills and additional skills views -->
     <div *ngIf="activeTab === 'mySkills'" @fadeIn>
         <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-4">
+                <!-- View Toggle: Switch between Core Skills and Additional Skills -->
                 <div class="inline-flex rounded-lg shadow-sm bg-blue-700 p-1">
+                    <!-- Core Skills Button: Shows job-required skills from API -->
                     <button (click)="mySkillsView = 'core'" class="px-3 py-1 text-xs rounded-md transition-colors duration-200" [ngClass]="{'bg-green-300 text-green-800 font-bold shadow': mySkillsView === 'core', 'text-blue-200 hover:bg-blue-500 font-semibold': mySkillsView !== 'core'}">
                         <i class="fa-solid fa-briefcase mr-1.5"></i>Core Skills
                     </button>
+                    <!-- Additional Skills Button: Shows self-reported skills -->
                     <button (click)="mySkillsView = 'additional'" class="px-3 py-1 text-xs rounded-md transition-colors duration-200" [ngClass]="{'bg-green-300 text-green-800 font-bold shadow': mySkillsView === 'additional', 'text-blue-200 hover:bg-blue-500 font-semibold': mySkillsView !== 'additional'}">
                         <i class="fa-solid fa-star mr-1.5"></i>Additional Skills
                     </button>
                 </div>
             </div>
-
+            <!-- Filter Controls: Search and filter options based on current view -->
             <div class="flex flex-wrap items-center gap-1.5">
+                <!-- Core Skills Filters: Search, skill name filter, and status filter -->
                 <ng-container *ngIf="mySkillsView === 'core'">
+                    <!-- Search Input: Filter skills by text search -->
                     <div class="relative">
                         <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                         <input type="text" [(ngModel)]="mySkillsSearch" placeholder="Search..." class="w-full sm:w-36 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-48 text-sm">
                     </div>
-                    <select [(ngModel)]="mySkillsSkillFilter" class="w-full sm:w-auto appearance-none px-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white cursor-pointer text-sm">
-                        <option value="All">All Skills</option>
-                        <option *ngFor="let name of uniqueMySkills" [value]="name">{{ name }}</option>
-                    </select>
-                    <select [(ngModel)]="mySkillsStatusFilter" class="w-full sm:w-auto appearance-none px-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white cursor-pointer text-sm">
-                        <option value="All">All Statuses</option>
-                        <option value="Met">Met</option>
-                        <option value="Gap">Gap</option>
-                        <option value="Error">Error</option>
-                    </select>
+                    <!-- Skill Name Filter: Searchable dropdown to filter by specific skill name -->
+                    <app-searchable-dropdown
+                        [(ngModel)]="mySkillsSkillFilter"
+                        [options]="uniqueMySkills"
+                        placeholder="All Skills"
+                        allOptionLabel="All Skills"
+                        allOptionValue=""
+                        iconClass="fa-filter"
+                        width="w-full sm:w-auto min-w-[140px]">
+                    </app-searchable-dropdown>
+                    <!-- Status Filter: Searchable dropdown to filter by skill status (Met, Gap, Error) -->
+                    <app-searchable-dropdown
+                        [(ngModel)]="mySkillsStatusFilter"
+                        [options]="['Met', 'Gap', 'Error']"
+                        placeholder="All Statuses"
+                        allOptionLabel="All Statuses"
+                        allOptionValue=""
+                        iconClass="fa-filter"
+                        width="w-full sm:w-auto min-w-[140px]">
+                    </app-searchable-dropdown>
+                    <!-- Reset Filters Button: Clear all filter selections -->
                     <button (click)="resetMySkillsFilters()" title="Reset Filters" class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors">
                         <i class="fa-solid fa-rotate-right"></i>
                     </button>
                 </ng-container>
-
+                <!-- Additional Skills Controls: Add new skill button -->
                 <ng-container *ngIf="mySkillsView === 'additional'">
+                    <!-- Toggle Add Skill Form: Show/hide form to add new additional skill -->
                     <button (click)="toggleAddSkillForm()" class="bg-white/20 hover:bg-white/30 text-white rounded-md px-3 py-1 text-sm font-medium transition-all duration-200 flex items-center gap-2 shadow-sm">
                         <i class="fa-solid fa-plus transition-transform duration-300" [ngClass]="{'rotate-45': showAddSkillForm}"></i>
                         <span>{{ showAddSkillForm ? 'Cancel' : 'Add Skill' }}</span>
@@ -187,15 +205,24 @@
                     <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                     <input type="text" [(ngModel)]="catalogSearch" placeholder="Search..." class="w-full sm:w-36 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-48 text-sm">
                 </div>
-                <select [(ngModel)]="catalogTypeFilter" class="w-full sm:w-auto appearance-none px-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white cursor-pointer text-sm">
-                    <option value="All">All Types</option>
-                    <option value="Online">Online</option>
-                    <option value="Offline">Offline</option>
-                </select>
-                <select [(ngModel)]="catalogCategoryFilter" class="w-full sm:w-auto appearance-none px-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white cursor-pointer text-sm">
-                    <option value="All">All Categories</option>
-                    <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
-                </select>
+                <app-searchable-dropdown
+                    [(ngModel)]="catalogTypeFilter"
+                    [options]="['Online', 'Offline']"
+                    placeholder="All Types"
+                    allOptionLabel="All Types"
+                    allOptionValue="All"
+                    iconClass="fa-filter"
+                    width="w-full sm:w-auto min-w-[140px]">
+                </app-searchable-dropdown>
+                <app-searchable-dropdown
+                    [(ngModel)]="catalogCategoryFilter"
+                    [options]="skillCategoryLevels"
+                    placeholder="All Categories"
+                    allOptionLabel="All Categories"
+                    allOptionValue="All"
+                    iconClass="fa-filter"
+                    width="w-full sm:w-auto min-w-[140px]">
+                </app-searchable-dropdown>
                 <button (click)="resetCatalogFilters()" title="Reset Filters" class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors">
                     <i class="fa-solid fa-rotate-right"></i>
                 </button>
@@ -220,14 +247,24 @@
                     <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                     <input type="text" [(ngModel)]="assignedSearch" placeholder="Search..." class="w-full sm:w-36 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-48 text-sm">
                 </div>
-                <select [(ngModel)]="assignedSkillFilter" class="w-full sm:w-auto appearance-none px-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white cursor-pointer text-sm">
-                    <option value="All">All Skills</option>
-                    <option *ngFor="let name of uniqueMySkills" [value]="name">{{ name }}</option>
-                </select>
-                <select [(ngModel)]="assignedLevelFilter" class="w-full sm:w-auto appearance-none px-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white cursor-pointer text-sm">
-                    <option value="All">All Levels</option>
-                    <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
-                </select>
+                <app-searchable-dropdown
+                    [(ngModel)]="assignedSkillFilter"
+                    [options]="uniqueMySkills"
+                    placeholder="All Skills"
+                    allOptionLabel="All Skills"
+                    allOptionValue="All"
+                    iconClass="fa-filter"
+                    width="w-full sm:w-auto min-w-[140px]">
+                </app-searchable-dropdown>
+                <app-searchable-dropdown
+                    [(ngModel)]="assignedLevelFilter"
+                    [options]="skillCategoryLevels"
+                    placeholder="All Levels"
+                    allOptionLabel="All Levels"
+                    allOptionValue="All"
+                    iconClass="fa-filter"
+                    width="w-full sm:w-auto min-w-[140px]">
+                </app-searchable-dropdown>
                 <input type="date" [(ngModel)]="assignedDateFilter" class="w-full sm:w-auto px-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-sm">
                 <button (click)="resetAssignedTrainingFilters()" title="Reset Filters" class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors">
                     <i class="fa-solid fa-rotate-right"></i>
@@ -430,13 +467,13 @@
                     <th class="text-left py-1.5 px-2 text-xs font-semibold text-slate-700">Team Member</th>
                     <th class="text-center py-1.5 px-2 text-xs font-semibold text-slate-700">
                       <div class="flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-check-circle text-green-600 text-[10px]"></i>
+                        <i class="fa-solid fa-check-circle text-slate-600 text-[10px]"></i>
                         <span>Skills Met</span>
                       </div>
                     </th>
                     <th class="text-center py-1.5 px-2 text-xs font-semibold text-slate-700">
                       <div class="flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-exclamation-triangle text-orange-600 text-[10px]"></i>
+                        <i class="fa-solid fa-exclamation-triangle text-slate-600 text-[10px]"></i>
                         <span>Skill Gaps</span>
                       </div>
                     </th>
@@ -456,12 +493,12 @@
                       </div>
                     </td>
                     <td class="py-1.5 px-2 text-center">
-                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-700 font-bold text-xs">
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
                         {{ getTeamSkillsMetCount(member) }}
                       </span>
                     </td>
                     <td class="py-1.5 px-2 text-center">
-                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-700 font-bold text-xs">
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
                         {{ getTeamSkillsGapCount(member) }}
                       </span>
                     </td>
@@ -493,12 +530,12 @@
                   <tr class="bg-slate-50 border-t-2 border-slate-200">
                     <td class="py-1.5 px-2 text-xs font-bold text-slate-800">Total</td>
                     <td class="py-1.5 px-2 text-center">
-                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-200 text-green-800 font-bold text-xs">
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
                         {{ teamSkillsMet }}
                       </span>
                     </td>
                     <td class="py-1.5 px-2 text-center">
-                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-200 text-orange-800 font-bold text-xs">
+                      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
                         {{ teamSkillsGap }}
                       </span>
                     </td>
@@ -729,10 +766,10 @@
       </div>
       
             <div *ngIf="activeTab !== 'dashboard'">
-                <div *ngIf="activeTab === 'mySkills'" @slideFadeIn>
+                <div *ngIf="activeTab === 'mySkills'" @slideFadeIn class="space-y-8">
                     <div *ngIf="mySkillsView === 'core'" @fadeIn class="space-y-8">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@listStagger]="(getFilteredMySkills()).length">
-                            <div *ngFor="let competency of getFilteredMySkills()"
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@listStagger]="(getFilteredMySkills() | skillFilter:mySkillsSearch:mySkillsStatusFilter).length">
+                            <div *ngFor="let competency of getFilteredMySkills() | skillFilter:mySkillsSearch:mySkillsStatusFilter"
                                 class="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                                 [ngClass]="{
                                     'border-green-300/80': competency.status === 'Met',
@@ -750,33 +787,47 @@
                                                 <p class="text-xs text-slate-500">{{ competency.competency }}</p>
                                             </div>
                                         </div>
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ml-2 flex-shrink-0" [ngClass]="{
-                                            'bg-green-100 text-green-800': competency.status === 'Met',
-                                            'bg-orange-100 text-orange-800': competency.status === 'Gap',
-                                            'bg-red-100 text-red-800': competency.status === 'Error'
-                                            }">
-                                            {{ competency.status }}
-                                        </span>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider flex-shrink-0" [ngClass]="{
+                                                'bg-green-100 text-green-800': competency.status === 'Met',
+                                                'bg-orange-100 text-orange-800': competency.status === 'Gap',
+                                                'bg-red-100 text-red-800': competency.status === 'Error'
+                                                }">
+                                                {{ competency.status }}
+                                            </span>
+                                        </div>
                                     </div>
-                        
-                                    <div>
-                                        <div class="flex justify-between items-center mb-1">
-                                            <span class="text-xs font-medium text-slate-600">Progress</span>
-                                            <span class="text-xs font-bold text-slate-700">{{ getSkillProgress(competency) }}%</span>
-                                        </div>
-                                        <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden shadow-inner mb-1.5">
-                                            <div class="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-cyan-400 to-cyan-600" [style.width.%]="getSkillProgress(competency)">
-                                            </div>
-                                        </div>
+                    
+                                    <div class="space-y-2">
                                         <div class="flex justify-between items-center text-xs text-slate-500 font-medium">
                                             <span>Current: <span class="font-bold text-slate-700">{{ competency.current_expertise }}</span></span>
                                             <span>Target: <span class="font-bold text-slate-700">{{ competency.target_expertise }}</span></span>
                                         </div>
+                                        <div>
+                                            <div class="flex justify-between items-center mb-1">
+                                                <span class="text-xs font-medium text-slate-600">Progress</span>
+                                                <span class="text-xs font-bold text-slate-700">{{ getSkillProgress(competency) }}%</span>
+                                            </div>
+                                            <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden shadow-inner">
+                                                <div class="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-cyan-400 to-cyan-600" [style.width.%]="getSkillProgress(competency)">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="pt-1">
+                                        <button (click)="openSkillFeedbackModal(competency.skill)"
+                                                class="w-full px-2.5 py-1.5 flex items-center justify-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-md border border-indigo-200 transition-all duration-200"
+                                                [title]="hasFeedbackForSkill(competency.skill) ? 'View Manager Feedback' : 'No feedback available yet'"
+                                                [ngClass]="{'opacity-50 cursor-not-allowed': !hasFeedbackForSkill(competency.skill), 'hover:border-indigo-300': hasFeedbackForSkill(competency.skill)}">
+                                            <i class="fa-solid fa-comment-dots text-[10px]"></i>
+                                            <span>Manager Feedback</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <p *ngIf="(getFilteredMySkills()).length === 0" class="text-center text-slate-500 mt-8">No skills found matching your filters.</p>
+                        <p *ngIf="(getFilteredMySkills() | skillFilter:mySkillsSearch:mySkillsStatusFilter).length === 0" class="text-center text-slate-500 mt-8">No skills found matching your filters.</p>
                     </div>
 
                     <div *ngIf="mySkillsView === 'additional'" @fadeIn>
@@ -1072,7 +1123,7 @@
                                         <i class="fa-solid fa-file-upload text-slate-600"></i>
                                         <span class="text-slate-700" *ngIf="!assignmentFile">Choose file to upload...</span>
                                         <span class="text-slate-700" *ngIf="assignmentFile">{{ assignmentFile.name }}</span>
-                                        <input type="file" (change)="onAssignmentFileSelected($event)" class="hidden" accept="*/*">
+                                        <input type="file" (change)="onAssignmentFileSelected($event)" class="hidden" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
                                     </label>
                                     <button *ngIf="assignmentFile" (click)="assignmentFile = null" class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Remove file">
                                         <i class="fa-solid fa-times"></i>
@@ -1176,39 +1227,76 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
               <div>
                 <label for="team-name-filter" class="block text-sm font-semibold text-slate-700 mb-2"><i class="fa-solid fa-user mr-2 text-indigo-600"></i>Filter by Team Member</label>
-                <select id="team-name-filter" [(ngModel)]="teamMemberNameFilter" class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-3 bg-white">
-                  <option value="All">All Members ({{ (manager.team.length || 0) }})</option>
-                  <option *ngFor="let member of uniqueTeamMembers" [value]="member">{{ member }}</option>
-                </select>
+                <app-searchable-dropdown
+                    id="team-name-filter"
+                    [(ngModel)]="teamMemberNameFilter"
+                    [options]="uniqueTeamMembers"
+                    placeholder="All Members"
+                    allOptionLabel="All Members"
+                    allOptionValue="All"
+                    iconClass="fa-user"
+                    size="large"
+                    width="w-full">
+                </app-searchable-dropdown>
               </div>
               <div>
                 <label for="team-skill-filter" class="block text-sm font-semibold text-slate-700 mb-2 transition-colors" [ngClass]="{'text-slate-400': teamCompetencyFilter !== 'All'}"><i class="fa-solid fa-brain mr-2 text-green-600"></i>Filter by Skill</label>
-                <select id="team-skill-filter" [(ngModel)]="teamSkillsSkillFilter" [disabled]="teamCompetencyFilter !== 'All'" title="{{ teamCompetencyFilter !== 'All' ? 'Clear the Competency filter to enable this' : 'Filter by skill name' }}" class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-3 bg-white disabled:bg-slate-200 disabled:cursor-not-allowed">
-                  <option value="All">All Skills ({{ uniqueTeamSkills.length }})</option>
-                  <option *ngFor="let skill of uniqueTeamSkills" [value]="skill">{{ skill }}</option>
-                </select>
+                <app-searchable-dropdown
+                    id="team-skill-filter"
+                    [(ngModel)]="teamSkillsSkillFilter"
+                    [options]="uniqueTeamSkills"
+                    placeholder="All Skills"
+                    allOptionLabel="All Skills"
+                    allOptionValue="All"
+                    iconClass="fa-brain"
+                    [disabled]="teamCompetencyFilter !== 'All'"
+                    size="large"
+                    width="w-full">
+                </app-searchable-dropdown>
               </div>
               <div>
                 <label for="team-competency-filter" class="block text-sm font-semibold text-slate-700 mb-2 transition-colors" [ngClass]="{'text-slate-400': teamSkillsSkillFilter !== 'All'}"><i class="fa-solid fa-cogs mr-2 text-orange-600"></i>Filter by Competency</label>
-                <select id="team-competency-filter" [(ngModel)]="teamCompetencyFilter" [disabled]="teamSkillsSkillFilter !== 'All'" title="{{ teamSkillsSkillFilter !== 'All' ? 'Clear the Skill filter to enable this' : 'Filter by competency' }}" class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-3 bg-white disabled:bg-slate-200 disabled:cursor-not-allowed">
-                  <option value="All">All Competencies ({{ uniqueCompetencies.length }})</option>
-                  <option *ngFor="let competency of uniqueCompetencies" [value]="competency">{{ competency }}</option>
-                </select>
+                <app-searchable-dropdown
+                    id="team-competency-filter"
+                    [(ngModel)]="teamCompetencyFilter"
+                    [options]="uniqueCompetencies"
+                    placeholder="All Competencies"
+                    allOptionLabel="All Competencies"
+                    allOptionValue="All"
+                    iconClass="fa-cogs"
+                    [disabled]="teamSkillsSkillFilter !== 'All'"
+                    size="large"
+                    width="w-full">
+                </app-searchable-dropdown>
               </div>
               <div>
                 <label for="team-skill-level-filter" class="block text-sm font-semibold text-slate-700 mb-2 transition-colors" [ngClass]="{'text-slate-400': teamSkillsSkillFilter === 'All' && teamCompetencyFilter === 'All'}"><i class="fa-solid fa-signal mr-2 text-indigo-600"></i>Filter by Current Level</label>
-                <select id="team-skill-level-filter" [(ngModel)]="teamSkillsCurrentLevelFilter" [disabled]="teamSkillsSkillFilter === 'All' && teamCompetencyFilter === 'All'" title="{{ (teamSkillsSkillFilter === 'All' && teamCompetencyFilter === 'All') ? 'Select a Skill or Competency to enable this filter' : 'Filter by current level' }}" class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-3 bg-white disabled:bg-slate-200 disabled:cursor-not-allowed">
-                  <option value="All">All Levels</option>
-                  <option *ngFor="let level of skillLevelsForFilter" [value]="level">{{ level }}</option>
-                </select>
+                <app-searchable-dropdown
+                    id="team-skill-level-filter"
+                    [(ngModel)]="teamSkillsCurrentLevelFilter"
+                    [options]="skillLevelsForFilter"
+                    placeholder="All Levels"
+                    allOptionLabel="All Levels"
+                    allOptionValue="All"
+                    iconClass="fa-signal"
+                    [disabled]="teamSkillsSkillFilter === 'All' && teamCompetencyFilter === 'All'"
+                    size="large"
+                    width="w-full">
+                </app-searchable-dropdown>
               </div>
               <div>
                 <label for="team-status-filter" class="block text-sm font-semibold text-slate-700 mb-2 transition-colors"><i class="fa-solid fa-chart-line mr-2 text-purple-600"></i>Filter by Status</label>
-                <select id="team-status-filter" [(ngModel)]="teamSkillsStatusFilter" class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-3 bg-white">
-                  <option value="All">All Status</option>
-                  <option value="Met">? Skills Met</option>
-                  <option value="Gap">?? Skills Gap</option>
-                </select>
+                <app-searchable-dropdown
+                    id="team-status-filter"
+                    [(ngModel)]="teamSkillsStatusFilter"
+                    [options]="['Met', 'Gap']"
+                    placeholder="All Status"
+                    allOptionLabel="All Status"
+                    allOptionValue="All"
+                    iconClass="fa-chart-line"
+                    size="large"
+                    width="w-full">
+                </app-searchable-dropdown>
               </div>
             </div>
           </div>
@@ -3245,4 +3333,170 @@
       </button>
     </div>
   </div>
+</div>
+
+<!-- Skill Feedback Modal -->
+<div *ngIf="showSkillFeedbackModal" @fadeIn
+    class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50"
+    (click)="closeSkillFeedbackModal()">
+    <div @modalScale class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl m-4 max-h-[85vh] flex flex-col" (click)="$event.stopPropagation()">
+        <div class="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-2xl border-b border-indigo-200">
+            <div class="flex items-center gap-2">
+                <div class="w-9 h-9 bg-indigo-600 text-white rounded-lg flex items-center justify-center">
+                    <i class="fa-solid fa-comment-dots text-base"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 leading-tight">Manager Feedback</h3>
+                    <p class="text-xs text-slate-600">{{ selectedSkillForFeedback }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <div *ngIf="skillFeedbackList.length > 0" class="text-right">
+                    <p class="text-xs text-slate-600">Total Feedback Entries</p>
+                    <p class="text-lg font-bold text-indigo-600">{{ skillFeedbackList.length }}</p>
+                </div>
+                <button (click)="closeSkillFeedbackModal()" 
+                        class="w-9 h-9 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-times text-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-3">
+            <!-- Skill Type Tabs -->
+            <div class="flex flex-wrap items-center gap-2 mb-3" *ngIf="skillCategoryLevels && skillCategoryLevels.length > 0">
+                <span class="text-xs font-semibold text-slate-500 mr-1">Levels:</span>
+                <button
+                    *ngFor="let level of skillCategoryLevels"
+                    type="button"
+                    (click)="selectedFeedbackSkillType = level"
+                    class="px-2.5 py-1 text-[11px] font-semibold rounded-full border transition-all duration-150"
+                    [ngClass]="selectedFeedbackSkillType === level
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : 'bg-white text-indigo-700 border-indigo-200 hover:bg-indigo-50'">
+                    {{ level }} - {{ getSkillTypeDisplayName(level) }}
+                </button>
+            </div>
+            <div *ngIf="skillFeedbackByType.size > 0" class="space-y-4">
+                <!-- Iterate over skill types (L1, L2, L3, L4, L5) -->
+                <ng-container *ngFor="let skillTypeEntry of getFilteredSkillTypeEntries()">
+                    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-4 border-2 border-indigo-200 shadow-sm hover:shadow-md transition-all">
+                        <!-- Skill Type Header -->
+                        <div class="flex items-center justify-between mb-3 pb-2 border-b-2 border-indigo-300">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-indigo-600 text-white rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-graduation-cap text-sm"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-lg text-slate-900">
+                                        {{ selectedSkillForFeedback }} - {{ getSkillTypeDisplayName(skillTypeEntry.key) }}
+                                    </h4>
+                                    <p class="text-xs text-slate-600 mt-0.5">
+                                        <i class="fa-solid fa-layer-group mr-1"></i>
+                                        {{ skillTypeEntry.value.length }} Feedback {{ skillTypeEntry.value.length === 1 ? 'Entry' : 'Entries' }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Latest Feedback for this Type -->
+                        <div *ngIf="getLatestFeedbackForType(skillTypeEntry.value)" class="space-y-3">
+                            <div class="bg-white rounded-lg p-3 border border-indigo-100 shadow-sm">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-1 text-[10px] font-semibold rounded-full bg-green-100 text-green-700 border border-green-300">
+                                            <i class="fa-solid fa-star mr-1"></i>Latest
+                                        </span>
+                                        <span class="text-xs text-slate-600">
+                                            <i class="fa-solid fa-clock mr-1"></i>
+                                            Updated: {{ getLatestFeedbackForType(skillTypeEntry.value)?.updated_at | date:'short' }}
+                                        </span>
+                                    </div>
+                                    <span class="px-3 py-1 text-xs font-semibold rounded-full flex-shrink-0" 
+                                          [ngClass]="getRatingColorClass(getLatestFeedbackForType(skillTypeEntry.value)?.overall_performance)">
+                                        {{ getLatestFeedbackForType(skillTypeEntry.value)?.overall_performance }}/5
+                                    </span>
+                                </div>
+
+                                <div class="mb-2">
+                                    <p class="text-xs text-slate-600 mb-2">
+                                        <i class="fa-solid fa-user-tie mr-1"></i>
+                                        {{ getLatestFeedbackForType(skillTypeEntry.value)?.manager_name }}
+                                        <span class="mx-1">•</span>
+                                        <i class="fa-solid fa-graduation-cap mr-1"></i>
+                                        {{ getLatestFeedbackForType(skillTypeEntry.value)?.training_name }}
+                                    </p>
+                                </div>
+
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1.5 mb-2">
+                                    <div *ngIf="getLatestFeedbackForType(skillTypeEntry.value)?.application_of_training" 
+                                        class="bg-indigo-50 rounded px-2 py-1 text-center border border-indigo-100">
+                                        <p class="text-[10px] text-slate-600 font-medium">Application</p>
+                                        <p class="text-xs font-bold text-slate-800">{{ getLatestFeedbackForType(skillTypeEntry.value)?.application_of_training }}/5</p>
+                                    </div>
+                                    <div *ngIf="getLatestFeedbackForType(skillTypeEntry.value)?.quality_of_deliverables" 
+                                        class="bg-indigo-50 rounded px-2 py-1 text-center border border-indigo-100">
+                                        <p class="text-[10px] text-slate-600 font-medium">Quality</p>
+                                        <p class="text-xs font-bold text-slate-800">{{ getLatestFeedbackForType(skillTypeEntry.value)?.quality_of_deliverables }}/5</p>
+                                    </div>
+                                    <div *ngIf="getLatestFeedbackForType(skillTypeEntry.value)?.problem_solving_capability" 
+                                        class="bg-indigo-50 rounded px-2 py-1 text-center border border-indigo-100">
+                                        <p class="text-[10px] text-slate-600 font-medium">Problem-Solving</p>
+                                        <p class="text-xs font-bold text-slate-800">{{ getLatestFeedbackForType(skillTypeEntry.value)?.problem_solving_capability }}/5</p>
+                                    </div>
+                                    <div *ngIf="getLatestFeedbackForType(skillTypeEntry.value)?.productivity_independence" 
+                                        class="bg-indigo-50 rounded px-2 py-1 text-center border border-indigo-100">
+                                        <p class="text-[10px] text-slate-600 font-medium">Productivity</p>
+                                        <p class="text-xs font-bold text-slate-800">{{ getLatestFeedbackForType(skillTypeEntry.value)?.productivity_independence }}/5</p>
+                                    </div>
+                                    <div *ngIf="getLatestFeedbackForType(skillTypeEntry.value)?.process_compliance_adherence" 
+                                        class="bg-indigo-50 rounded px-2 py-1 text-center border border-indigo-100">
+                                        <p class="text-[10px] text-slate-600 font-medium">Compliance</p>
+                                        <p class="text-xs font-bold text-slate-800">{{ getLatestFeedbackForType(skillTypeEntry.value)?.process_compliance_adherence }}/5</p>
+                                    </div>
+                                </div>
+
+                                <div *ngIf="getLatestFeedbackForType(skillTypeEntry.value)?.strengths || getLatestFeedbackForType(skillTypeEntry.value)?.improvement_areas || getLatestFeedbackForType(skillTypeEntry.value)?.additional_comments" 
+                                     class="space-y-1.5">
+                                    <div *ngIf="getLatestFeedbackForType(skillTypeEntry.value)?.strengths" 
+                                         class="bg-green-50 border-l-2 border-green-400 rounded px-3 py-1.5">
+                                        <p class="text-[10px] font-semibold text-green-800 mb-1">
+                                            <i class="fa-solid fa-thumbs-up mr-1"></i>Strengths
+                                        </p>
+                                        <p class="text-xs text-green-700 whitespace-pre-wrap break-words">
+                                            {{ getLatestFeedbackForType(skillTypeEntry.value)?.strengths }}
+                                        </p>
+                                    </div>
+                                    <div *ngIf="getLatestFeedbackForType(skillTypeEntry.value)?.improvement_areas" 
+                                         class="bg-amber-50 border-l-2 border-amber-400 rounded px-3 py-1.5">
+                                        <p class="text-[10px] font-semibold text-amber-800 mb-1">
+                                            <i class="fa-solid fa-arrow-up mr-1"></i>Improvement Areas
+                                        </p>
+                                        <p class="text-xs text-amber-700 whitespace-pre-wrap break-words">
+                                            {{ getLatestFeedbackForType(skillTypeEntry.value)?.improvement_areas }}
+                                        </p>
+                                    </div>
+                                    <div *ngIf="getLatestFeedbackForType(skillTypeEntry.value)?.additional_comments" 
+                                         class="bg-blue-50 border-l-2 border-blue-400 rounded px-3 py-1.5">
+                                        <p class="text-[10px] font-semibold text-blue-800 mb-1">
+                                            <i class="fa-solid fa-comment mr-1"></i>Comments
+                                        </p>
+                                        <p class="text-xs text-blue-700 whitespace-pre-wrap break-words">
+                                            {{ getLatestFeedbackForType(skillTypeEntry.value)?.additional_comments }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+            </div>
+            <div *ngIf="skillFeedbackByType.size === 0" class="text-center py-12 text-slate-500">
+                <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-comment-slash text-3xl text-slate-400"></i>
+                </div>
+                <p class="text-lg font-semibold text-slate-700 mb-2">No Feedback Available</p>
+                <p class="text-sm text-slate-500 max-w-md mx-auto">No feedback has been provided for <span class="font-medium text-slate-700">{{ selectedSkillForFeedback }}</span> yet. Feedback will appear here once your manager reviews your training performance.</p>
+            </div>
+        </div>
+    </div>
 </div>

@@ -36,6 +36,7 @@ import { AdminDashboardComponent } from './dashboards/admin-dashboard/admin-dash
 import { SkillFilterPipe } from './pipes/skill-filter.pipe';
 import { ToastComponent } from './components/toast/toast.component';
 import { NotificationsComponent } from './components/notifications/notifications.component';
+import { SearchableDropdownComponent } from './components/searchable-dropdown/searchable-dropdown.component';
 
 @NgModule({
   declarations: [
@@ -51,6 +52,7 @@ import { NotificationsComponent } from './components/notifications/notifications
     SkillFilterPipe,
     ToastComponent,
     NotificationsComponent,
+    SearchableDropdownComponent,
   ],
   imports: [
     BrowserModule,

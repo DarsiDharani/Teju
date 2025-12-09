@@ -513,6 +513,111 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   // ==================== TRAINING MANAGEMENT ====================
+  /**
+   * Groups duplicate trainings by training_name + date + time and combines trainer names
+   * This handles the case where Excel loader created separate records for each trainer
+   */
+  groupDuplicateTrainings(trainings: Training[]): Training[] {
+    const groupedMap = new Map<string, Training[]>();
+    
+    // Normalize date to ISO string format for consistent comparison
+    const normalizeDate = (date: any): string => {
+      if (!date) return '';
+      try {
+        // If it's already a string in ISO format, use it
+        if (typeof date === 'string') {
+          // Extract just the date part (YYYY-MM-DD) if it's a full ISO string
+          const dateMatch = date.match(/^(\d{4}-\d{2}-\d{2})/);
+          if (dateMatch) return dateMatch[1];
+          return date.trim();
+        }
+        // If it's a Date object, convert to ISO string
+        if (date instanceof Date) {
+          return date.toISOString().split('T')[0];
+        }
+      } catch (e) {
+        console.warn('Error normalizing date:', date, e);
+      }
+      return String(date || '').trim();
+    };
+    
+    // Normalize time string (remove extra spaces, normalize separators)
+    const normalizeTime = (time: string | undefined): string => {
+      if (!time) return '';
+      return time.trim().replace(/\s+/g, ' ').replace(/\./g, ':');
+    };
+    
+    // Group trainings by a unique key: training_name + normalized date + normalized time
+    trainings.forEach(training => {
+      const normalizedName = (training.training_name || '').trim().toLowerCase();
+      const normalizedDate = normalizeDate(training.training_date);
+      const normalizedTime = normalizeTime(training.time);
+      const key = `${normalizedName}_${normalizedDate}_${normalizedTime}`;
+      
+      if (!groupedMap.has(key)) {
+        groupedMap.set(key, []);
+      }
+      groupedMap.get(key)!.push(training);
+    });
+    
+    // Combine grouped trainings
+    const grouped: Training[] = [];
+    groupedMap.forEach((trainingsGroup, key) => {
+      if (trainingsGroup.length === 0) return;
+      
+      // Use the first training as base
+      const baseTraining = { ...trainingsGroup[0] };
+      
+      // Collect all unique trainer names
+      const trainerNamesSet = new Set<string>();
+      const emailSet = new Set<string>();
+      const trainingIds: number[] = [];
+      
+      // Aggregate counts from all duplicate trainings
+      let totalAssignedCount = 0;
+      let totalAttendedCount = 0;
+      
+      trainingsGroup.forEach(t => {
+        if (t.trainer_name) {
+          // Split by comma in case trainer_name already contains multiple names
+          const names = t.trainer_name.split(',').map(n => n.trim()).filter(n => n);
+          names.forEach(name => trainerNamesSet.add(name));
+        }
+        if (t.email) {
+          const emails = t.email.split(',').map(e => e.trim()).filter(e => e);
+          emails.forEach(email => emailSet.add(email));
+        }
+        if (t.id) {
+          trainingIds.push(t.id);
+        }
+        // Sum up counts from all duplicate trainings
+        totalAssignedCount += t.assigned_count || 0;
+        totalAttendedCount += t.attended_count || 0;
+      });
+      
+      // Combine trainer names with comma separation
+      baseTraining.trainer_name = Array.from(trainerNamesSet).join(', ');
+      baseTraining.email = Array.from(emailSet).join(', ');
+      
+      // Aggregate counts
+      baseTraining.assigned_count = totalAssignedCount;
+      baseTraining.attended_count = totalAttendedCount;
+      baseTraining.completion_rate = totalAssignedCount > 0 
+        ? Math.round((totalAttendedCount / totalAssignedCount * 100) * 100) / 100 
+        : 0;
+      
+      // Store all related training IDs for reference
+      (baseTraining as any).relatedTrainingIds = trainingIds;
+      
+      // Use the first training ID as the primary one
+      baseTraining.id = trainingIds[0];
+      
+      grouped.push(baseTraining);
+    });
+    
+    return grouped;
+  }
+
   loadTrainings(): void {
     this.trainingsLoading = true;
     let url = this.apiService.adminTrainingsUrl;
@@ -526,7 +631,9 @@ export class AdminDashboardComponent implements OnInit {
     this.http.get<any>(url, { headers: this.getHeaders() })
       .subscribe({
         next: (data) => {
-          this.trainings = data.trainings || [];
+          const rawTrainings = data.trainings || [];
+          // Group duplicate trainings by training_name + date + time and combine trainer names
+          this.trainings = this.groupDuplicateTrainings(rawTrainings);
           // Clear selections when trainings are reloaded (e.g., after search/filter)
           this.selectedTrainings.clear();
           this.isSelectAllTrainings = false;

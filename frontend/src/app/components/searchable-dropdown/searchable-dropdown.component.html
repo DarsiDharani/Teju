@@ -1,0 +1,79 @@
+<div class="relative" [ngClass]="width" #dropdown>
+  <button
+    type="button"
+    (click)="toggleDropdown()"
+    [disabled]="disabled"
+    class="w-full appearance-none pl-8 pr-8 border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white flex items-center justify-between transition-colors"
+    [ngClass]="{
+      'py-1 rounded-md text-sm': size === 'small',
+      'p-3 rounded-lg text-sm': size === 'large',
+      'cursor-pointer': !disabled,
+      'cursor-not-allowed': disabled,
+      'bg-slate-200': disabled,
+      'focus-within:ring-2': isOpen && !disabled,
+      'focus-within:ring-sky-500': isOpen && !disabled
+    }"
+  >
+    <div class="flex items-center gap-2 flex-1 min-w-0">
+      <i class="fa-solid" [ngClass]="iconClass" class="text-slate-600 text-xs pointer-events-none flex-shrink-0"></i>
+      <span class="truncate" [class.text-slate-400]="!selectedValue || selectedValue === '' || selectedValue === 'All'">
+        {{ getDisplayValue() }}
+      </span>
+    </div>
+    <i class="fa-solid fa-chevron-down text-slate-600 text-xs pointer-events-none flex-shrink-0 ml-2 transition-transform duration-200" 
+       [class.rotate-180]="isOpen"></i>
+  </button>
+  
+  <div 
+    *ngIf="isOpen"
+    class="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-md shadow-lg max-h-60 overflow-hidden"
+  >
+    <!-- Search Input -->
+    <div class="p-2 border-b border-slate-200 sticky top-0 bg-white">
+      <div class="relative">
+        <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+        <input
+          #searchInput
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+          [placeholder]="searchPlaceholder"
+          class="w-full pl-8 pr-3 py-1.5 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-sky-500 outline-none"
+          (click)="$event.stopPropagation()"
+        />
+      </div>
+    </div>
+    
+    <!-- Options List -->
+    <div class="max-h-48 overflow-y-auto">
+      <div
+        *ngIf="showAllOption"
+        (click)="selectOption(allOptionLabel)"
+        class="px-3 py-2 text-sm cursor-pointer hover:bg-sky-50 transition-colors"
+        [class.bg-sky-100]="isSelected(allOptionLabel)"
+      >
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-check text-xs text-sky-600" *ngIf="isSelected(allOptionLabel)"></i>
+          <span [class.font-semibold]="isSelected(allOptionLabel)">{{ allOptionLabel }}</span>
+        </div>
+      </div>
+      
+      <div
+        *ngFor="let option of filteredOptions"
+        (click)="selectOption(option)"
+        class="px-3 py-2 text-sm cursor-pointer hover:bg-sky-50 transition-colors"
+        [class.bg-sky-100]="isSelected(option)"
+      >
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-check text-xs text-sky-600" *ngIf="isSelected(option)"></i>
+          <span [class.font-semibold]="isSelected(option)">{{ option }}</span>
+        </div>
+      </div>
+      
+      <div *ngIf="filteredOptions.length === 0 && searchTerm.trim()" class="px-3 py-4 text-sm text-slate-500 text-center">
+        No options found
+      </div>
+    </div>
+  </div>
+</div>
+

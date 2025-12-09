@@ -179,8 +179,16 @@ async def upload_question_file(
             detail=f"File size exceeds 10MB limit. File size: {file_size / (1024 * 1024):.2f}MB"
         )
 
+    # Validate file extension (only PDF, DOC, DOCX allowed)
+    file_extension = Path(file.filename).suffix.lower()
+    allowed_extensions = ['.pdf', '.doc', '.docx']
+    if file_extension not in allowed_extensions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file format. Only PDF, DOC, and DOCX files are allowed. Received: {file_extension}"
+        )
+
     # Generate unique filename
-    file_extension = Path(file.filename).suffix
     unique_filename = f"{training_id}_{uuid.uuid4()}{file_extension}"
     file_path = QUESTION_FILES_DIR / unique_filename
 
@@ -265,12 +273,12 @@ async def download_question_file(
             detail="You can only download question files for trainings assigned to you"
         )
 
-    # Get the question file
+    # Get the most recent question file (in case multiple files exist)
     file_stmt = select(models.TrainingQuestionFile).where(
         models.TrainingQuestionFile.training_id == training_id
-    )
+    ).order_by(models.TrainingQuestionFile.uploaded_at.desc())
     file_result = await db.execute(file_stmt)
-    question_file = file_result.scalar_one_or_none()
+    question_file = file_result.scalars().first()
 
     if not question_file:
         raise HTTPException(
@@ -339,12 +347,12 @@ async def check_question_file_exists(
             detail="You can only check question files for trainings you have scheduled"
         )
 
-    # Check if question file exists
+    # Check if question file exists (get most recent if multiple exist)
     file_stmt = select(models.TrainingQuestionFile).where(
         models.TrainingQuestionFile.training_id == training_id
-    )
+    ).order_by(models.TrainingQuestionFile.uploaded_at.desc())
     file_result = await db.execute(file_stmt)
-    question_file = file_result.scalar_one_or_none()
+    question_file = file_result.scalars().first()
 
     return {
         "exists": question_file is not None,
@@ -396,8 +404,16 @@ async def upload_solution_file(
             detail=f"File size exceeds 10MB limit. File size: {file_size / (1024 * 1024):.2f}MB"
         )
 
+    # Validate file extension (only PDF, DOC, DOCX allowed)
+    file_extension = Path(file.filename).suffix.lower()
+    allowed_extensions = ['.pdf', '.doc', '.docx']
+    if file_extension not in allowed_extensions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file format. Only PDF, DOC, and DOCX files are allowed. Received: {file_extension}"
+        )
+
     # Generate unique filename
-    file_extension = Path(file.filename).suffix
     unique_filename = f"{training_id}_{employee_username}_{uuid.uuid4()}{file_extension}"
     file_path = SOLUTION_FILES_DIR / unique_filename
 

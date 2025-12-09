@@ -251,8 +251,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // Existing assignments for duplicate checking (format: "trainingId_employeeId")
   existingAssignments: Set<string> = new Set();
 
-  mySkillsStatusFilter: 'All' | 'Met' | 'Gap' = 'All';
-  mySkillsSkillFilter: 'All' | string = 'All';
+  mySkillsStatusFilter: string = '';
+  mySkillsSkillFilter: string = '';
   mySkillsSearch: string = '';
   mySkillsView: 'core' | 'additional' = 'core'; // New property for the toggle UI
   teamSkillsStatusFilter: 'All' | 'Met' | 'Gap' = 'All';
@@ -284,6 +284,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   editingSkillId: number | null = null;
   additionalSkillLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
   skillCategories = ['Technical', 'Soft Skills', 'Leadership', 'Communication', 'Project Management', 'Other'];
+  
+  // Feedback modal properties
+  showSkillFeedbackModal: boolean = false;
+  selectedSkillForFeedback: string = '';
+  selectedFeedbackSkillType: string = '';
+  skillFeedbackList: ManagerPerformanceFeedback[] = [];
+  skillFeedbackByType: Map<string, ManagerPerformanceFeedback[]> = new Map();
   
   showScheduleTrainingModal = false;
   trainingCatalog: TrainingDetail[] = [];
@@ -636,8 +643,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         this.fetchAssignedTrainings();
     }
     this.selectedTeamMember = null;
-    this.mySkillsStatusFilter = 'All';
-    this.mySkillsSkillFilter = 'All';
+    this.mySkillsStatusFilter = '';
+    this.mySkillsSkillFilter = '';
     this.teamSkillsStatusFilter = 'All';
     this.teamSkillsSkillFilter = 'All';
     this.teamMemberNameFilter = 'All';
@@ -984,6 +991,31 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       'L5': 'Expert'
     };
     return typeMap[skillType] || skillType;
+  }
+
+  // Get skill type entries as array for template iteration (for skill feedback modal)
+  getSkillTypeEntriesForFeedback(): Array<{key: string, value: ManagerPerformanceFeedback[]}> {
+    return Array.from(this.skillFeedbackByType.entries()).map(([key, value]) => ({
+      key,
+      value
+    }));
+  }
+
+  // Get filtered skill type entries based on selected tab (for skill feedback modal)
+  getFilteredSkillTypeEntries(): Array<{key: string, value: ManagerPerformanceFeedback[]}> {
+    const entries = this.getSkillTypeEntriesForFeedback();
+    if (!this.selectedFeedbackSkillType) {
+      return entries;
+    }
+    return entries.filter(entry => entry.key === this.selectedFeedbackSkillType);
+  }
+
+  // Get rating color class for feedback display
+  getRatingColorClass(rating: number | null | undefined): string {
+    if (!rating) return 'bg-slate-100 text-slate-600';
+    if (rating >= 4) return 'bg-green-100 text-green-700';
+    if (rating >= 3) return 'bg-yellow-100 text-yellow-700';
+    return 'bg-red-100 text-red-700';
   }
 
   // Get skill type entries as array for template iteration
@@ -1704,8 +1736,10 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.http.get<TrainingDetail[]>(this.apiService.trainingsUrl, { headers }).subscribe({
       next: (data) => {
         console.log('Training catalog data loaded:', data);
-        this.trainingCatalog = data;
-        this.allTrainings = data; // Align with engineer dashboard
+        // Group duplicate trainings by training_name + date + time and combine trainer names
+        const groupedData = this.groupDuplicateTrainings(data || []);
+        this.trainingCatalog = groupedData;
+        this.allTrainings = groupedData; // Align with engineer dashboard
         this.allTrainingsCalendarEvents = this.allTrainings
           .filter(t => t.training_date)
           .map(t => ({
@@ -1773,7 +1807,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.http.get<TrainingDetail[]>(this.apiService.myAssignmentsUrl, { headers }).subscribe({
       next: (response) => {
         console.log('Personal assigned trainings loaded:', response);
-        this.assignedTrainings = (response || []).map(t => ({ ...t, assignmentType: 'personal' as const }));
+        const rawTrainings = (response || []).map(t => ({ ...t, assignmentType: 'personal' as const }));
+        // Group duplicate trainings by training_name + date + time and combine trainer names
+        this.assignedTrainings = this.groupDuplicateTrainings(rawTrainings);
         this.assignedTrainingsCalendarEvents = this.assignedTrainings
           .filter(t => t.training_date)
           .map(t => ({
@@ -2456,20 +2492,43 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     return percent;
   }
 
+  // Check if feedback exists for a skill (for manager's own skills)
+  hasFeedbackForSkill(skillName: string): boolean {
+    if (!this.manager || !this.manager.id) return false;
+    const feedbackList = this.getFeedbackForSkill(skillName, this.manager.id);
+    return feedbackList.length > 0;
+  }
+
+  // Open feedback modal for a specific skill
+  openSkillFeedbackModal(skillName: string): void {
+    if (!skillName || !this.manager || !this.manager.id) return;
+    this.selectedSkillForFeedback = skillName;
+    this.skillFeedbackList = this.getFeedbackForSkill(skillName, this.manager.id);
+    
+    // Group feedback by skill type
+    this.skillFeedbackByType = this.groupFeedbackBySkillType(this.skillFeedbackList);
+    const typeKeys = Array.from(this.skillFeedbackByType.keys());
+    // Default selected tab to first available type (if any)
+    this.selectedFeedbackSkillType = typeKeys.length > 0 ? typeKeys[0] : '';
+    
+    this.showSkillFeedbackModal = true;
+  }
+
+  // Close feedback modal
+  closeSkillFeedbackModal(): void {
+    this.showSkillFeedbackModal = false;
+    this.selectedSkillForFeedback = '';
+    this.skillFeedbackList = [];
+    this.skillFeedbackByType = new Map();
+    this.selectedFeedbackSkillType = '';
+  }
+
   getFilteredMySkills(): Competency[] {
     if (!this.manager || !this.manager.skills) {
       return [];
     }
     let filtered = [...this.manager.skills];
-    if (this.mySkillsSearch) {
-      filtered = filtered.filter(skill =>
-        skill.skill.toLowerCase().includes(this.mySkillsSearch.toLowerCase())
-      );
-    }
-    if (this.mySkillsStatusFilter !== 'All') {
-      filtered = filtered.filter(skill => skill.status === this.mySkillsStatusFilter);
-    }
-    if (this.mySkillsSkillFilter !== 'All') {
+    if (this.mySkillsSkillFilter) {
       filtered = filtered.filter(skill => skill.skill === this.mySkillsSkillFilter);
     }
     return filtered;
@@ -2543,6 +2602,97 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     return list;
   }
 
+  /**
+   * Groups duplicate trainings by training_name + date + time and combines trainer names
+   * This handles the case where Excel loader created separate records for each trainer
+   */
+  groupDuplicateTrainings(trainings: TrainingDetail[]): TrainingDetail[] {
+    const groupedMap = new Map<string, TrainingDetail[]>();
+    
+    // Normalize date to ISO string format for consistent comparison
+    const normalizeDate = (date: any): string => {
+      if (!date) return '';
+      try {
+        // If it's already a string in ISO format, use it
+        if (typeof date === 'string') {
+          // Extract just the date part (YYYY-MM-DD) if it's a full ISO string
+          const dateMatch = date.match(/^(\d{4}-\d{2}-\d{2})/);
+          if (dateMatch) return dateMatch[1];
+          return date.trim();
+        }
+        // If it's a Date object, convert to ISO string
+        if (date instanceof Date) {
+          return date.toISOString().split('T')[0];
+        }
+      } catch (e) {
+        console.warn('Error normalizing date:', date, e);
+      }
+      return String(date || '').trim();
+    };
+    
+    // Normalize time string (remove extra spaces, normalize separators)
+    const normalizeTime = (time: string | undefined): string => {
+      if (!time) return '';
+      return time.trim().replace(/\s+/g, ' ').replace(/\./g, ':');
+    };
+    
+    // Group trainings by a unique key: training_name + normalized date + normalized time
+    trainings.forEach(training => {
+      const normalizedName = (training.training_name || '').trim().toLowerCase();
+      const normalizedDate = normalizeDate(training.training_date);
+      const normalizedTime = normalizeTime(training.time);
+      const key = `${normalizedName}_${normalizedDate}_${normalizedTime}`;
+      
+      if (!groupedMap.has(key)) {
+        groupedMap.set(key, []);
+      }
+      groupedMap.get(key)!.push(training);
+    });
+    
+    // Combine grouped trainings
+    const grouped: TrainingDetail[] = [];
+    groupedMap.forEach((trainingsGroup, key) => {
+      if (trainingsGroup.length === 0) return;
+      
+      // Use the first training as base
+      const baseTraining = { ...trainingsGroup[0] };
+      
+      // Collect all unique trainer names
+      const trainerNamesSet = new Set<string>();
+      const emailSet = new Set<string>();
+      const trainingIds: number[] = [];
+      
+      trainingsGroup.forEach(t => {
+        if (t.trainer_name) {
+          // Split by comma in case trainer_name already contains multiple names
+          const names = t.trainer_name.split(',').map(n => n.trim()).filter(n => n);
+          names.forEach(name => trainerNamesSet.add(name));
+        }
+        if (t.email) {
+          const emails = t.email.split(',').map(e => e.trim()).filter(e => e);
+          emails.forEach(email => emailSet.add(email));
+        }
+        if (t.id) {
+          trainingIds.push(t.id);
+        }
+      });
+      
+      // Combine trainer names with comma separation
+      baseTraining.trainer_name = Array.from(trainerNamesSet).join(', ');
+      baseTraining.email = Array.from(emailSet).join(', ');
+      
+      // Store all related training IDs for checking shared content
+      (baseTraining as any).relatedTrainingIds = trainingIds;
+      
+      // Use the first training ID as the primary one
+      baseTraining.id = trainingIds[0];
+      
+      grouped.push(baseTraining);
+    });
+    
+    return grouped;
+  }
+
   get filteredAssignedTrainings(): TrainingDetail[] {
     let list = [...(this.assignedTrainings || [])];
     if (this.assignedSearch && this.assignedSearch.trim()) {
@@ -2560,7 +2710,23 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       list = list.filter(t => t.skill_category === this.assignedLevelFilter);
     }
     if (this.assignedDateFilter) {
-      list = list.filter(t => t.training_date === this.assignedDateFilter);
+      // Normalize dates for comparison (extract YYYY-MM-DD from both)
+      const normalizeDate = (date: any): string => {
+        if (!date) return '';
+        if (typeof date === 'string') {
+          const match = date.match(/^(\d{4}-\d{2}-\d{2})/);
+          return match ? match[1] : date.trim();
+        }
+        if (date instanceof Date) {
+          return date.toISOString().split('T')[0];
+        }
+        return String(date || '').trim();
+      };
+      const filterDate = normalizeDate(this.assignedDateFilter);
+      list = list.filter(t => {
+        const trainingDate = normalizeDate(t.training_date);
+        return trainingDate === filterDate;
+      });
     }
     list.sort((a, b) => {
       const dateA = a.training_date ? new Date(a.training_date).getTime() : Infinity;
@@ -2798,8 +2964,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // --- Filter Reset Logic ---
   resetMySkillsFilters(): void {
     this.mySkillsSearch = '';
-    this.mySkillsSkillFilter = 'All';
-    this.mySkillsStatusFilter = 'All';
+    this.mySkillsSkillFilter = '';
+    this.mySkillsStatusFilter = '';
   }
 
   resetCatalogFilters(): void {

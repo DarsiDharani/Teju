@@ -947,6 +947,126 @@ async def get_shared_feedback_for_trainer(
         updated_at=shared_feedback.updated_at
     )
 
+@router.get("/trainer/related-assignments/{training_id}")
+async def check_related_trainings_assignment(
+    training_id: int,
+    db: AsyncSession = Depends(get_db_async),
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Checks if any related training (same name, date, time) has shared assignment.
+    Returns the trainer username who shared it, if any.
+    """
+    trainer_username = current_user.get("username")
+    if not trainer_username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )
+
+    # Get the training details
+    training_stmt = select(models.TrainingDetail).where(
+        models.TrainingDetail.id == training_id
+    )
+    training_result = await db.execute(training_stmt)
+    training = training_result.scalar_one_or_none()
+    
+    if not training:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Training not found"
+        )
+
+    # Find all related trainings (same name, date, time)
+    related_trainings_stmt = select(models.TrainingDetail).where(
+        models.TrainingDetail.training_name == training.training_name,
+        models.TrainingDetail.training_date == training.training_date,
+        models.TrainingDetail.time == training.time
+    )
+    related_result = await db.execute(related_trainings_stmt)
+    related_trainings = related_result.scalars().all()
+    
+    related_training_ids = [t.id for t in related_trainings]
+    
+    if not related_training_ids:
+        return {"shared": False, "trainer_username": None}
+    
+    # Check if any related training has shared assignment
+    assignment_stmt = select(models.SharedAssignment).where(
+        models.SharedAssignment.training_id.in_(related_training_ids)
+    ).order_by(models.SharedAssignment.updated_at.desc())
+    assignment_result = await db.execute(assignment_stmt)
+    shared_assignment = assignment_result.scalars().first()
+    
+    if shared_assignment:
+        return {
+            "shared": True,
+            "trainer_username": shared_assignment.trainer_username,
+            "training_id": shared_assignment.training_id
+        }
+    
+    return {"shared": False, "trainer_username": None}
+
+@router.get("/trainer/related-feedback/{training_id}")
+async def check_related_trainings_feedback(
+    training_id: int,
+    db: AsyncSession = Depends(get_db_async),
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Checks if any related training (same name, date, time) has shared feedback.
+    Returns the trainer username who shared it, if any.
+    """
+    trainer_username = current_user.get("username")
+    if not trainer_username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )
+
+    # Get the training details
+    training_stmt = select(models.TrainingDetail).where(
+        models.TrainingDetail.id == training_id
+    )
+    training_result = await db.execute(training_stmt)
+    training = training_result.scalar_one_or_none()
+    
+    if not training:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Training not found"
+        )
+
+    # Find all related trainings (same name, date, time)
+    related_trainings_stmt = select(models.TrainingDetail).where(
+        models.TrainingDetail.training_name == training.training_name,
+        models.TrainingDetail.training_date == training.training_date,
+        models.TrainingDetail.time == training.time
+    )
+    related_result = await db.execute(related_trainings_stmt)
+    related_trainings = related_result.scalars().all()
+    
+    related_training_ids = [t.id for t in related_trainings]
+    
+    if not related_training_ids:
+        return {"shared": False, "trainer_username": None}
+    
+    # Check if any related training has shared feedback
+    feedback_stmt = select(models.SharedFeedback).where(
+        models.SharedFeedback.training_id.in_(related_training_ids)
+    ).order_by(models.SharedFeedback.updated_at.desc())
+    feedback_result = await db.execute(feedback_stmt)
+    shared_feedback = feedback_result.scalars().first()
+    
+    if shared_feedback:
+        return {
+            "shared": True,
+            "trainer_username": shared_feedback.trainer_username,
+            "training_id": shared_feedback.training_id
+        }
+    
+    return {"shared": False, "trainer_username": None}
+
 # --- Assignment Submission Schemas ---
 
 class AnswerSubmission(BaseModel):

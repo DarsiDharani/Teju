@@ -503,49 +503,41 @@ async def load_all_from_excel(excel_file_source: Any, db: AsyncSession):
             else:
                 email_str = "None"
             
-            # ALWAYS log splitting details for debugging (not just when multiple)
-            logging.info(f"🔍 Row {i+2} SPLITTING:")
-            logging.info(f"   Trainer string: {repr(trainer_str)}")
-            logging.info(f"   Split into {len(trainer_names)} trainer(s): {trainer_names}")
-            logging.info(f"   Email string: {repr(email_str)}")
-            logging.info(f"   Split into {len(email_list)} email(s): {email_list}")
+            # Keep trainer names as comma-separated (don't split into multiple records)
+            # This maintains data consistency - one training record per training, multiple trainers shown together
+            combined_trainer_name = ', '.join(trainer_names) if trainer_names else "Not Assigned"
+            combined_email = ', '.join(email_list) if email_list else None
             
-            # Create one training record per trainer
-            for idx, trainer_name in enumerate(trainer_names):
-                # Match email with trainer index (1-to-1 matching)
-                if idx < len(email_list):
-                    trainer_email = email_list[idx]
-                elif len(email_list) == 1:
-                    # If only one email but multiple trainers, use the same email for all
-                    trainer_email = email_list[0]
-                else:
-                    trainer_email = None
-                
-                logging.info(f"Row {i+2}, Trainer {idx+1}/{len(trainer_names)}: '{trainer_name}' -> email: '{trainer_email}'")
-                
-                trainings_to_add.append(
-                    TrainingDetail(
-                        division=division_val,
-                        department=department_val,
-                        competency=competency_val,
-                        skill=skill_val,
-                        training_name=training_name_val,
-                        training_topics=training_topics_val,
-                        prerequisites=prerequisites_val,
-                        skill_category=skill_category_val,
-                        trainer_name=trainer_name,
-                        email=trainer_email,
-                        training_date=final_date,
-                        duration=duration_str,
-                        seats=seats_str,
-                        time=time_val,
-                        training_type=training_type_val,
-                        assessment_details=assessment_details_val,
-                    )
+            logging.info(f"🔍 Row {i+2} TRAINER INFO:")
+            logging.info(f"   Trainer string: {repr(trainer_str)}")
+            logging.info(f"   Combined trainer name: {combined_trainer_name}")
+            logging.info(f"   Email string: {repr(email_str)}")
+            logging.info(f"   Combined email: {combined_email}")
+            
+            # Create single training record with all trainers
+            trainings_to_add.append(
+                TrainingDetail(
+                    division=division_val,
+                    department=department_val,
+                    competency=competency_val,
+                    skill=skill_val,
+                    training_name=training_name_val,
+                    training_topics=training_topics_val,
+                    prerequisites=prerequisites_val,
+                    skill_category=skill_category_val,
+                    trainer_name=combined_trainer_name,
+                    email=combined_email,
+                    training_date=final_date,
+                    duration=duration_str,
+                    seats=seats_str,
+                    time=time_val,
+                    training_type=training_type_val,
+                    assessment_details=assessment_details_val,
                 )
+            )
             
             if len(trainer_names) > 1:
-                logging.info(f"✅ Row {i+2}: Successfully split into {len(trainer_names)} separate training records")
+                logging.info(f"✅ Row {i+2}: Training created with {len(trainer_names)} trainers: {combined_trainer_name}")
         
         logging.info(f"-> Training validation complete: {len(trainings_to_add)} valid rows, {skipped_training_count} skipped.")
 

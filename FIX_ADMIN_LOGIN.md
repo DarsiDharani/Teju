@@ -124,3 +124,6 @@ Once the setup is complete:
 - ✅ They will be redirected to the admin dashboard
 - ✅ They will have full admin privileges
 
+
+
+

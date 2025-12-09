@@ -17,22 +17,25 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { Skill } from '../models/skill.model';
 
+// Type for items that can be filtered (must have skill and status properties)
+type FilterableSkill = { skill: string; status: 'Met' | 'Gap' | 'Error' };
+
 @Pipe({
   name: 'skillFilter'
 })
 export class SkillFilterPipe implements PipeTransform {
   /**
    * Transforms an array of skills by applying search and status filters
-   * @param items - Array of Skill objects to filter (can be null)
+   * @param items - Array of Skill or Competency objects to filter (can be null)
    * @param search - Search text to match against skill names (case-insensitive)
    * @param status - Status value to filter by (e.g., 'Met', 'Gap')
-   * @returns Filtered array of Skill objects
+   * @returns Filtered array of the same type as input, preserving all properties
    */
-  transform(items: Skill[] | null, search: string = '', status: string = ''): Skill[] {
+  transform<T extends FilterableSkill>(items: T[] | null, search: string = '', status: string = ''): T[] {
     // Return empty array if input is null or undefined
     if (!items) return [];
     
-    let filtered = items;
+    let filtered: T[] = items;
     
     // Apply search filter if search text is provided
     // Performs case-insensitive matching on skill name
