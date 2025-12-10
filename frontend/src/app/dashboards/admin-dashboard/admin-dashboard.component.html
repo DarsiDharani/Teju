@@ -571,6 +571,13 @@
                     <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">Skills Management</h1>
                     <p class="text-slate-600 text-lg">Manage employee skills and competencies</p>
                 </div>
+                <div class="flex items-center gap-3">
+                    <button (click)="openCreateSkillModal()" 
+                            class="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span class="font-semibold">Add New Skill</span>
+                    </button>
+                </div>
             </div>
 
             <!-- Filter Bar -->
@@ -607,36 +614,42 @@
                         <table class="w-full">
                             <thead class="bg-gradient-to-r from-slate-50 to-blue-50/50">
                                 <tr>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Employee</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Skill</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Current</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Target</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Employee</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Skill</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Competency</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Current</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Target</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Department</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Division</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Project</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Target Date</th>
+                                    <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200/60">
                                 <tr *ngFor="let comp of competencies" class="hover:bg-blue-50/30 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
+                                    <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="flex items-center gap-2">
                                             <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
                                                 <i class="fa-solid fa-user text-white text-xs"></i>
                                             </div>
                                             <div>
-                                                <p class="text-sm font-semibold text-slate-900">{{ comp.employee_name }}</p>
+                                                <p class="text-sm font-semibold text-slate-900">{{ comp.employee_name || 'N/A' }}</p>
                                                 <p class="text-xs text-slate-500">{{ comp.employee_empid }}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-700 font-medium">{{ comp.skill }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-3 py-1.5 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-xs font-bold rounded-full border border-blue-300 shadow-sm">{{ comp.current_expertise }}</span>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-700 font-medium">{{ comp.skill || 'N/A' }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{{ comp.competency || 'N/A' }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 text-xs font-bold rounded-full border border-blue-300 shadow-sm">{{ comp.current_expertise || 'N/A' }}</span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-3 py-1.5 bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 text-xs font-bold rounded-full border border-purple-300 shadow-sm">{{ comp.target_expertise }}</span>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 text-xs font-bold rounded-full border border-purple-300 shadow-sm">{{ comp.target_expertise || 'N/A' }}</span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-3 py-1.5 text-xs font-bold rounded-full shadow-sm" 
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-bold rounded-full shadow-sm" 
                                               [ngClass]="{
                                                   'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300': comp.status === 'Met',
                                                   'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300': comp.status === 'Gap',
@@ -648,7 +661,14 @@
                                             {{ comp.status }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{{ comp.department || 'N/A' }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{{ comp.division || 'N/A' }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{{ comp.project || 'N/A' }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-slate-600">
+                                        <span *ngIf="comp.target_date">{{ comp.target_date | date:'shortDate' }}</span>
+                                        <span *ngIf="!comp.target_date" class="text-slate-400">N/A</span>
+                                    </td>
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm">
                                         <button (click)="openEditSkillModal(comp)" 
                                                 class="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all hover:scale-110" 
                                                 title="Edit Skill">
@@ -657,7 +677,7 @@
                                     </td>
                                 </tr>
                                 <tr *ngIf="competencies.length === 0">
-                                    <td colspan="6" class="px-6 py-12 text-center">
+                                    <td colspan="11" class="px-6 py-12 text-center">
                                         <div class="flex flex-col items-center gap-3">
                                             <i class="fa-solid fa-graduation-cap text-slate-300 text-4xl"></i>
                                             <p class="text-slate-500 font-medium">No competencies found</p>
@@ -1282,6 +1302,134 @@
                 Update
             </button>
             <button (click)="showEditSkillModal = false" 
+                    class="flex-1 bg-slate-200 text-slate-800 px-6 py-3 rounded-xl hover:bg-slate-300 transition-all font-semibold">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Create Skill Modal -->
+<div *ngIf="showCreateSkillModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" @fadeIn>
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto" @slideFadeIn>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Add New Skill</h2>
+            <button (click)="showCreateSkillModal = false" class="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-times text-slate-600"></i>
+            </button>
+        </div>
+        <div class="space-y-6">
+            <!-- Employee Selection -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Employee Information *</legend>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Select Employee</label>
+                        <select [(ngModel)]="newCompetency.employee_empid" 
+                                (change)="onEmployeeSelected(newCompetency.employee_empid)"
+                                class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                            <option value="">-- Select Employee --</option>
+                            <option *ngFor="let emp of allEmployees" [value]="emp.username">
+                                {{ emp.name }} ({{ emp.username }})
+                            </option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Employee Name *</label>
+                        <input type="text" [(ngModel)]="newCompetency.employee_name" placeholder="Employee Name" 
+                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Skill Information -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Skill Information *</legend>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Skill Name *</label>
+                        <input type="text" [(ngModel)]="newCompetency.skill" placeholder="e.g., Python Programming" 
+                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Competency Area</label>
+                        <input type="text" [(ngModel)]="newCompetency.competency" placeholder="e.g., Technical Skills" 
+                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Expertise Levels -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Expertise Levels *</legend>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Current Expertise *</label>
+                        <select [(ngModel)]="newCompetency.current_expertise" 
+                                class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                            <option value="">-- Select Level --</option>
+                            <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Target Expertise *</label>
+                        <select [(ngModel)]="newCompetency.target_expertise" 
+                                class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                            <option value="">-- Select Level --</option>
+                            <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
+                        </select>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Additional Information -->
+            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+                <legend class="px-2 text-sm font-semibold text-slate-700">Additional Information (Optional)</legend>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Department</label>
+                        <input type="text" [(ngModel)]="newCompetency.department" placeholder="Department" 
+                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Division</label>
+                        <input type="text" [(ngModel)]="newCompetency.division" placeholder="Division" 
+                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Project</label>
+                        <input type="text" [(ngModel)]="newCompetency.project" placeholder="Project" 
+                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Target Date</label>
+                        <input type="date" [(ngModel)]="newCompetency.target_date" 
+                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Role-Specific Competency</label>
+                        <input type="text" [(ngModel)]="newCompetency.role_specific_comp" placeholder="Role-specific competency" 
+                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Destination</label>
+                        <input type="text" [(ngModel)]="newCompetency.destination" placeholder="Destination" 
+                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Comments</label>
+                    <textarea [(ngModel)]="newCompetency.comments" placeholder="Additional comments..." rows="3" 
+                              class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                </div>
+            </fieldset>
+        </div>
+        <div class="mt-8 flex gap-4">
+            <button (click)="createSkill()" 
+                    class="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-cyan-700 transition-all shadow-lg hover:shadow-xl font-semibold">
+                <i class="fa-solid fa-plus mr-2"></i>Create Skill
+            </button>
+            <button (click)="showCreateSkillModal = false" 
                     class="flex-1 bg-slate-200 text-slate-800 px-6 py-3 rounded-xl hover:bg-slate-300 transition-all font-semibold">
                 Cancel
             </button>

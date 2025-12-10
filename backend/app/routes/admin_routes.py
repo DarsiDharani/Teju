@@ -74,6 +74,21 @@ class SkillUpdateAdmin(BaseModel):
     current_expertise: str
     target_expertise: str
 
+class CompetencyCreateAdmin(BaseModel):
+    employee_empid: str
+    employee_name: str
+    skill: str
+    competency: Optional[str] = None
+    current_expertise: str
+    target_expertise: str
+    department: Optional[str] = None
+    division: Optional[str] = None
+    project: Optional[str] = None
+    role_specific_comp: Optional[str] = None
+    destination: Optional[str] = None
+    comments: Optional[str] = None
+    target_date: Optional[date] = None
+
 class AdditionalSkillReview(BaseModel):
     action: str  # approve, reject
     admin_notes: Optional[str] = None
@@ -621,10 +636,96 @@ async def get_all_competencies(
             "current_expertise": comp.current_expertise,
             "target_expertise": comp.target_expertise,
             "status": status_val,
-            "department": comp.department
+            "department": comp.department,
+            "division": comp.division,
+            "project": comp.project,
+            "role_specific_comp": comp.role_specific_comp,
+            "destination": comp.destination,
+            "comments": comp.comments,
+            "target_date": comp.target_date.isoformat() if comp.target_date else None
         })
     
     return {"competencies": competencies_list, "total": len(competencies_list)}
+
+@router.post("/skills/competencies")
+async def create_competency(
+    competency_data: CompetencyCreateAdmin,
+    current_user: dict = Depends(get_current_active_admin),
+    db: AsyncSession = Depends(get_db_async)
+):
+    """Create a new competency for an employee (admin only)"""
+    # Verify employee exists
+    employee_check = await db.execute(
+        select(User).where(User.username == competency_data.employee_empid)
+    )
+    employee = employee_check.scalar_one_or_none()
+    
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Employee with ID {competency_data.employee_empid} not found"
+        )
+    
+    # Check if competency already exists for this employee and skill
+    existing_check = await db.execute(
+        select(EmployeeCompetency).where(
+            EmployeeCompetency.employee_empid == competency_data.employee_empid,
+            EmployeeCompetency.skill == competency_data.skill
+        )
+    )
+    existing = existing_check.scalar_one_or_none()
+    
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Competency for skill '{competency_data.skill}' already exists for employee {competency_data.employee_empid}"
+        )
+    
+    # Create new competency
+    new_competency = EmployeeCompetency(
+        employee_empid=competency_data.employee_empid,
+        employee_name=competency_data.employee_name,
+        skill=competency_data.skill,
+        competency=competency_data.competency,
+        current_expertise=competency_data.current_expertise,
+        target_expertise=competency_data.target_expertise,
+        department=competency_data.department,
+        division=competency_data.division,
+        project=competency_data.project,
+        role_specific_comp=competency_data.role_specific_comp,
+        destination=competency_data.destination,
+        comments=competency_data.comments,
+        target_date=competency_data.target_date
+    )
+    
+    db.add(new_competency)
+    await db.commit()
+    await db.refresh(new_competency)
+    
+    # Determine status
+    current = new_competency.current_expertise or ""
+    target = new_competency.target_expertise or ""
+    status_val = "Error"
+    if current and target:
+        try:
+            current_num = int(current.replace("L", "")) if current.startswith("L") else 0
+            target_num = int(target.replace("L", "")) if target.startswith("L") else 0
+            status_val = "Met" if current_num >= target_num else "Gap"
+        except:
+            status_val = "Error"
+    
+    return {
+        "id": new_competency.id,
+        "employee_empid": new_competency.employee_empid,
+        "employee_name": new_competency.employee_name,
+        "skill": new_competency.skill,
+        "competency": new_competency.competency,
+        "current_expertise": new_competency.current_expertise,
+        "target_expertise": new_competency.target_expertise,
+        "status": status_val,
+        "department": new_competency.department,
+        "message": "Competency created successfully"
+    }
 
 @router.put("/skills/competencies/{competency_id}")
 async def update_competency(

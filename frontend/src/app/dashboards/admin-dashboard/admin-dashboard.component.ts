@@ -57,11 +57,17 @@ interface Competency {
   employee_empid: string;
   employee_name: string;
   skill: string;
-  competency: string;
+  competency?: string;
   current_expertise: string;
   target_expertise: string;
   status: string;
   department?: string;
+  division?: string;
+  project?: string;
+  role_specific_comp?: string;
+  destination?: string;
+  comments?: string;
+  target_date?: string;
 }
 
 interface GapAnalysis {
@@ -171,11 +177,28 @@ export class AdminDashboardComponent implements OnInit {
   skillSearch: string = '';
   skillEmployeeFilter: string = '';
   showEditSkillModal: boolean = false;
+  showCreateSkillModal: boolean = false;
   selectedCompetency: Competency | null = null;
   skillUpdate: any = {
     current_expertise: '',
     target_expertise: ''
   };
+  newCompetency: any = {
+    employee_empid: '',
+    employee_name: '',
+    skill: '',
+    competency: '',
+    current_expertise: '',
+    target_expertise: '',
+    department: '',
+    division: '',
+    project: '',
+    role_specific_comp: '',
+    destination: '',
+    comments: '',
+    target_date: ''
+  };
+  allEmployees: User[] = [];
   gapAnalysis: GapAnalysis | null = null;
   
   // Data Management
@@ -213,6 +236,8 @@ export class AdminDashboardComponent implements OnInit {
     this.adminName = `Admin (${this.adminId})`;
     
     this.loadDashboardData();
+    this.loadTrainings();
+    this.loadGapAnalysis();
   }
 
   getHeaders(): HttpHeaders {
@@ -279,6 +304,22 @@ export class AdminDashboardComponent implements OnInit {
           this.isLoading = false;
         }
       });
+  }
+
+  getUpcomingTrainings(): Training[] {
+    const now = new Date();
+    return this.trainings
+      .filter(t => {
+        if (!t.training_date) return false;
+        const trainingDate = new Date(t.training_date);
+        return trainingDate >= now;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.training_date || '');
+        const dateB = new Date(b.training_date || '');
+        return dateA.getTime() - dateB.getTime();
+      })
+      .slice(0, 5);
   }
 
   // ==================== USER MANAGEMENT ====================
@@ -958,6 +999,99 @@ export class AdminDashboardComponent implements OnInit {
         },
         error: (err) => {
           this.toastService.show(err.error?.detail || 'Failed to update skill', 'error');
+        }
+      });
+  }
+
+  openCreateSkillModal(): void {
+    this.newCompetency = {
+      employee_empid: '',
+      employee_name: '',
+      skill: '',
+      competency: '',
+      current_expertise: '',
+      target_expertise: '',
+      department: '',
+      division: '',
+      project: '',
+      role_specific_comp: '',
+      destination: '',
+      comments: '',
+      target_date: ''
+    };
+    // Load employees for selection
+    this.loadAllEmployees();
+    this.showCreateSkillModal = true;
+  }
+
+  loadAllEmployees(): void {
+    this.http.get<any>(`${this.apiService.adminUsersUrl}?page=1&limit=1000`, { headers: this.getHeaders() })
+      .subscribe({
+        next: (data) => {
+          this.allEmployees = (data.users || []).filter((u: User) => u.role === 'employee' || u.role === 'manager');
+        },
+        error: (err) => {
+          console.error('Error loading employees:', err);
+        }
+      });
+  }
+
+  onEmployeeSelected(employeeEmpid: string): void {
+    if (employeeEmpid) {
+      const employee = this.allEmployees.find(u => u.username === employeeEmpid);
+      if (employee) {
+        this.newCompetency.employee_empid = employee.username;
+        this.newCompetency.employee_name = employee.name || employee.username;
+      }
+    } else {
+      this.newCompetency.employee_empid = '';
+      this.newCompetency.employee_name = '';
+    }
+  }
+
+  createSkill(): void {
+    if (!this.newCompetency.employee_empid || !this.newCompetency.employee_name || !this.newCompetency.skill) {
+      this.toastService.show('Please fill in employee ID, employee name, and skill', 'error');
+      return;
+    }
+
+    if (!this.newCompetency.current_expertise || !this.newCompetency.target_expertise) {
+      this.toastService.show('Please specify both current and target expertise levels', 'error');
+      return;
+    }
+
+    // Prepare payload, converting empty strings to null for optional fields
+    const payload: any = {
+      employee_empid: this.newCompetency.employee_empid,
+      employee_name: this.newCompetency.employee_name,
+      skill: this.newCompetency.skill,
+      current_expertise: this.newCompetency.current_expertise,
+      target_expertise: this.newCompetency.target_expertise,
+      competency: this.newCompetency.competency || null,
+      department: this.newCompetency.department || null,
+      division: this.newCompetency.division || null,
+      project: this.newCompetency.project || null,
+      role_specific_comp: this.newCompetency.role_specific_comp || null,
+      destination: this.newCompetency.destination || null,
+      comments: this.newCompetency.comments || null,
+      target_date: this.newCompetency.target_date || null
+    };
+
+    this.http.post(this.apiService.adminSkillsCompetenciesUrl, payload, { headers: this.getHeaders() })
+      .subscribe({
+        next: (data: any) => {
+          this.toastService.show(data.message || 'Skill created successfully', 'success');
+          this.showCreateSkillModal = false;
+          this.loadCompetencies();
+          this.loadGapAnalysis();
+          this.loadDashboardData();
+          // Delay analytics refresh slightly to ensure database is updated
+          setTimeout(() => {
+            this.loadAnalytics(); // Refresh analytics data
+          }, 500);
+        },
+        error: (err) => {
+          this.toastService.show(err.error?.detail || 'Failed to create skill', 'error');
         }
       });
   }
