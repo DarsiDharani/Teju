@@ -20,15 +20,15 @@ export interface QuestionOption {
 
 /**
  * Assignment question interface
- * Supports multiple question types: single-choice, multiple-choice, and text-input
+ * Supports multiple question types: single-choice, multiple-choice, text-input and file-upload
  */
 export interface AssignmentQuestion {
   /** The question text */
   text: string;
   /** Helper text providing additional instructions (e.g., "Please select at most 2 options.") */
   helperText: string;
-  /** Type of question: single-choice, multiple-choice, or text-input */
-  type: 'single-choice' | 'multiple-choice' | 'text-input';
+  /** Type of question: single-choice, multiple-choice, text-input, or file-upload */
+  type: 'single-choice' | 'multiple-choice' | 'text-input' | 'file-upload';
   /** Array of answer options (not used for text-input type) */
   options: QuestionOption[];
 }

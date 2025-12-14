@@ -203,10 +203,10 @@
                             iconClass="fa-filter"
                             width="w-full sm:w-auto min-w-[140px]">
                         </app-searchable-dropdown>
-                        <!-- Status Filter: Searchable dropdown to filter by skill status (Met, Gap, Error) -->
+                        <!-- Status Filter: Searchable dropdown to filter by timeline status (Not Started, Behind, On Track, Completed) -->
                         <app-searchable-dropdown
                             [(ngModel)]="skillStatusFilter"
-                            [options]="['Met', 'Gap', 'Error']"
+                            [options]="['Not Started', 'Behind', 'On Track', 'Completed']"
                             placeholder="All Statuses"
                             allOptionLabel="All Statuses"
                             allOptionValue=""
@@ -217,6 +217,17 @@
                         <button (click)="resetSkillFilters()" title="Reset Filters" class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors">
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
+                        <!-- Progress Legend: Indicates what each color in the stacked bar represents -->
+                        <div class="flex items-center gap-3 text-[10px] text-blue-100 ml-2">
+                            <span class="flex items-center gap-1">
+                                <span class="w-4 h-1.5 rounded-full bg-gradient-to-r from-amber-300 to-amber-500"></span>
+                                <span>Expected</span>
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <span class="w-4 h-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600"></span>
+                                <span>Actual</span>
+                            </span>
+                        </div>
                     </ng-container>
                     <!-- Additional Skills Controls: Add new skill button -->
                     <ng-container *ngIf="mySkillsView === 'additional'">
@@ -247,7 +258,7 @@
                                     'text-white hover:text-blue-200': trainingCatalogType !== 'live'
                                 }">
                                 <i class="fa-solid fa-video text-sm group-hover:scale-110 transition-transform"></i>
-                                <span>Normal Training</span>
+                                <span>Class Trainings</span>
                             </button>
                             <button 
                                 (click)="setTrainingCatalogType('recorded')" 
@@ -274,7 +285,7 @@
             <div class="flex items-center gap-1.5 flex-1 justify-end min-w-0">
                 <div class="relative">
                     <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" [(ngModel)]="trainingSearch" placeholder="Search..." class="w-32 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-sm">
+                    <input type="text" [(ngModel)]="trainingSearch" placeholder="Search..." class="w-28 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-xs">
                 </div>
                 <app-searchable-dropdown
                     [(ngModel)]="trainingSkillFilter"
@@ -283,7 +294,7 @@
                     allOptionLabel="All Skills"
                     allOptionValue="All"
                     iconClass="fa-filter"
-                    width="w-auto min-w-[120px]">
+                    width="w-auto min-w-[110px] text-xs">
                 </app-searchable-dropdown>
                 <app-searchable-dropdown
                     [(ngModel)]="trainingLevelFilter"
@@ -292,12 +303,12 @@
                     allOptionLabel="All Levels"
                     allOptionValue="All"
                     iconClass="fa-filter"
-                    width="w-auto min-w-[110px]">
+                    width="w-auto min-w-[100px] text-xs">
                 </app-searchable-dropdown>
                 <div class="relative">
                     <i class="fa-solid fa-filter absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 text-xs pointer-events-none"></i>
                     <i class="fa-solid fa-calendar-days absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 text-xs pointer-events-none"></i>
-                    <input type="date" [(ngModel)]="trainingDateFilter" class="w-auto min-w-[140px] pl-8 pr-8 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-sm">
+                    <input type="date" [(ngModel)]="trainingDateFilter" class="w-auto min-w-[130px] pl-8 pr-8 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-xs">
                 </div>
                 <button (click)="resetTrainingFilters()" title="Reset Filters" class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors flex-shrink-0">
                     <i class="fa-solid fa-rotate-right"></i>
@@ -538,13 +549,13 @@
             <div *ngIf="activeTab !== 'dashboard'">
                 <div *ngIf="activeTab === 'mySkills'" @slideFadeIn class="space-y-8">
                     <div *ngIf="mySkillsView === 'core'" @fadeIn class="space-y-8">
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@listStagger]="(getFilteredSkills() | skillFilter:skillSearch:skillStatusFilter).length">
-                            <div *ngFor="let competency of getFilteredSkills() | skillFilter:skillSearch:skillStatusFilter"
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@listStagger]="(getFilteredSkills() | skillFilter:skillSearch:'').length">
+                            <div *ngFor="let competency of getFilteredSkills() | skillFilter:skillSearch:''"
                                 class="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                                 [ngClass]="{
-                                    'border-green-300/80': competency.status === 'Met',
-                                    'border-orange-300/80': competency.status === 'Gap',
-                                    'border-red-300/80': competency.status === 'Error'
+                                    'border-slate-300/80': getTimelineStatus(competency) === 'Not Started',
+                                    'border-orange-300/80': getTimelineStatus(competency) === 'Behind',
+                                    'border-green-300/80': getTimelineStatus(competency) === 'On Track' || getTimelineStatus(competency) === 'Completed'
                                 }">
                                 <div class="flex flex-col justify-between h-full space-y-3">
                                     <div class="flex items-start justify-between">
@@ -559,11 +570,12 @@
                                         </div>
                                         <div class="flex items-center gap-2 flex-wrap">
                                             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider flex-shrink-0" [ngClass]="{
-                                                'bg-green-100 text-green-800': competency.status === 'Met',
-                                                'bg-orange-100 text-orange-800': competency.status === 'Gap',
-                                                'bg-red-100 text-red-800': competency.status === 'Error'
+                                                'bg-slate-100 text-slate-700': getTimelineStatus(competency) === 'Not Started',
+                                                'bg-orange-100 text-orange-800': getTimelineStatus(competency) === 'Behind',
+                                                'bg-green-100 text-green-800': getTimelineStatus(competency) === 'On Track',
+                                                'bg-emerald-100 text-emerald-800': getTimelineStatus(competency) === 'Completed'
                                                 }">
-                                                {{ competency.status }}
+                                                {{ getTimelineStatus(competency) }}
                                             </span>
                                         </div>
                                     </div>
@@ -576,10 +588,18 @@
                                         <div>
                                             <div class="flex justify-between items-center mb-1">
                                                 <span class="text-xs font-medium text-slate-600">Progress</span>
-                                                <span class="text-xs font-bold text-slate-700">{{ getSkillProgress(competency) }}%</span>
+                                                <span class="text-[11px] font-semibold text-slate-700">
+                                                    Exp: {{ getExpectedProgress(competency) }}% • Act: {{ getSkillProgress(competency) }}%
+                                                </span>
                                             </div>
-                                            <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden shadow-inner">
-                                                <div class="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-cyan-400 to-cyan-600" [style.width.%]="getSkillProgress(competency)">
+                                            <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden shadow-inner relative">
+                                                <!-- Expected progress (background bar) -->
+                                                <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-300 to-amber-500 h-full transition-all duration-700"
+                                                     [style.width.%]="getExpectedProgress(competency)">
+                                                </div>
+                                                <!-- Actual progress (foreground bar) -->
+                                                <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 to-cyan-600 h-full transition-all duration-700"
+                                                     [style.width.%]="getSkillProgress(competency)">
                                                 </div>
                                             </div>
                                         </div>
@@ -598,7 +618,7 @@
                             </div>
                         </div>
 
-                        <p *ngIf="(skills | skillFilter:skillSearch:skillStatusFilter).length === 0"
+                        <p *ngIf="(getFilteredSkills() | skillFilter:skillSearch:'').length === 0"
                             class="text-center text-slate-500 mt-8">No skills found matching your filters.</p>
                     </div>
 
@@ -1476,6 +1496,7 @@
                                                     <option value="single-choice">Single Choice</option>
                                                     <option value="multiple-choice">Multiple Choice</option>
                                                     <option value="text-input">Text Input</option>
+                                                    <option value="file-upload">File Upload</option>
                                                 </select>
                                             </div>
                                             
@@ -1498,6 +1519,39 @@
                                                 <button type="button" (click)="addOptionToQuestion(qIndex)" class="text-sm font-medium text-sky-600 hover:text-sky-800 transition-colors duration-200 mt-2">
                                                     <i class="fa-solid fa-plus mr-1"></i> Add Another Option
                                                 </button>
+                                            </div>
+
+                                            <div *ngIf="question.type === 'file-upload'" class="pl-8 pt-2 space-y-3">
+                                                 <div class="p-3 rounded-lg bg-indigo-50 border border-dashed border-indigo-300 text-xs text-slate-700">
+                                                     <p class="font-semibold text-indigo-900 mb-1">File Upload Question</p>
+                                                     <p>
+                                                         Use this when you want candidates to work with a separate document (e.g., case study, dataset) and
+                                                         upload their solution file as the answer.
+                                                     </p>
+                                                     <p class="mt-2">
+                                                         You can attach the document for this question below. Candidates will be able to
+                                                         <strong>download</strong> it and then <strong>upload their solution file</strong> while taking the assignment.
+                                                     </p>
+                                                 </div>
+                                                 <div class="flex items-center gap-3 text-xs" *ngIf="newAssignment.trainingId; else selectTrainingFirstEng">
+                                                     <label class="flex-1 px-4 py-2.5 bg-white rounded-lg border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors flex items-center gap-2">
+                                                         <i class="fa-solid fa-file-upload text-slate-600"></i>
+                                                         <span class="text-slate-700" *ngIf="!assignmentFile">Choose file to upload for this question...</span>
+                                                         <span class="text-slate-700" *ngIf="assignmentFile">{{ assignmentFile.name }}</span>
+                                                         <input type="file"
+                                                                (change)="onAssignmentFileSelected($event)"
+                                                                class="hidden"
+                                                                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                                                     </label>
+                                                     <span *ngIf="assignmentFile" class="text-[11px] text-emerald-700 font-semibold">
+                                                         File selected. It will be uploaded when you share this assignment.
+                                                     </span>
+                                                 </div>
+                                                 <ng-template #selectTrainingFirstEng>
+                                                     <p class="text-[11px] text-amber-700">
+                                                         Select a <strong>Training Name</strong> above to enable file upload for this question.
+                                                     </p>
+                                                 </ng-template>
                                             </div>
                         
                                             <button type="button" (click)="removeAssignmentQuestion(qIndex)" class="absolute -top-2 -right-2 w-7 h-7 bg-slate-600 text-white rounded-full hover:bg-red-600 transition-all shadow flex items-center justify-center" title="Delete This Question">
@@ -2034,24 +2088,6 @@
             </button>
         </div>
         <div class="max-h-[70vh] overflow-y-auto p-8" *ngIf="currentExamAssignment">
-            <!-- Download and Upload PDF Buttons -->
-            <div class="mb-6 flex items-center gap-3 pb-4 border-b border-slate-200" *ngIf="currentExamAssignment?.trainingId">
-                <button 
-                    (click)="downloadQuestionFile(currentExamAssignment!.trainingId!)" 
-                    class="px-5 py-2.5 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition-colors duration-200 text-sm flex items-center gap-2 border border-indigo-200 shadow-sm"
-                    title="Download Questions Document (PDF, DOC, DOCX)">
-                    <i class="fa-solid fa-file-pdf text-indigo-600"></i>
-                    <span>Download Questions</span>
-                </button>
-                <label 
-                    class="px-5 py-2.5 bg-teal-50 text-teal-700 font-semibold rounded-lg hover:bg-teal-100 transition-colors duration-200 text-sm flex items-center gap-2 border border-teal-200 cursor-pointer shadow-sm"
-                    title="Upload Solution Document (PDF, DOC, DOCX)">
-                    <i class="fa-solid fa-upload text-teal-600"></i>
-                    <span *ngIf="!hasSolutionFile(currentExamAssignment!.trainingId!)">Upload Solution</span>
-                    <span *ngIf="hasSolutionFile(currentExamAssignment!.trainingId!)">Update Solution</span>
-                    <input type="file" (change)="uploadSolutionFile(currentExamAssignment!.trainingId!, $event)" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden">
-                </label>
-            </div>
             <div class="mb-6">
                 <p class="text-slate-600" *ngIf="currentExamAssignment.description">{{ currentExamAssignment.description }}</p>
             </div>
@@ -2066,6 +2102,30 @@
                         <span class="px-3 py-1 rounded-full text-xs font-semibold bg-violet-100 text-violet-700">
                             {{ question.type }}
                         </span>
+                    </div>
+                    <!-- File upload question controls -->
+                    <div *ngIf="question.type === 'file-upload' && currentExamAssignment?.trainingId" class="mt-4 mb-4 p-3 bg-indigo-50 border border-dashed border-indigo-300 rounded-lg space-y-2">
+                        <p class="text-xs text-slate-700">
+                            This question requires you to work with a file. Use the buttons below to download the trainer's file
+                            and upload your completed solution.
+                        </p>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <button 
+                                (click)="downloadQuestionFile(currentExamAssignment!.trainingId!)" 
+                                class="px-4 py-2 bg-white text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition-colors duration-200 text-xs flex items-center gap-2 border border-indigo-200 shadow-sm"
+                                title="Download Questions Document (PDF, DOC, DOCX)">
+                                <i class="fa-solid fa-file-pdf text-indigo-600"></i>
+                                <span>Download File</span>
+                            </button>
+                            <label 
+                                class="px-4 py-2 bg-white text-teal-700 font-semibold rounded-lg hover:bg-teal-100 transition-colors duration-200 text-xs flex items-center gap-2 border border-teal-200 cursor-pointer shadow-sm"
+                                title="Upload Solution Document (PDF, DOC, DOCX)">
+                                <i class="fa-solid fa-upload text-teal-600"></i>
+                                <span *ngIf="!hasSolutionFile(currentExamAssignment!.trainingId!)">Upload Solution</span>
+                                <span *ngIf="hasSolutionFile(currentExamAssignment!.trainingId!)">Update Solution</span>
+                                <input type="file" (change)="uploadSolutionFile(currentExamAssignment!.trainingId!, $event)" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" class="hidden">
+                            </label>
+                        </div>
                     </div>
                     <div *ngIf="question.type === 'single-choice'" class="space-y-2 mt-4">
                         <div *ngFor="let option of question.options; let j = index" 
@@ -2212,6 +2272,15 @@
                             <p class="text-sm font-medium text-slate-700 mb-1">Your Answer:</p>
                             <p class="text-slate-900">{{ getQuestionResult(i)?.userTextAnswer || 'No answer provided' }}</p>
                             <p class="text-xs text-slate-500 mt-2">Note: Text answers require manual evaluation</p>
+                        </div>
+                    </div>
+                    <div *ngIf="question.type === 'file-upload'" class="mt-4">
+                        <div class="p-3 bg-white rounded-lg border border-slate-300">
+                            <p class="text-sm font-medium text-slate-700 mb-1">File Upload Question</p>
+                            <p class="text-slate-900 text-sm">
+                                This question was answered using an uploaded file. Evaluation for this question may be done manually
+                                by your trainer and is not auto-graded here.
+                            </p>
                         </div>
                     </div>
                 </div>

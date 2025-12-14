@@ -374,7 +374,23 @@ export class NotificationsComponent implements OnInit, OnDestroy {
    * Format relative time (e.g., "2 minutes ago")
    */
   getRelativeTime(dateString: string): string {
-    const date = new Date(dateString);
+    if (!dateString) {
+      return '';
+    }
+
+    // Ensure the timestamp is interpreted in UTC if no timezone is provided.
+    // Backend currently sends ISO strings without timezone (UTC-based),
+    // which JavaScript treats as local time by default.
+    let normalized = dateString;
+    if (!/Z|[+-]\d{2}:\d{2}$/.test(normalized)) {
+      normalized += 'Z';
+    }
+
+    const date = new Date(normalized);
+    if (isNaN(date.getTime())) {
+      return '';
+    }
+
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);

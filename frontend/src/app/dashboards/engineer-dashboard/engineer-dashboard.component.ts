@@ -59,7 +59,7 @@
 
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
 import { map, catchError } from 'rxjs/operators';
@@ -430,6 +430,7 @@ export class EngineerDashboardComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService,
     private apiService: ApiService,
     private cdr: ChangeDetectorRef,
@@ -465,6 +466,47 @@ export class EngineerDashboardComponent implements OnInit {
     this.notificationService.initialize();
     // Initialize sample recorded trainings data
     this.initializeRecordedTrainings();
+
+    // Set initial tab based on route query parameter (e.g., ?tab=assignedTrainings)
+    // Also react to query param changes (e.g., when clicking notifications)
+    this.route.queryParams.subscribe(params => {
+      const tab = params['tab'] as string | undefined;
+      if (tab) {
+        this.setActiveTabFromRoute(tab);
+      }
+    });
+  }
+
+  /**
+   * Map route tab parameter to a valid dashboard tab and activate it
+   * Supports legacy/alias values coming from notification action URLs
+   */
+  private setActiveTabFromRoute(tabParam: string): void {
+    if (!tabParam) {
+      return;
+    }
+
+    let mappedTab = tabParam;
+
+    // Map legacy or backend values to actual tab names
+    if (mappedTab === 'trainingRequests') {
+      mappedTab = 'myRequests';
+    }
+
+    const validTabs = new Set([
+      'dashboard',
+      'mySkills',
+      'trainingCatalog',
+      'assignedTrainings',
+      'myRequests',
+      'myBadges',
+      'levels',
+      'trainerZone'
+    ]);
+
+    if (validTabs.has(mappedTab)) {
+      this.selectTab(mappedTab);
+    }
   }
 
   // Fetch manager performance feedback
@@ -932,15 +974,16 @@ export class EngineerDashboardComponent implements OnInit {
       return;
     }
 
-    // Skills Met count is based on API skills with status "Met"
-    this.skillsMet = this.skills.filter(s => s.status === 'Met').length;
-    this.skillsGap = this.skills.filter(s => s.status === 'Gap').length;
+    // Skills "Met" (Completed) and "Gap" (Behind) are now based on timeline status,
+    // which uses expected vs actual progress from manager feedback and target dates.
+    this.skillsMet = this.skills.filter(s => this.getTimelineStatus(s) === 'Completed').length;
+    this.skillsGap = this.skills.filter(s => this.getTimelineStatus(s) === 'Behind').length;
     this.progressPercentage = this.totalSkills > 0
       ? Math.round((this.skillsMet / this.totalSkills) * 100)
       : 0;
 
-    this.skillGaps = this.skills.filter(s => s.status === 'Gap');
-    this.badges = this.skills.filter(s => s.status === 'Met');
+    this.skillGaps = this.skills.filter(s => this.getTimelineStatus(s) === 'Behind');
+    this.badges = this.skills.filter(s => this.getTimelineStatus(s) === 'Completed');
   }
 
   processDashboardTrainings(): void {
@@ -1636,9 +1679,14 @@ export class EngineerDashboardComponent implements OnInit {
           return String(date || '').trim();
         };
         const filterDate = normalizeDate(this.trainingDateFilter);
+        const filterDateObj = new Date(filterDate);
         list = list.filter(t => {
-          const trainingDate = normalizeDate(t.training_date);
-          return trainingDate === filterDate;
+          const trainingDateStr = normalizeDate(t.training_date);
+          if (!trainingDateStr) return false;
+          const trainingDateObj = new Date(trainingDateStr);
+          if (isNaN(trainingDateObj.getTime())) return false;
+          // Show trainings on the selected date and all future dates
+          return trainingDateObj >= filterDateObj;
         });
     }
     list.sort((a, b) => {
@@ -2211,19 +2259,27 @@ export class EngineerDashboardComponent implements OnInit {
   }
 
   onQuestionTypeChange(question: AssignmentQuestion): void {
+    // Ensure options exist for choice-based questions
     if ((question.type === 'single-choice' || question.type === 'multiple-choice') && question.options.length === 0) {
       question.options.push({ text: '', isCorrect: false }, { text: '', isCorrect: false });
     }
+
+    // For text or file-upload questions, clear options as they are not used
+    if (question.type === 'text-input' || question.type === 'file-upload') {
+      question.options = [];
+    }
+
+    // Enforce only one correct option for single-choice
     if (question.type === 'single-choice') {
-        let firstCorrectFound = false;
-        question.options.forEach(opt => {
-            if (opt.isCorrect) {
-                if (firstCorrectFound) {
-                    opt.isCorrect = false;
-                }
-                firstCorrectFound = true;
-            }
-        });
+      let firstCorrectFound = false;
+      question.options.forEach(opt => {
+        if (opt.isCorrect) {
+          if (firstCorrectFound) {
+            opt.isCorrect = false;
+          }
+          firstCorrectFound = true;
+        }
+      });
     }
   }
   
@@ -2956,6 +3012,12 @@ export class EngineerDashboardComponent implements OnInit {
           this.toastService.warning(`Please answer question ${i + 1}.`);
           return;
         }
+      } else if (answer.type === 'file-upload') {
+        // For file-upload questions, ensure a solution file has been uploaded for this training
+        if (this.currentExamAssignment.trainingId && !this.hasSolutionFile(this.currentExamAssignment.trainingId)) {
+          this.toastService.warning(`Please upload your solution file for question ${i + 1} before submitting.`);
+          return;
+        }
       }
     }
 
@@ -3128,6 +3190,10 @@ export class EngineerDashboardComponent implements OnInit {
     if (this.skillNameFilter) {
       filtered = filtered.filter(skill => skill.skill === this.skillNameFilter);
     }
+    // Apply status filter based on timeline status (Not Started/Behind/On Track/Completed)
+    if (this.skillStatusFilter) {
+      filtered = filtered.filter(skill => this.getTimelineStatus(skill) === this.skillStatusFilter);
+    }
     return filtered;
   }
 
@@ -3242,6 +3308,88 @@ export class EngineerDashboardComponent implements OnInit {
     if (percent > 100) percent = 100;
     if (percent < 0) percent = 0;
     return percent;
+  }
+
+  /**
+   * Calculate expected progress for a skill based on assignment and target dates.
+   * Expected progress is computed in 3‑month (approximately 90‑day) intervals
+   * between assignment_start_date and target_completion_date.
+   */
+  getExpectedProgress(competency: Skill | ModalSkill): number {
+    const assignmentDateStr = (competency as any).assignment_start_date as string | undefined;
+    const targetDateStr = (competency as any).target_completion_date as string | undefined;
+
+    if (!assignmentDateStr || !targetDateStr) {
+      // If no timeline is defined, we cannot compute an expected value
+      return 0;
+    }
+
+    const assignmentDate = new Date(assignmentDateStr);
+    const targetDate = new Date(targetDateStr);
+    if (isNaN(assignmentDate.getTime()) || isNaN(targetDate.getTime()) || targetDate <= assignmentDate) {
+      return 0;
+    }
+
+    const now = new Date();
+    if (now <= assignmentDate) {
+      return 0;
+    }
+
+    const totalMs = targetDate.getTime() - assignmentDate.getTime();
+    const elapsedMs = Math.min(Math.max(now.getTime() - assignmentDate.getTime(), 0), totalMs);
+
+    // Approximate 3‑month intervals as 90‑day blocks and distribute 0‑100% across them
+    const totalDays = totalMs / (1000 * 60 * 60 * 24);
+    const intervalDays = 90;
+    const intervals = Math.max(1, Math.ceil(totalDays / intervalDays));
+    const intervalMs = totalMs / intervals;
+    const elapsedIntervals = Math.floor(elapsedMs / intervalMs);
+
+    let expected = Math.round((elapsedIntervals / intervals) * 100);
+    if (expected > 100) expected = 100;
+    if (expected < 0) expected = 0;
+    return expected;
+  }
+
+  /**
+   * Derive timeline-based status for a skill using expected vs actual progress.
+   * Statuses: Not Started, Behind, On Track, Completed.
+   */
+  getTimelineStatus(competency: Skill | ModalSkill): 'Not Started' | 'Behind' | 'On Track' | 'Completed' {
+    const actual = this.getSkillProgress(competency);
+    const expected = this.getExpectedProgress(competency);
+
+    const assignmentDateStr = (competency as any).assignment_start_date as string | undefined;
+    const targetDateStr = (competency as any).target_completion_date as string | undefined;
+    const now = new Date();
+    const assignmentDate = assignmentDateStr ? new Date(assignmentDateStr) : null;
+    const targetDate = targetDateStr ? new Date(targetDateStr) : null;
+
+    if (actual <= 0 && assignmentDate && now <= assignmentDate) {
+      return 'Not Started';
+    }
+
+    if (actual >= 100) {
+      return 'Completed';
+    }
+
+    // If we don't have a valid timeline, fall back to simple interpretation
+    if (!assignmentDate || !targetDate || isNaN(assignmentDate.getTime()) || isNaN(targetDate.getTime())) {
+      if (actual <= 0) return 'Not Started';
+      return 'On Track';
+    }
+
+    // If we've passed the target date and actual < 100, consider it Behind
+    if (now > targetDate && actual < 100) {
+      return 'Behind';
+    }
+
+    // Compare actual vs expected progress
+    if (expected > 0 && actual < expected) {
+      return 'Behind';
+    }
+
+    return 'On Track';
   }
 
   getFormattedDate(): string {

@@ -38,6 +38,8 @@ class AssignmentCreate(BaseModel):
     """Request schema for creating a training assignment"""
     training_id: int
     employee_username: str
+    # Optional target completion date for this specific training assignment
+    target_date: date | None = None
 
 @router.post("/", status_code=201)
 async def assign_training_to_employee(
@@ -93,7 +95,8 @@ async def assign_training_to_employee(
         db_assignment = models.TrainingAssignment(
             training_id=assignment.training_id,
             employee_empid=assignment.employee_username,
-            manager_empid=manager_username
+            manager_empid=manager_username,
+            target_date=assignment.target_date,
         )
         db.add(db_assignment)
         await db.commit()

@@ -56,7 +56,7 @@
 
 import { Component, OnInit, ElementRef, QueryList, AfterViewInit, ViewChildren } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
 import { trigger, style, animate, transition, query, stagger } from '@angular/animations';
@@ -72,7 +72,13 @@ interface Competency {
   competency: string;
   current_expertise: string;
   target_expertise: string;
+  // Legacy status from backend (Met/Gap/Error). UI should prefer timeline-based status.
   status: 'Met' | 'Gap' | 'Error';
+  assignment_start_date?: string;
+  target_completion_date?: string;
+  expected_progress?: number;
+  actual_progress?: number;
+  timeline_status?: 'Not Started' | 'Behind' | 'On Track' | 'Completed';
 }
 
 interface AdditionalSkill {
@@ -234,9 +240,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   selectedTrainingIds: number[] = [];
   selectedMemberIds: string[] = [];
-
+  
   assignTrainingSearch: string = '';
   assignMemberSearch: string = '';
+  /**
+   * Optional target completion date for assigned trainings.
+   * When set, this date will be applied to all new training assignments in the current batch.
+   */
+  assignmentTargetDate: string | null = null;
 
   // Success modal properties
   showAssignmentSuccessModal: boolean = false;
@@ -315,6 +326,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   catalogSearch: string = '';
   catalogTypeFilter: string = 'All';
   catalogCategoryFilter: string = 'All';
+  catalogDateFilter: string = '';
   
   // --- Assigned Trainings Filters ---
   assignedSearch: string = '';
@@ -584,6 +596,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService,
     private toastService: ToastService,
     private apiService: ApiService,
@@ -606,6 +619,48 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.notificationService.initialize();
     // Initialize sample recorded trainings data
     this.initializeRecordedTrainings();
+
+    // Set initial tab based on route query parameter (e.g., ?tab=assignedTrainings)
+    // Also react to query param changes (e.g., when clicking notifications)
+    this.route.queryParams.subscribe(params => {
+      const tab = params['tab'] as string | undefined;
+      if (tab) {
+        this.setActiveTabFromRoute(tab);
+      }
+    });
+  }
+
+  /**
+   * Map route tab parameter to a valid manager dashboard tab and activate it
+   * Supports legacy/alias values coming from notification action URLs
+   */
+  private setActiveTabFromRoute(tabParam: string): void {
+    if (!tabParam) {
+      return;
+    }
+
+    let mappedTab = tabParam;
+
+    // Map legacy or backend values to actual tab names
+    if (mappedTab === 'trainingRequests') {
+      // Manager sees pending training requests on the main dashboard
+      mappedTab = 'dashboard';
+    }
+
+    const validTabs = new Set([
+      'dashboard',
+      'mySkills',
+      'teamSkills',
+      'trainingCatalog',
+      'assignTraining',
+      'assignedTrainings',
+      'trainerZone',
+      'levels'
+    ]);
+
+    if (validTabs.has(mappedTab)) {
+      this.selectTab(mappedTab);
+    }
   }
 
   fetchAssignedTrainingsCount(): void {
@@ -1271,7 +1326,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.http.delete(this.apiService.getUrl(`/assignments/${trainingId}/${employeeEmpid}`), { headers }).subscribe({
       next: () => {
         // After deletion, recreate the assignment
-        const payload = { 
+        const payload: any = { 
           training_id: trainingId, 
           employee_username: employeeEmpid 
         };
@@ -1600,22 +1655,30 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         break;
       case 'mySkillsMet':
         this.modalTitle = 'My Skills Met';
-        this.modalData = this.manager.skills.filter(s => s.status === 'Met');
+        this.modalData = this.manager.skills.filter(s => this.getTimelineStatus(s) === 'Completed');
         this.modalDataType = 'skills';
         break;
       case 'mySkillGaps':
         this.modalTitle = 'My Skill Gaps';
-        this.modalData = this.manager.skills.filter(s => s.status === 'Gap');
+        this.modalData = this.manager.skills.filter(s => this.getTimelineStatus(s) === 'Behind');
         this.modalDataType = 'skills';
         break;
       case 'teamSkillsMet':
         this.modalTitle = 'Team Skills Met';
-        this.modalData = this.manager.team.flatMap(m => m.skills.filter(s => s.status === 'Met').map(s => ({...s, memberName: m.name})));
+        this.modalData = this.manager.team.flatMap(m =>
+          m.skills
+            .filter(s => this.getTimelineStatus(s) === 'Completed')
+            .map(s => ({ ...s, memberName: m.name }))
+        );
         this.modalDataType = 'skills';
         break;
       case 'teamSkillGaps':
         this.modalTitle = 'Team Skill Gaps';
-        this.modalData = this.manager.team.flatMap(m => m.skills.filter(s => s.status === 'Gap').map(s => ({...s, memberName: m.name})));
+        this.modalData = this.manager.team.flatMap(m =>
+          m.skills
+            .filter(s => this.getTimelineStatus(s) === 'Behind')
+            .map(s => ({ ...s, memberName: m.name }))
+        );
         this.modalDataType = 'skills';
         break;
       case 'additionalSkills':
@@ -1843,6 +1906,30 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     }
     if (this.catalogCategoryFilter !== 'All') {
       list = list.filter(t => (t.skill_category || '').toLowerCase() === this.catalogCategoryFilter.toLowerCase());
+    }
+    if (this.catalogDateFilter) {
+      // Normalize dates for comparison (extract YYYY-MM-DD from both)
+      const normalizeDate = (date: any): string => {
+        if (!date) return '';
+        if (typeof date === 'string') {
+          const match = date.match(/^(\d{4}-\d{2}-\d{2})/);
+          return match ? match[1] : date.trim();
+        }
+        if (date instanceof Date) {
+          return date.toISOString().split('T')[0];
+        }
+        return String(date || '').trim();
+      };
+      const filterDate = normalizeDate(this.catalogDateFilter);
+      const filterDateObj = new Date(filterDate);
+      list = list.filter(t => {
+        const trainingDateStr = normalizeDate(t.training_date);
+        if (!trainingDateStr) return false;
+        const trainingDateObj = new Date(trainingDateStr);
+        if (isNaN(trainingDateObj.getTime())) return false;
+        // Show trainings on the selected date and all future dates
+        return trainingDateObj >= filterDateObj;
+      });
     }
     
     list.sort((a, b) => {
@@ -2080,8 +2167,11 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       if (!memberNames.includes(memberName)) {
         memberNames.push(memberName);
       }
-      
-      const payload = { training_id: trainingId, employee_username: memberId };
+      // Build payload for assignment; include optional target_date if manager has set it
+      const payload: any = { training_id: trainingId, employee_username: memberId };
+      if (this.assignmentTargetDate) {
+        payload.target_date = this.assignmentTargetDate;
+      }
       assignmentObservables.push(
         this.http.post(this.apiService.assignmentsUrl, payload, { headers }).pipe(
           map(() => {
@@ -2268,6 +2358,25 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     return this.selectedMemberIds.includes(memberId);
   }
 
+  // Header checkbox handlers for Assign Training tab
+  onToggleAllTrainings(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    if (input && input.checked) {
+      this.selectAllTrainings();
+    } else {
+      this.clearAllTrainings();
+    }
+  }
+
+  onToggleAllMembers(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    if (input && input.checked) {
+      this.selectAllMembers();
+    } else {
+      this.clearAllMembers();
+    }
+  }
+
   closeAssignmentSuccessModal(): void {
     this.showAssignmentSuccessModal = false;
     this.assignmentSuccessData = null;
@@ -2311,18 +2420,21 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   calculateProgress(skills: Competency[]): number {
     const total = skills.length;
-    const met = skills.filter(s => s.status === 'Met').length;
-    return total > 0 ? (met / total) * 100 : 0;
+    const completed = skills.filter(s => this.getTimelineStatus(s) === 'Completed').length;
+    return total > 0 ? (completed / total) * 100 : 0;
   }
 
   getTeamProgressPercentage(): number {
     const totalSkills = this.manager?.team.flatMap(member => member.skills).length || 0;
-    const metSkills = this.manager?.team.flatMap(member => member.skills).filter(skill => skill.status === 'Met').length || 0;
-    return totalSkills > 0 ? Math.round((metSkills / totalSkills) * 100) : 0;
+    const completedSkills = this.manager?.team
+      .flatMap(member => member.skills)
+      .filter(skill => this.getTimelineStatus(skill) === 'Completed').length || 0;
+    return totalSkills > 0 ? Math.round((completedSkills / totalSkills) * 100) : 0;
   }
 
   getMySkillsMetCount(): number {
-    return this.manager?.skills.filter(skill => skill.status === 'Met').length || 0;
+    // "Met" count on dashboard is now based on timeline status "Completed"
+    return this.manager?.skills.filter(skill => this.getTimelineStatus(skill) === 'Completed').length || 0;
   }
 
   // Helper method to get feedback for a specific skill (similar to engineer dashboard)
@@ -2388,38 +2500,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   getSkillProgress(skill: Competency): number {
-    // Calculate progress based on average overall performance across L1-L5 levels
+    // Same formula as engineer dashboard: use manager feedback (overall_performance 1–5)
+    // and convert the average into a percentage.
     const skillName = skill.skill;
     if (!skillName) return 0;
 
-    // For manager dashboard, we need employee_empid to get feedback
-    // Since this is used for manager's own skills, we might not have feedback
-    // Try to get feedback - if not available, fall back to old calculation
-    const feedbackList = this.getFeedbackForSkill(skillName);
-    
-    // If no feedback available, fall back to old calculation
-    if (!feedbackList || feedbackList.length === 0) {
-      const extractLevel = (level: string): number => {
-        if (!level) return 0;
-        if (level.toUpperCase().startsWith('L')) {
-          return parseInt(level.substring(1), 10) || 0;
-        }
-        const levelMap: { [key: string]: number } = {
-          'BEGINNER': 1, 'INTERMEDIATE': 2, 'ADVANCED': 3, 'EXPERT': 4
-        };
-        return levelMap[level.toUpperCase()] || 0;
-      };
-
-      const current = extractLevel(skill.current_expertise);
-      const target = extractLevel(skill.target_expertise);
-
-      if (target === 0) return 0;
-
-      let percent = Math.round((current / target) * 100);
-      if (percent > 100) percent = 100;
-      if (percent < 0) percent = 0;
-      return percent;
-    }
+    const employeeEmpid = this.manager?.id;
+    const feedbackList = this.getFeedbackForSkill(skillName, employeeEmpid);
+    if (!feedbackList || feedbackList.length === 0) return 0;
 
     // Group feedback by skill category (L1, L2, L3, L4, L5)
     const feedbackByLevel = new Map<string, ManagerPerformanceFeedback[]>();
@@ -2434,8 +2522,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     });
 
     // Sort feedback within each level by updated_at (most recent first)
-    feedbackByLevel.forEach((feedbackList, level) => {
-      feedbackList.sort((a, b) => {
+    feedbackByLevel.forEach(feedbackArr => {
+      feedbackArr.sort((a, b) => {
         const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
         const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
         return dateB - dateA;
@@ -2445,7 +2533,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     // Get latest overall_performance for each level (L1-L5)
     const performanceScores: number[] = [];
     const levels = ['L1', 'L2', 'L3', 'L4', 'L5'];
-    
+
     levels.forEach(level => {
       const levelFeedback = feedbackByLevel.get(level);
       if (levelFeedback && levelFeedback.length > 0) {
@@ -2456,40 +2544,100 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       }
     });
 
-    // If no performance scores found, fall back to old calculation
-    if (performanceScores.length === 0) {
-      const extractLevel = (level: string): number => {
-        if (!level) return 0;
-        if (level.toUpperCase().startsWith('L')) {
-          return parseInt(level.substring(1), 10) || 0;
-        }
-        const levelMap: { [key: string]: number } = {
-          'BEGINNER': 1, 'INTERMEDIATE': 2, 'ADVANCED': 3, 'EXPERT': 4
-        };
-        return levelMap[level.toUpperCase()] || 0;
-      };
-
-      const current = extractLevel(skill.current_expertise);
-      const target = extractLevel(skill.target_expertise);
-
-      if (target === 0) return 0;
-
-      let percent = Math.round((current / target) * 100);
-      if (percent > 100) percent = 100;
-      if (percent < 0) percent = 0;
-      return percent;
-    }
+    // If no performance scores found, return 0 (no progress data yet)
+    if (performanceScores.length === 0) return 0;
 
     // Calculate average of overall performance scores
     const sum = performanceScores.reduce((acc, score) => acc + score, 0);
     const average = sum / performanceScores.length;
 
     // Convert to percentage: (average/5) * 100
-    // Since overall_performance is on a 1-5 scale, we convert it to percentage
     let percent = Math.round((average / 5) * 100);
     if (percent > 100) percent = 100;
     if (percent < 0) percent = 0;
     return percent;
+  }
+
+  /**
+   * Calculate expected progress for a skill based on assignment and target dates.
+   * Expected progress is computed in 3‑month (approximately 90‑day) intervals
+   * between assignment_start_date and target_completion_date.
+   */
+  getExpectedProgress(skill: Competency): number {
+    const assignmentDateStr = skill.assignment_start_date;
+    const targetDateStr = skill.target_completion_date;
+
+    if (!assignmentDateStr || !targetDateStr) {
+      // If no timeline is defined, we cannot compute an expected value
+      return 0;
+    }
+
+    const assignmentDate = new Date(assignmentDateStr);
+    const targetDate = new Date(targetDateStr);
+    if (isNaN(assignmentDate.getTime()) || isNaN(targetDate.getTime()) || targetDate <= assignmentDate) {
+      return 0;
+    }
+
+    const now = new Date();
+    if (now <= assignmentDate) {
+      return 0;
+    }
+
+    const totalMs = targetDate.getTime() - assignmentDate.getTime();
+    const elapsedMs = Math.min(Math.max(now.getTime() - assignmentDate.getTime(), 0), totalMs);
+
+    // Approximate 3‑month intervals as 90‑day blocks and distribute 0‑100% across them
+    const totalDays = totalMs / (1000 * 60 * 60 * 24);
+    const intervalDays = 90;
+    const intervals = Math.max(1, Math.ceil(totalDays / intervalDays));
+    const intervalMs = totalMs / intervals;
+    const elapsedIntervals = Math.floor(elapsedMs / intervalMs);
+
+    let expected = Math.round((elapsedIntervals / intervals) * 100);
+    if (expected > 100) expected = 100;
+    if (expected < 0) expected = 0;
+    return expected;
+  }
+
+  /**
+   * Derive timeline-based status for a skill using expected vs actual progress.
+   * Statuses: Not Started, Behind, On Track, Completed.
+   */
+  getTimelineStatus(skill: Competency): 'Not Started' | 'Behind' | 'On Track' | 'Completed' {
+    const actual = this.getSkillProgress(skill);
+    const expected = this.getExpectedProgress(skill);
+
+    const assignmentDateStr = skill.assignment_start_date;
+    const targetDateStr = skill.target_completion_date;
+    const now = new Date();
+    const assignmentDate = assignmentDateStr ? new Date(assignmentDateStr) : null;
+    const targetDate = targetDateStr ? new Date(targetDateStr) : null;
+
+    if (actual <= 0 && assignmentDate && now <= assignmentDate) {
+      return 'Not Started';
+    }
+
+    if (actual >= 100) {
+      return 'Completed';
+    }
+
+    // If we don't have a valid timeline, fall back to simple interpretation
+    if (!assignmentDate || !targetDate || isNaN(assignmentDate.getTime()) || isNaN(targetDate.getTime())) {
+      if (actual <= 0) return 'Not Started';
+      return 'On Track';
+    }
+
+    // If we've passed the target date and actual < 100, consider it Behind
+    if (now > targetDate && actual < 100) {
+      return 'Behind';
+    }
+
+    // Compare actual vs expected progress
+    if (expected > 0 && actual < expected) {
+      return 'Behind';
+    }
+
+    return 'On Track';
   }
 
   // Check if feedback exists for a skill (for manager's own skills)
@@ -2530,6 +2678,10 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     let filtered = [...this.manager.skills];
     if (this.mySkillsSkillFilter) {
       filtered = filtered.filter(skill => skill.skill === this.mySkillsSkillFilter);
+    }
+     // Apply status filter based on timeline status (Not Started/Behind/On Track/Completed)
+    if (this.mySkillsStatusFilter) {
+      filtered = filtered.filter(skill => this.getTimelineStatus(skill) === this.mySkillsStatusFilter);
     }
     return filtered;
   }
@@ -2972,6 +3124,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.catalogSearch = '';
     this.catalogTypeFilter = 'All';
     this.catalogCategoryFilter = 'All';
+    this.catalogDateFilter = '';
   }
 
   resetAssignedTrainingFilters(): void {
@@ -3208,10 +3361,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       { headers }
     ).subscribe({
       next: (candidates) => {
+        // Cache candidates for this training; UI will decide when to show messages
         this.trainingCandidates.set(trainingId, candidates);
-        if (candidates.length === 0) {
-          this.toastService.info('No candidates assigned to this training yet.');
-        }
       },
       error: (err) => {
         // If 401, token expired - redirect to login
@@ -3254,7 +3405,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       setTimeout(() => {
         const updatedCandidates = this.getTrainingCandidates(trainingId);
         if (updatedCandidates.length === 0) {
-          this.toastService.warning('No candidates found for this training. You may not be the trainer for this training, or no employees have been assigned yet.');
+          // Show simple info popup only when user explicitly clicks Attendance
+          this.toastService.info('No candidates assigned to this training yet.');
           return;
         }
         this.attendanceCandidates = updatedCandidates.map(c => ({ ...c }));
@@ -3575,19 +3727,27 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   onQuestionTypeChange(question: AssignmentQuestion): void {
+    // Ensure options exist for choice-based questions
     if ((question.type === 'single-choice' || question.type === 'multiple-choice') && question.options.length === 0) {
       question.options.push({ text: '', isCorrect: false }, { text: '', isCorrect: false });
     }
+
+    // For text or file-upload questions, clear options as they are not used
+    if (question.type === 'text-input' || question.type === 'file-upload') {
+      question.options = [];
+    }
+
+    // Enforce only one correct option for single-choice
     if (question.type === 'single-choice') {
-        let firstCorrectFound = false;
-        question.options.forEach(opt => {
-            if (opt.isCorrect) {
-                if (firstCorrectFound) {
-                    opt.isCorrect = false;
-                }
-                firstCorrectFound = true;
-            }
-        });
+      let firstCorrectFound = false;
+      question.options.forEach(opt => {
+        if (opt.isCorrect) {
+          if (firstCorrectFound) {
+            opt.isCorrect = false;
+          }
+          firstCorrectFound = true;
+        }
+      });
     }
   }
 

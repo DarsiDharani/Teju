@@ -153,7 +153,8 @@ async def notify_training_request_rejected(
         type="warning",
         related_id=training_id,
         related_type="training_request",
-        action_url=f"/engineer-dashboard?tab=trainingRequests"
+        # Engineer sees their requests under the 'myRequests' tab
+        action_url=f"/engineer-dashboard?tab=myRequests"
     )
 
 async def notify_new_assignment_available(
@@ -273,8 +274,14 @@ async def notify_training_request_received(
         type="info",
         related_id=training_id,
         related_type="training_request",
-        action_url=f"/manager-dashboard?tab=trainingRequests"
+        # Manager sees pending training requests on the main dashboard
+        action_url=f"/manager-dashboard?tab=dashboard"
     )
+
+
+
+
+
 
 
 
