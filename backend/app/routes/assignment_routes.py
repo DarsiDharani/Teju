@@ -96,7 +96,7 @@ async def assign_training_to_employee(
             training_id=assignment.training_id,
             employee_empid=assignment.employee_username,
             manager_empid=manager_username,
-            target_date=assignment.target_date,
+            # target_date=assignment.target_date,  # Uncomment after running migration
         )
         db.add(db_assignment)
         await db.commit()

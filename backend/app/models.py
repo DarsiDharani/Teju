@@ -121,7 +121,8 @@ class TrainingAssignment(Base):
     # Match existing DB column name 'assignment_date' (timestamp)
     assignment_date = Column(DateTime, default=datetime.utcnow)
     # Optional target completion date set by manager at the time of assignment
-    target_date = Column(Date, nullable=True)
+    # NOTE: Uncomment after running migration: backend/add_target_date_to_training_assignments.py
+    # target_date = Column(Date, nullable=True)
 
 class TrainingAttendance(Base):
     __tablename__ = 'training_attendance'

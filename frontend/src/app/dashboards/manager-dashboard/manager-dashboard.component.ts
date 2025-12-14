@@ -109,53 +109,53 @@ interface ManagerData {
 // TrainingDetail and TrainingRequest are now imported from models/training.model.ts
 
 interface TeamAssignmentSubmission {
-    id: number;
-    training_id: number;
-    training_name: string;
-    employee_empid: string;
-    employee_name: string;
-    score: number;
-    total_questions: number;
-    correct_answers: number;
-    submitted_at: string;
-    has_feedback?: boolean;
-    feedback_count?: number;
+  id: number;
+  training_id: number;
+  training_name: string;
+  employee_empid: string;
+  employee_name: string;
+  score: number;
+  total_questions: number;
+  correct_answers: number;
+  submitted_at: string;
+  has_feedback?: boolean;
+  feedback_count?: number;
 }
 
 interface TeamFeedbackSubmission {
-    id: number;
-    training_id: number;
-    training_name: string;
-    employee_empid: string;
-    employee_name: string;
-    responses: Array<{ questionIndex: number; questionText: string; selectedOption: string }>;
-    submitted_at: string;
-    has_feedback?: boolean;
-    feedback_count?: number;
+  id: number;
+  training_id: number;
+  training_name: string;
+  employee_empid: string;
+  employee_name: string;
+  responses: Array<{ questionIndex: number; questionText: string; selectedOption: string }>;
+  submitted_at: string;
+  has_feedback?: boolean;
+  feedback_count?: number;
 }
 
 interface ManagerPerformanceFeedback {
-    id: number;
-    training_id: number;
-    training_name: string;
-    employee_empid: string;
-    employee_name: string;
-    manager_empid: string;
-    manager_name: string;
-    application_of_training?: number;
-    quality_of_deliverables?: number;
-    problem_solving_capability?: number;
-    productivity_independence?: number;
-    process_compliance_adherence?: number;
-    improvement_areas?: string;
-    strengths?: string;
-    overall_performance: number;
-    additional_comments?: string;
-    created_at: string;
-    updated_at: string;
-    updateNumber?: number;  // Added for feedback history display
-    totalUpdates?: number;  // Added for feedback history display
-    skill_category?: string;  // Added for skill level grouping (L1-L5)
+  id: number;
+  training_id: number;
+  training_name: string;
+  employee_empid: string;
+  employee_name: string;
+  manager_empid: string;
+  manager_name: string;
+  application_of_training?: number;
+  quality_of_deliverables?: number;
+  problem_solving_capability?: number;
+  productivity_independence?: number;
+  process_compliance_adherence?: number;
+  improvement_areas?: string;
+  strengths?: string;
+  overall_performance: number;
+  additional_comments?: string;
+  created_at: string;
+  updated_at: string;
+  updateNumber?: number;  // Added for feedback history display
+  totalUpdates?: number;  // Added for feedback history display
+  skill_category?: string;  // Added for skill level grouping (L1-L5)
 }
 
 // CalendarEvent, Assignment, AssignmentQuestion, QuestionOption, and FeedbackQuestion 
@@ -179,13 +179,13 @@ type Section = { title: string; subtitle?: string; levels: LevelBlock[] };
       ])
     ]),
     trigger('slideFadeIn', [
-        transition(':enter', [
-            style({ opacity: 0, transform: 'translateY(-20px)' }),
-            animate('500ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
-        ]),
-        transition(':leave', [
-            animate('500ms ease-in', style({ opacity: 0, transform: 'translateY(-20px)' }))
-        ])
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(-20px)' }),
+        animate('500ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ]),
+      transition(':leave', [
+        animate('500ms ease-in', style({ opacity: 0, transform: 'translateY(-20px)' }))
+      ])
     ]),
     trigger('modalScale', [
       transition(':enter', [
@@ -217,6 +217,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   private observer!: IntersectionObserver;
 
   activeTab: string = 'dashboard';
+  dashboardCompletedTrainings: TrainingDetail[] = [];
+  dashboardUpcomingTrainings: TrainingDetail[] = [];
+  showCompletedTrainingsModal: boolean = false;
+  showSkillsModal: boolean = false;
+  modalTitle: string = '';
+  modalSkills: any[] = [];
+
+  // Data
   manager: ManagerData | null = null;
   managerDisplayName: string = '';
   managerIsTrainer: boolean = false;
@@ -228,11 +236,11 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   teamSkillsGap: number = 0;
   topSkillGaps: any[] = [];
   assignedTrainingsCount: number = 0; // New metric!
-  
+
   // Dashboard view toggle
   dashboardView: 'personal' | 'team' = 'personal';
   pinnedItems: string[] = []; // For pin-to-pin feature
-  
+
   selectedTeamMember: TeamMember | null = null;
 
   editingSkill: { memberId: string, skillIndex: number } | null = null;
@@ -240,7 +248,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   selectedTrainingIds: number[] = [];
   selectedMemberIds: string[] = [];
-  
+
   assignTrainingSearch: string = '';
   assignMemberSearch: string = '';
   /**
@@ -253,12 +261,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   showAssignmentSuccessModal: boolean = false;
   assignmentSuccessData: { trainingNames: string[]; memberNames: string[]; totalAssignments: number } | null = null;
   isAssigningTraining: boolean = false;
-  
+
   // Duplicate assignments modal
   showDuplicateModal: boolean = false;
   duplicateAssignments: { training: string; member: string }[] = [];
   pendingValidAssignments: { trainingId: number; memberId: string; trainingName: string; memberName: string }[] = [];
-  
+
   // Existing assignments for duplicate checking (format: "trainingId_employeeId")
   existingAssignments: Set<string> = new Set();
 
@@ -280,7 +288,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   skillLevels: string[] = ['L0', 'L1', 'L2', 'L3', 'L4', 'L5'];
   skillLevelsForFilter: string[] = ['L0', 'L1', 'L2', 'L3', 'L4', 'L5'];
-  
+
   skillCategoryLevels: string[] = ['L1', 'L2', 'L3', 'L4', 'L5'];
   skillNames: string[] = [];
 
@@ -295,21 +303,21 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   editingSkillId: number | null = null;
   additionalSkillLevels = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
   skillCategories = ['Technical', 'Soft Skills', 'Leadership', 'Communication', 'Project Management', 'Other'];
-  
+
   // Feedback modal properties
   showSkillFeedbackModal: boolean = false;
   selectedSkillForFeedback: string = '';
   selectedFeedbackSkillType: string = '';
   skillFeedbackList: ManagerPerformanceFeedback[] = [];
   skillFeedbackByType: Map<string, ManagerPerformanceFeedback[]> = new Map();
-  
+
   showScheduleTrainingModal = false;
   trainingCatalog: TrainingDetail[] = [];
   allTrainings: TrainingDetail[] = [];
   assignedTrainings: TrainingDetail[] = [];
   teamAssignedTrainings: TrainingDetail[] = [];
   pendingRequests: TrainingRequest[] = [];
-  
+
   // --- Recorded Trainings ---
   recordedTrainings: Array<{
     id: number;
@@ -327,7 +335,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   catalogTypeFilter: string = 'All';
   catalogCategoryFilter: string = 'All';
   catalogDateFilter: string = '';
-  
+
   // --- Assigned Trainings Filters ---
   assignedSearch: string = '';
   assignedSkillFilter: string = 'All';
@@ -352,14 +360,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   sharedFeedback: Map<number, boolean> = new Map(); // Track which trainings have feedback shared
   assignmentSharedBy: Map<number, string> = new Map(); // Track who shared the assignment
   feedbackSharedBy: Map<number, string> = new Map(); // Track who shared the feedback
-  trainingCandidates: Map<number, {employee_empid: string, employee_name: string, attended: boolean}[]> = new Map(); // Store candidates for each training
+  trainingCandidates: Map<number, { employee_empid: string, employee_name: string, attended: boolean }[]> = new Map(); // Store candidates for each training
   showAttendanceModal: boolean = false;
   selectedTrainingForAttendance: number | null = null;
-  attendanceCandidates: {employee_empid: string, employee_name: string, attended: boolean}[] = [];
+  attendanceCandidates: { employee_empid: string, employee_name: string, attended: boolean }[] = [];
   isMarkingAttendance: boolean = false;
   private _myTrainingsCache: TrainingDetail[] = [];
   private _myTrainingsCacheKey: string = '';
-  
+
   // File management properties
   questionFilesUploaded: Map<number, boolean> = new Map(); // Track which trainings have question files
   trainerSolutions: Map<number, any[]> = new Map(); // Store solution files for trainers to view
@@ -367,7 +375,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   selectedTrainingForSolutions: number | null = null;
   solutionsList: any[] = [];
   isLoadingSolutions: boolean = false;
-  
+
   // Assignment and Feedback Forms
   newAssignment: Assignment = {
     trainingId: null,
@@ -376,7 +384,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     questions: []
   };
   assignmentFile: File | null = null; // File to upload with assignment
-  
+
   defaultFeedbackQuestions: FeedbackQuestion[] = [
     { text: "How would you rate your overall experience with this training?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
     { text: "Was the content relevant and applicable to your role?", options: ['Yes', 'No', 'Partially'], isDefault: true },
@@ -393,7 +401,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     trainingId: null as number | null,
     customQuestions: [] as FeedbackQuestion[]
   };
-  
+
   newTraining = {
     division: '',
     department: '',
@@ -415,7 +423,6 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   // Modal properties
   showDetailModal = false;
-  modalTitle = '';
   modalData: any[] = [];
   modalDataType: 'members' | 'skills' | null = null;
 
@@ -452,7 +459,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   feedbackHistoryList: ManagerPerformanceFeedback[] = [];
   showSuccessPopup: boolean = false;
   successPopupMessage: string = '';
-  
+
   // Attendance success popup
   showAttendanceSuccessPopup: boolean = false;
   attendanceSuccessData: {
@@ -601,7 +608,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     private toastService: ToastService,
     private apiService: ApiService,
     private notificationService: NotificationService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // Clear question file status map on init to ensure fresh state after logout/login
@@ -666,7 +673,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   fetchAssignedTrainingsCount(): void {
     // This is a placeholder. In a real app, you would make an API call here.
     // For now, we'll simulate a count.
-    this.assignedTrainingsCount = 12; 
+    this.assignedTrainingsCount = 12;
   }
 
   ngAfterViewInit(): void {
@@ -688,14 +695,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   selectTab(tabName: string): void {
     if (tabName === 'trainingCatalog' || tabName === 'assignTraining' || tabName === 'trainerZone') {
-        this.fetchTrainingCatalog();
+      this.fetchTrainingCatalog();
     }
     if (tabName === 'trainerZone') {
       // Refresh scheduled trainings when switching to Trainer Zone to show latest sessions
       this.fetchScheduledTrainings();
     }
     if (tabName === 'assignedTrainings') {
-        this.fetchAssignedTrainings();
+      this.fetchAssignedTrainings();
     }
     this.selectedTeamMember = null;
     this.mySkillsStatusFilter = '';
@@ -707,7 +714,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.teamSkillsCurrentLevelFilter = 'All';
     this.activeTab = tabName;
     setTimeout(() => {
-        this.animatedElements.forEach(el => this.observer.observe(el.nativeElement));
+      this.animatedElements.forEach(el => this.observer.observe(el.nativeElement));
     }, 0);
   }
 
@@ -765,7 +772,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   getTeamMembersWithGaps(): TeamMember[] {
     if (!this.manager) return [];
-    return this.manager.team.filter(member => 
+    return this.manager.team.filter(member =>
       member.skills.some(skill => skill.status === 'Gap')
     );
   }
@@ -780,7 +787,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   getUpcomingTeamTrainings(): TrainingDetail[] {
     // This would typically come from an API call for team assigned trainings
-    return this.assignedTrainings.filter(t => 
+    return this.assignedTrainings.filter(t =>
       t.training_date && new Date(t.training_date) >= new Date()
     ).slice(0, 5);
   }
@@ -832,6 +839,85 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // Process trainings for dashboard display (Upcoming vs Completed)
+  processDashboardTrainings(): void {
+    if (!this.assignedTrainings || this.assignedTrainings.length === 0) {
+      this.dashboardUpcomingTrainings = [];
+      this.dashboardCompletedTrainings = [];
+      return;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Populate dashboardUpcomingTrainings using the same logic as getUpcomingPersonalTrainings but storing in property
+    this.dashboardUpcomingTrainings = this.assignedTrainings
+      .filter(t => t.training_date && new Date(t.training_date) >= today)
+      .sort((a, b) => {
+        return new Date(a.training_date!).getTime() - new Date(b.training_date!).getTime();
+      });
+
+    // Completed trainings: training date has passed AND attendance has been marked AND employee attended
+    this.dashboardCompletedTrainings = this.assignedTrainings
+      .filter(t => {
+        const trainingDate = t.training_date ? new Date(t.training_date) : null;
+        const isPast = trainingDate && trainingDate < today;
+        const attendanceMarked = t.attendance_marked === true;
+        const attendanceAttended = t.attendance_attended === true;
+        return isPast && attendanceMarked && attendanceAttended;
+      })
+      .sort((a, b) => {
+        return new Date(b.training_date!).getTime() - new Date(a.training_date!).getTime();
+      });
+  }
+
+  openCompletedTrainingsModal(): void {
+    this.showCompletedTrainingsModal = true;
+  }
+
+  closeCompletedTrainingsModal(): void {
+    this.showCompletedTrainingsModal = false;
+  }
+
+  // --- Skills Modal Logic ---
+  openSkillsModal(filterStatus: 'all' | 'Met'): void {
+    // Reset modal data first
+    this.modalTitle = '';
+    this.modalSkills = [];
+
+    if (filterStatus === 'all') {
+      this.modalTitle = 'Core Skills';
+      // For Core Skills, we show all core skills without status
+      this.modalSkills = this.sections.map((section, index) => ({
+        id: index + 1,
+        skill: section.title,
+        competency: section.subtitle || 'Core Competency'
+      }));
+    } else if (filterStatus === 'Met') {
+      this.modalTitle = 'Skills Met';
+      // For Skills Met, we use the timeline status logic
+      // Since manager might not have "skills" property exactly like engineer, we adapt
+      const skills = this.manager?.skills || [];
+      this.modalSkills = skills.filter(s => this.getTimelineStatus(s) === 'Completed').map((skill, index) => ({
+        id: index + 1, // Generate temporary ID since Competency doesn't have one
+        skill: skill.skill,
+        competency: skill.competency,
+        current_expertise: skill.current_expertise,
+        target_expertise: skill.target_expertise,
+        status: 'Met'
+      }));
+    }
+
+    // Force change detection and then show modal
+    // this.cdr.detectChanges(); // If needed, inject ChangeDetectorRef
+    this.showSkillsModal = true;
+  }
+
+  closeSkillsModal(): void {
+    this.showSkillsModal = false;
+    this.modalTitle = '';
+    this.modalSkills = [];
+  }
+
   getTrainingCardIcon(skill?: string | null): string {
     if (!skill) return 'fa-solid fa-laptop-code';
     const skillLower = skill.toLowerCase();
@@ -853,13 +939,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const token = this.authService.getToken();
     if (!token) return;
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
-    this.http.get<{training_id: number; employee_empid: string}[]>(this.apiService.managerTeamAssignmentsUrl, { headers }).subscribe({
+
+    this.http.get<{ training_id: number; employee_empid: string }[]>(this.apiService.managerTeamAssignmentsUrl, { headers }).subscribe({
       next: (response) => {
         console.log('Team assigned trainings loaded:', response);
         // Store existing assignments in a Set for quick duplicate checking
         this.existingAssignments.clear();
-        (response || []).forEach((assignment: {training_id: number; employee_empid: string}) => {
+        (response || []).forEach((assignment: { training_id: number; employee_empid: string }) => {
           const key = `${assignment.training_id}_${assignment.employee_empid}`;
           this.existingAssignments.add(key);
         });
@@ -879,9 +965,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const token = this.authService.getToken();
     if (!token) return;
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     this.isLoadingSubmissions = true;
-    
+
     // Fetch both assignment and feedback submissions
     forkJoin({
       assignments: this.http.get<TeamAssignmentSubmission[]>(this.apiService.managerTeamAssignmentsSubmissionsUrl, { headers }).pipe(
@@ -923,7 +1009,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     };
     this.existingFeedback = null;
     this.showFeedbackModal = true;
-    
+
     // Load existing feedback if any
     this.loadExistingFeedback(submission.training_id, submission.employee_empid);
   }
@@ -933,7 +1019,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const token = this.authService.getToken();
     if (!token) return;
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     // Load latest feedback for editing
     this.http.get<ManagerPerformanceFeedback>(this.apiService.managerPerformanceFeedbackByIdUrl(trainingId, employeeEmpid), { headers }).subscribe({
       next: (feedback) => {
@@ -990,7 +1076,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
         // Group feedback by skill type
         this.feedbackHistoryByType = this.groupFeedbackBySkillType(this.feedbackHistory);
-        
+
         this.isLoadingFeedbackHistory = false;
       },
       error: (err) => {
@@ -1005,17 +1091,17 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // Group feedback by skill type (L1-L5)
   groupFeedbackBySkillType(feedbackList: ManagerPerformanceFeedback[]): Map<string, ManagerPerformanceFeedback[]> {
     const grouped = new Map<string, ManagerPerformanceFeedback[]>();
-    
+
     feedbackList.forEach(feedback => {
       // Get skill category (L1, L2, L3, L4, L5) or default to 'Unknown'
       const skillType = feedback.skill_category || 'Unknown';
-      
+
       if (!grouped.has(skillType)) {
         grouped.set(skillType, []);
       }
       grouped.get(skillType)!.push(feedback);
     });
-    
+
     // Sort feedback within each group by updated_at (most recent first)
     grouped.forEach((feedbackList, skillType) => {
       feedbackList.sort((a, b) => {
@@ -1024,14 +1110,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         return dateB - dateA;
       });
     });
-    
+
     return grouped;
   }
 
   // Get latest feedback for a skill type
   getLatestFeedbackForType(feedbackList: ManagerPerformanceFeedback[]): ManagerPerformanceFeedback | null {
     if (!feedbackList || feedbackList.length === 0) return null;
-    
+
     // List is already sorted by updated_at descending
     return feedbackList[0];
   }
@@ -1049,7 +1135,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   // Get skill type entries as array for template iteration (for skill feedback modal)
-  getSkillTypeEntriesForFeedback(): Array<{key: string, value: ManagerPerformanceFeedback[]}> {
+  getSkillTypeEntriesForFeedback(): Array<{ key: string, value: ManagerPerformanceFeedback[] }> {
     return Array.from(this.skillFeedbackByType.entries()).map(([key, value]) => ({
       key,
       value
@@ -1057,7 +1143,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   // Get filtered skill type entries based on selected tab (for skill feedback modal)
-  getFilteredSkillTypeEntries(): Array<{key: string, value: ManagerPerformanceFeedback[]}> {
+  getFilteredSkillTypeEntries(): Array<{ key: string, value: ManagerPerformanceFeedback[] }> {
     const entries = this.getSkillTypeEntriesForFeedback();
     if (!this.selectedFeedbackSkillType) {
       return entries;
@@ -1074,7 +1160,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   // Get skill type entries as array for template iteration
-  getSkillTypeEntries(): Array<{key: string, value: ManagerPerformanceFeedback[]}> {
+  getSkillTypeEntries(): Array<{ key: string, value: ManagerPerformanceFeedback[] }> {
     return Array.from(this.feedbackHistoryByType.entries()).map(([key, value]) => ({
       key,
       value
@@ -1087,19 +1173,19 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.selectedSkillTypeForHistory = skillType;
     this.selectedTrainingNameForHistory = this.selectedSubmissionForFeedback.submission.training_name;
     this.selectedEmployeeNameForHistory = this.selectedSubmissionForFeedback.submission.employee_name;
-    
+
     // Get all feedback for this skill type
-    this.feedbackHistoryList = this.feedbackHistory.filter(fb => 
+    this.feedbackHistoryList = this.feedbackHistory.filter(fb =>
       (fb.skill_category || 'Unknown') === skillType
     );
-    
+
     // Sort by updated_at descending (most recent first)
     this.feedbackHistoryList.sort((a, b) => {
       const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
       const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
       return dateB - dateA;
     });
-    
+
     this.showFeedbackHistoryModal = true;
   }
 
@@ -1138,11 +1224,11 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   openFinalEvaluationFromCard(submission: TeamAssignmentSubmission | TeamFeedbackSubmission): void {
     // Determine submission type by checking if it has 'score' property (assignment) or 'responses' property (feedback)
     const submissionType: 'assignment' | 'feedback' = 'score' in submission ? 'assignment' : 'feedback';
-    
+
     // Set the selected submission for feedback
-    this.selectedSubmissionForFeedback = { 
-      type: submissionType, 
-      submission: submission 
+    this.selectedSubmissionForFeedback = {
+      type: submissionType,
+      submission: submission
     };
     // Open the final evaluation modal
     this.openFinalEvaluationModal();
@@ -1151,14 +1237,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // Open final evaluation modal
   openFinalEvaluationModal(): void {
     if (!this.selectedSubmissionForFeedback) return;
-    
+
     this.showFinalEvaluationModal = true;
     this.isLoadingEmployeeSkills = true;
     this.employeeSkillsForEvaluation = [];
     this.isManagerSatisfied = null; // Reset satisfaction status
-    
+
     const employeeEmpid = this.selectedSubmissionForFeedback.submission.employee_empid;
-    
+
     // Try to get skills from already loaded manager data
     if (this.manager) {
       const teamMember = this.manager.team.find(member => member.id === employeeEmpid);
@@ -1173,16 +1259,16 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         return;
       }
     }
-    
+
     // If not found in loaded data, fetch manager dashboard data
     const token = this.authService.getToken();
     if (!token) {
       this.isLoadingEmployeeSkills = false;
       return;
     }
-    
+
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     // Fetch manager dashboard data to get team member skills
     this.http.get<any>(this.apiService.getUrl('/data/manager/dashboard'), { headers }).subscribe({
       next: (data) => {
@@ -1222,19 +1308,19 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // Submit final evaluation
   submitFinalEvaluation(): void {
     if (!this.selectedSubmissionForFeedback) return;
-    
+
     // Check if manager is satisfied
     if (this.isManagerSatisfied === null) {
       this.toastService.warning('Please indicate whether you are satisfied with the candidate\'s performance');
       return;
     }
-    
+
     if (this.isManagerSatisfied === false) {
       // Should not reach here if UI is correct, but handle it anyway
       this.reassignTraining();
       return;
     }
-    
+
     const achievedSkills = this.employeeSkillsForEvaluation.filter(skill => skill.targetAchieved);
     if (achievedSkills.length === 0) {
       this.toastService.error('Please select at least one skill that has achieved its target state');
@@ -1242,16 +1328,16 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     }
 
     this.isSubmittingEvaluation = true;
-    
+
     const token = this.authService.getToken();
     if (!token) {
       this.isSubmittingEvaluation = false;
       return;
     }
-    
+
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' });
     const employeeEmpid = this.selectedSubmissionForFeedback.submission.employee_empid;
-    
+
     // Update each achieved skill
     const updatePromises = achievedSkills.map(skill => {
       const payload = {
@@ -1260,31 +1346,31 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         current_expertise: skill.target_expertise, // Update current to match target
         target_expertise: skill.target_expertise
       };
-      
+
       return this.http.put(this.apiService.getUrl('/data/manager/team-skill'), payload, { headers }).toPromise();
     });
 
     // Execute all updates
     Promise.all(updatePromises).then(() => {
       this.isSubmittingEvaluation = false;
-      
+
       // Show success message
       this.successPopupMessage = `Successfully updated ${achievedSkills.length} skill${achievedSkills.length !== 1 ? 's' : ''} and awarded ${achievedSkills.length} badge${achievedSkills.length !== 1 ? 's' : ''}!`;
       this.showSuccessPopup = true;
-      
+
       // Auto-close popup after 4 seconds
       setTimeout(() => {
         if (this.showSuccessPopup) {
           this.closeSuccessPopup();
         }
       }, 4000);
-      
+
       // Close evaluation modal
       this.closeFinalEvaluationModal();
-      
+
       // Refresh team data to reflect changes
       this.fetchDashboardData();
-      
+
       this.toastService.success(`Final evaluation completed! ${achievedSkills.length} badge${achievedSkills.length !== 1 ? 's' : ''} awarded.`);
     }).catch((err) => {
       this.isSubmittingEvaluation = false;
@@ -1300,60 +1386,60 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // Reassign training when manager is not satisfied
   reassignTraining(): void {
     if (!this.selectedSubmissionForFeedback) return;
-    
+
     const trainingId = this.selectedSubmissionForFeedback.submission.training_id;
     const employeeEmpid = this.selectedSubmissionForFeedback.submission.employee_empid;
     const trainingName = this.selectedSubmissionForFeedback.submission.training_name;
     const employeeName = this.selectedSubmissionForFeedback.submission.employee_name;
-    
+
     if (!trainingId || !employeeEmpid) {
       this.toastService.error('Missing training or employee information');
       return;
     }
-    
+
     this.isReassigningTraining = true;
-    
+
     const token = this.authService.getToken();
     if (!token) {
       this.isReassigningTraining = false;
       this.toastService.error('Authentication token missing. Please login again.');
       return;
     }
-    
+
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     // First, delete the existing assignment
     this.http.delete(this.apiService.getUrl(`/assignments/${trainingId}/${employeeEmpid}`), { headers }).subscribe({
       next: () => {
         // After deletion, recreate the assignment
-        const payload: any = { 
-          training_id: trainingId, 
-          employee_username: employeeEmpid 
+        const payload: any = {
+          training_id: trainingId,
+          employee_username: employeeEmpid
         };
-        
+
         this.http.post(this.apiService.assignmentsUrl, payload, { headers }).subscribe({
           next: () => {
             this.isReassigningTraining = false;
-            
+
             // Show success message
             this.successPopupMessage = `Training "${trainingName}" has been reassigned to ${employeeName}. They can now retake the training.`;
             this.showSuccessPopup = true;
-            
+
             // Auto-close popup after 4 seconds
             setTimeout(() => {
               if (this.showSuccessPopup) {
                 this.closeSuccessPopup();
               }
             }, 4000);
-            
+
             // Close evaluation modal
             this.closeFinalEvaluationModal();
-            
+
             // Refresh team data to reflect changes
             this.fetchDashboardData();
             this.fetchTeamAssignedTrainings();
             this.fetchTeamSubmissions();
-            
+
             this.toastService.success(`Training reassigned successfully to ${employeeName}`);
           },
           error: (err) => {
@@ -1368,11 +1454,11 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         console.error('Failed to delete assignment:', err);
         if (err.status === 404) {
           // Assignment might not exist, try to create it anyway
-          const payload = { 
-            training_id: trainingId, 
-            employee_username: employeeEmpid 
+          const payload = {
+            training_id: trainingId,
+            employee_username: employeeEmpid
           };
-          
+
           this.http.post(this.apiService.assignmentsUrl, payload, { headers }).subscribe({
             next: () => {
               this.isReassigningTraining = false;
@@ -1427,7 +1513,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.showSuccessPopup = false;
     this.successPopupMessage = '';
   }
-  
+
   closeAttendanceSuccessPopup(): void {
     this.showAttendanceSuccessPopup = false;
     this.attendanceSuccessData = null;
@@ -1444,9 +1530,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const r5 = this.performanceFeedback.process_compliance_adherence;
 
     // Check if all five ratings are provided (not null or undefined)
-    if (r1 === null || r1 === undefined || r2 === null || r2 === undefined || 
-        r3 === null || r3 === undefined || r4 === null || r4 === undefined || 
-        r5 === null || r5 === undefined) {
+    if (r1 === null || r1 === undefined || r2 === null || r2 === undefined ||
+      r3 === null || r3 === undefined || r4 === null || r4 === undefined ||
+      r5 === null || r5 === undefined) {
       this.performanceFeedback.overall_performance = 0;
       return;
     }
@@ -1466,13 +1552,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
     // Calculate sum of all five ratings
     const sum = rating1 + rating2 + rating3 + rating4 + rating5;
-    
+
     // Calculate average: sum divided by 5
     const average = sum / 5;
-    
+
     // Round to nearest integer (1-5 scale)
     this.performanceFeedback.overall_performance = Math.round(average);
-    
+
     // Ensure it's within valid range (should always be 1-5 after rounding)
     if (this.performanceFeedback.overall_performance < 1) {
       this.performanceFeedback.overall_performance = 1;
@@ -1499,10 +1585,10 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // Submit performance feedback
   submitPerformanceFeedback(): void {
     if (!this.selectedSubmissionForFeedback) return;
-    
+
     // Ensure overall performance is calculated
     this.calculateOverallPerformance();
-    
+
     // Validate that all five ratings are provided
     const ratings = [
       { name: 'Application of Training in Daily Work', value: this.performanceFeedback.application_of_training },
@@ -1537,9 +1623,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const token = this.authService.getToken();
     if (!token) return;
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' });
-    
+
     this.isSubmittingFeedback = true;
-    
+
     const payload = {
       training_id: this.performanceFeedback.training_id,
       employee_empid: this.performanceFeedback.employee_empid,
@@ -1558,27 +1644,27 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       next: (response) => {
         this.isSubmittingFeedback = false;
         const isUpdate = this.existingFeedback !== null;
-        
+
         // Update local status immediately
         this.updateSubmissionFeedbackStatus(
           this.performanceFeedback.training_id,
           this.performanceFeedback.employee_empid,
           true
         );
-        
+
         // Store training and employee info before closing modal
         const trainingId = this.performanceFeedback.training_id;
         const employeeEmpid = this.performanceFeedback.employee_empid;
-        
+
         // Close feedback modal first
         this.closeFeedbackModal();
-        
+
         // Show success popup after a brief delay to ensure modal is closed
         setTimeout(() => {
           this.successPopupMessage = 'Feedback submitted successfully! A new entry has been created. All previous feedback entries are preserved and visible.';
           this.showSuccessPopup = true;
           console.log('Success popup should be visible now:', this.showSuccessPopup, this.successPopupMessage);
-          
+
           // Auto-close popup after 4 seconds
           setTimeout(() => {
             if (this.showSuccessPopup) {
@@ -1586,7 +1672,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             }
           }, 4000);
         }, 300);
-        
+
         // Refresh team submissions to update status from backend
         this.fetchTeamSubmissions();
       },
@@ -1603,7 +1689,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       }
     });
   }
-  
+
   openScheduleTrainingModal(): void {
     this.newTraining.trainer_name = this.managerDisplayName || this.manager?.name || this.manager?.id || this.authService.getUsername() || '';
     this.showScheduleTrainingModal = true;
@@ -1612,32 +1698,32 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   closeScheduleTrainingModal(): void {
     this.showScheduleTrainingModal = false;
     this.newTraining = {
-        division: '',
-        department: '',
-        competency: '',
-        skill: '',
-        training_name: '',
-        training_topics: '',
-        prerequisites: '',
-        skill_category: 'L1',
-        trainer_name: '',
-        email: '',
-        training_date: '',
-        duration: '',
-        time: '',
-        training_type: 'Online',
-        seats: '',
-        assessment_details: ''
+      division: '',
+      department: '',
+      competency: '',
+      skill: '',
+      training_name: '',
+      training_topics: '',
+      prerequisites: '',
+      skill_category: 'L1',
+      trainer_name: '',
+      email: '',
+      training_date: '',
+      duration: '',
+      time: '',
+      training_type: 'Online',
+      seats: '',
+      assessment_details: ''
     };
   }
 
   // New Modal Methods
   openDetailModal(type: 'mySkillsMet' | 'mySkillGaps' | 'teamSkillsMet' | 'teamSkillGaps' | 'totalMembers' | 'additionalSkills' | 'coreSkills') {
     if (!this.manager) return;
-    
+
     this.modalDataType = null;
 
-    switch(type) {
+    switch (type) {
       case 'totalMembers':
         this.modalTitle = 'Total Team Members';
         this.modalData = this.manager.team;
@@ -1682,10 +1768,10 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         this.modalDataType = 'skills';
         break;
       case 'additionalSkills':
-          this.modalTitle = 'My Additional Skills';
-          this.modalData = this.additionalSkills;
-          this.modalDataType = 'skills'; // Reuse skills template for this
-          break;
+        this.modalTitle = 'My Additional Skills';
+        this.modalData = this.additionalSkills;
+        this.modalDataType = 'skills'; // Reuse skills template for this
+        break;
     }
     this.showDetailModal = true;
   }
@@ -1701,8 +1787,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   scheduleTraining(): void {
     const token = this.authService.getToken();
     if (!token) {
-        this.errorMessage = 'Authentication error. Please log in again.';
-        return;
+      this.errorMessage = 'Authentication error. Please log in again.';
+      return;
     }
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
@@ -1724,28 +1810,28 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     };
 
     this.http.post(this.apiService.trainingsUrl, payload, { headers }).subscribe({
-        next: (response) => {
-            this.toastService.success('Training scheduled successfully!');
-            this.closeScheduleTrainingModal();
-            this.fetchTrainingCatalog();
-            this.fetchScheduledTrainings();
-        },
-        error: (err) => {
-            if (err.status === 401) {
-              this.toastService.error('Your session has expired. Please log in again.');
-              this.authService.logout();
-              this.router.navigate(['/login']);
-            } else if (err.status === 422 && err.error && err.error.detail) {
-              const errorDetails = err.error.detail.map((e: any) => `- Field '${e.loc[1]}': ${e.msg}`).join('\n');
-              const fullErrorMessage = `Please correct the following errors:\n${errorDetails}`;
-              this.errorMessage = fullErrorMessage;
-              this.toastService.error(fullErrorMessage);
-            } else {
-              const detail = err.error?.detail || 'An unknown error occurred. Please try again.';
-              this.errorMessage = `Failed to schedule training: ${detail}`;
-              this.toastService.error(this.errorMessage);
-            }
+      next: (response) => {
+        this.toastService.success('Training scheduled successfully!');
+        this.closeScheduleTrainingModal();
+        this.fetchTrainingCatalog();
+        this.fetchScheduledTrainings();
+      },
+      error: (err) => {
+        if (err.status === 401) {
+          this.toastService.error('Your session has expired. Please log in again.');
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        } else if (err.status === 422 && err.error && err.error.detail) {
+          const errorDetails = err.error.detail.map((e: any) => `- Field '${e.loc[1]}': ${e.msg}`).join('\n');
+          const fullErrorMessage = `Please correct the following errors:\n${errorDetails}`;
+          this.errorMessage = fullErrorMessage;
+          this.toastService.error(fullErrorMessage);
+        } else {
+          const detail = err.error?.detail || 'An unknown error occurred. Please try again.';
+          this.errorMessage = `Failed to schedule training: ${detail}`;
+          this.toastService.error(this.errorMessage);
         }
+      }
     });
   }
 
@@ -1792,7 +1878,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   fetchTrainingCatalog(): void {
     const token = this.authService.getToken();
     if (!token) {
-        return;
+      return;
     }
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
@@ -1821,7 +1907,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   fetchScheduledTrainings(): void {
     const token = this.authService.getToken();
     if (!token) {
-        return;
+      return;
     }
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
@@ -1832,12 +1918,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         this._myTrainingsCache = [];
         this._myTrainingsCacheKey = '';
         this.allTrainingsCalendarEvents = this.allTrainings
-            .filter(t => t.training_date)
-            .map(t => ({
-                date: new Date(t.training_date as string),
-                title: t.training_name,
-                trainer: t.trainer_name || 'N/A'
-            }));
+          .filter(t => t.training_date)
+          .map(t => ({
+            date: new Date(t.training_date as string),
+            title: t.training_name,
+            trainer: t.trainer_name || 'N/A'
+          }));
       },
       error: (err) => {
         console.error('Failed to fetch scheduled trainings:', err);
@@ -1849,7 +1935,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const token = this.authService.getToken();
     if (!token) return;
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     this.http.get<TrainingRequest[]>(this.apiService.pendingTrainingRequestsUrl, { headers }).subscribe({
       next: (response) => {
         this.pendingRequests = response || [];
@@ -1864,7 +1950,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const token = this.authService.getToken();
     if (!token) return;
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     // For managers, only fetch personal assigned trainings (assigned to the manager by their manager)
     // Team assigned trainings should not be shown in the "Assigned Trainings" tab
     this.http.get<TrainingDetail[]>(this.apiService.myAssignmentsUrl, { headers }).subscribe({
@@ -1873,6 +1959,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         const rawTrainings = (response || []).map(t => ({ ...t, assignmentType: 'personal' as const }));
         // Group duplicate trainings by training_name + date + time and combine trainer names
         this.assignedTrainings = this.groupDuplicateTrainings(rawTrainings);
+        this.processDashboardTrainings(); // Process for dashboard display
         this.assignedTrainingsCalendarEvents = this.assignedTrainings
           .filter(t => t.training_date)
           .map(t => ({
@@ -1931,13 +2018,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         return trainingDateObj >= filterDateObj;
       });
     }
-    
+
     list.sort((a, b) => {
       const dateA = a.training_date ? new Date(a.training_date).getTime() : Infinity;
       const dateB = b.training_date ? new Date(b.training_date).getTime() : Infinity;
       return dateA - dateB;
     });
-    
+
     return list;
   }
 
@@ -1945,43 +2032,43 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     // Backend stores trainer_name as username (manager id), so prioritize matching against manager id
     const managerId = this.manager?.id || this.authService.getUsername() || '';
     const managerName = this.managerDisplayName || this.manager?.name || '';
-    
+
     if (!managerId && !managerName) {
       return [];
     }
-    
+
     // Use cache to prevent repeated calculations during change detection
     const cacheKey = `${managerId}-${managerName}-${this.allTrainings.length}`;
     if (this._myTrainingsCacheKey === cacheKey && this._myTrainingsCache.length >= 0) {
       return this._myTrainingsCache;
     }
-    
+
     const mgrId = String(managerId).trim();
     const mgrName = (managerName || '').trim();
-    
+
     // Filter: Match against managerId first (what backend stores), then managerName as fallback
     const filtered = this.allTrainings
       .filter(t => {
         const trainerName = String(t.trainer_name || '').trim();
         if (!trainerName) return false;
-        
+
         // Normalize all strings for comparison
         const trainerNameLower = trainerName.toLowerCase();
         const mgrIdLower = mgrId.toLowerCase();
         const mgrNameLower = mgrName.toLowerCase();
-        
+
         // Primary match: managerId (username) - exact match (case-insensitive)
         const matchesId = trainerNameLower === mgrIdLower;
-        
+
         // Fallback match: managerName (for trainings imported via Excel or other sources)
         const matchesName = mgrName && mgrNameLower.length > 0 && trainerNameLower === mgrNameLower;
-        
+
         // Additional: Check if trainer_name contains the managerId (for partial matches)
         const containsId = mgrIdLower.length > 0 && trainerNameLower.includes(mgrIdLower);
-        
+
         // Additional: Check if trainer_name contains the managerName (for partial matches)
         const containsName = mgrName && mgrNameLower.length > 0 && trainerNameLower.includes(mgrNameLower);
-        
+
         return matchesId || matchesName || containsId || containsName;
       })
       .sort((a, b) => {
@@ -1989,7 +2076,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         const dateB = b.training_date ? new Date(b.training_date).getTime() : 0;
         return dateB - dateA; // Sort descending
       });
-    
+
     // Update cache
     this._myTrainingsCache = filtered;
     this._myTrainingsCacheKey = cacheKey;
@@ -1998,7 +2085,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       this.checkSharedStatus(training.id);
       this.fetchTrainingCandidates(training.id);
     });
-    
+
     return filtered;
   }
 
@@ -2013,14 +2100,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.isLoading = true;
     const token = this.authService.getToken();
     const userRole = this.authService.getRole();
-      
+
     if (!token || userRole !== 'manager') {
       this.errorMessage = 'Authentication token not found or invalid role. Please log in again.';
       this.isLoading = false;
       this.router.navigate(['/login']);
       return;
     }
-      
+
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
     this.http.get<any>(this.apiService.getUrl(this.API_ENDPOINT), { headers }).subscribe({
@@ -2056,7 +2143,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const allTeamSkills = this.manager.team.flatMap((member: TeamMember) => member.skills);
     this.teamSkillsMet = allTeamSkills.filter((skill: Competency) => skill.status === 'Met').length;
     this.teamSkillsGap = allTeamSkills.filter((skill: Competency) => skill.status === 'Gap').length;
-    
+
     const skillGapCount: { [key: string]: number } = {};
     allTeamSkills.forEach((skill: Competency) => {
       if (skill.status === 'Gap') {
@@ -2069,7 +2156,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       .sort((a, b) => b.count - a.count)
       .slice(0, 3); // Limit to top 3 for a more compact view
   }
-  
+
   extractUniqueMySkills(): void {
     if (this.manager && this.manager.skills) {
       this.uniqueMySkills = [...new Set(this.manager.skills.map(skill => skill.skill))];
@@ -2117,31 +2204,31 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       this.toastService.warning('Please select at least one team member.');
       return;
     }
-    
+
     // Filter out already assigned combinations - only process valid assignments
     const validAssignments: { trainingId: number; memberId: string; trainingName: string; memberName: string }[] = [];
-    
+
     this.selectedTrainingIds.forEach(trainingId => {
       const training = this.trainingCatalog.find(t => t.id === trainingId);
       const trainingName = training?.training_name || 'Unknown Training';
-      
+
       this.selectedMemberIds.forEach(memberId => {
         const member = this.manager?.team.find(m => m.id === memberId);
         const memberName = member?.name || 'Unknown';
-        
+
         // Only add if not already assigned
         if (!this.isAlreadyAssigned(trainingId, memberId)) {
           validAssignments.push({ trainingId, memberId, trainingName, memberName });
         }
       });
     });
-    
+
     // If no valid assignments after filtering duplicates
     if (validAssignments.length === 0) {
       this.toastService.warning('All selected assignments already exist. Please select different training or team members.');
       return;
     }
-    
+
     // Proceed with valid assignments only
     const trainingNames: string[] = [];
     const memberNames: string[] = [];
@@ -2153,13 +2240,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       this.toastService.error('Authentication token missing. Please login again.');
       return;
     }
-    
+
     this.isAssigningTraining = true;
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     // Create array of observables only for valid (non-duplicate) assignments
     const assignmentObservables: any[] = [];
-    
+
     validAssignments.forEach(({ trainingId, memberId, trainingName, memberName }) => {
       if (!trainingNames.includes(trainingName)) {
         trainingNames.push(trainingName);
@@ -2196,7 +2283,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     forkJoin(assignmentObservables).subscribe({
       next: (results) => {
         this.isAssigningTraining = false;
-        
+
         // Count successful assignments
         const successfulNames: string[] = [];
         results.forEach((result: any) => {
@@ -2209,11 +2296,11 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             failedAssignments.push({ training: result.trainingName, member: result.memberName });
           }
         });
-        
+
         if (completedCount > 0) {
           // Refresh team assigned trainings to update the list
           this.fetchTeamAssignedTrainings();
-          
+
           // Show success modal
           this.assignmentSuccessData = {
             trainingNames: [...new Set(trainingNames)],
@@ -2221,11 +2308,11 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             totalAssignments: completedCount
           };
           this.showAssignmentSuccessModal = true;
-          
+
           // Reset selections
           this.selectedTrainingIds = [];
           this.selectedMemberIds = [];
-          
+
           // Show toasts for results
           // Note: duplicateAssignments info is already shown in the modal
           if (failedAssignments.length > 0) {
@@ -2245,24 +2332,24 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       }
     });
   }
-  
+
   closeDuplicateModal(): void {
     this.showDuplicateModal = false;
     this.duplicateAssignments = [];
     this.pendingValidAssignments = [];
   }
-  
+
   confirmProceedWithAssignments(): void {
     this.showDuplicateModal = false;
     const validAssignments = this.pendingValidAssignments;
     this.duplicateAssignments = [];
     this.pendingValidAssignments = [];
-    
+
     if (validAssignments.length === 0) {
       this.toastService.warning('No valid assignments to proceed with.');
       return;
     }
-    
+
     // Process assignments inline (duplicate modal is kept for backward compatibility but not used in new flow)
     // This method is only called if the duplicate modal is shown, which shouldn't happen with the new inline indicators
     // But keeping it for safety
@@ -2277,12 +2364,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       this.selectedTrainingIds.push(trainingId);
     }
   }
-  
+
   isAlreadyAssigned(trainingId: number, memberId: string): boolean {
     const assignmentKey = `${trainingId}_${memberId}`;
     return this.existingAssignments.has(assignmentKey);
   }
-  
+
   getAlreadyAssignedMembersForTraining(trainingId: number): string[] {
     const assignedMembers: string[] = [];
     this.manager?.team.forEach(member => {
@@ -2292,7 +2379,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     });
     return assignedMembers;
   }
-  
+
   getAlreadyAssignedTrainingsForMember(memberId: string): string[] {
     const assignedTrainings: string[] = [];
     this.trainingCatalog.forEach(training => {
@@ -2302,7 +2389,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     });
     return assignedTrainings;
   }
-  
+
   getSelectedTrainingsAlreadyAssignedForMember(memberId: string): string[] {
     const alreadyAssigned: string[] = [];
     this.selectedTrainingIds.forEach(trainingId => {
@@ -2315,11 +2402,11 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     });
     return alreadyAssigned;
   }
-  
+
   canAssignTrainingToMember(trainingId: number, memberId: string): boolean {
     return !this.isAlreadyAssigned(trainingId, memberId);
   }
-  
+
   getSelectedMembersAlreadyAssigned(trainingId: number): string[] {
     const alreadyAssigned: string[] = [];
     this.selectedMemberIds.forEach(memberId => {
@@ -2652,13 +2739,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     if (!skillName || !this.manager || !this.manager.id) return;
     this.selectedSkillForFeedback = skillName;
     this.skillFeedbackList = this.getFeedbackForSkill(skillName, this.manager.id);
-    
+
     // Group feedback by skill type
     this.skillFeedbackByType = this.groupFeedbackBySkillType(this.skillFeedbackList);
     const typeKeys = Array.from(this.skillFeedbackByType.keys());
     // Default selected tab to first available type (if any)
     this.selectedFeedbackSkillType = typeKeys.length > 0 ? typeKeys[0] : '';
-    
+
     this.showSkillFeedbackModal = true;
   }
 
@@ -2679,7 +2766,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     if (this.mySkillsSkillFilter) {
       filtered = filtered.filter(skill => skill.skill === this.mySkillsSkillFilter);
     }
-     // Apply status filter based on timeline status (Not Started/Behind/On Track/Completed)
+    // Apply status filter based on timeline status (Not Started/Behind/On Track/Completed)
     if (this.mySkillsStatusFilter) {
       filtered = filtered.filter(skill => this.getTimelineStatus(skill) === this.mySkillsStatusFilter);
     }
@@ -2760,7 +2847,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
    */
   groupDuplicateTrainings(trainings: TrainingDetail[]): TrainingDetail[] {
     const groupedMap = new Map<string, TrainingDetail[]>();
-    
+
     // Normalize date to ISO string format for consistent comparison
     const normalizeDate = (date: any): string => {
       if (!date) return '';
@@ -2781,39 +2868,39 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       }
       return String(date || '').trim();
     };
-    
+
     // Normalize time string (remove extra spaces, normalize separators)
     const normalizeTime = (time: string | undefined): string => {
       if (!time) return '';
       return time.trim().replace(/\s+/g, ' ').replace(/\./g, ':');
     };
-    
+
     // Group trainings by a unique key: training_name + normalized date + normalized time
     trainings.forEach(training => {
       const normalizedName = (training.training_name || '').trim().toLowerCase();
       const normalizedDate = normalizeDate(training.training_date);
       const normalizedTime = normalizeTime(training.time);
       const key = `${normalizedName}_${normalizedDate}_${normalizedTime}`;
-      
+
       if (!groupedMap.has(key)) {
         groupedMap.set(key, []);
       }
       groupedMap.get(key)!.push(training);
     });
-    
+
     // Combine grouped trainings
     const grouped: TrainingDetail[] = [];
     groupedMap.forEach((trainingsGroup, key) => {
       if (trainingsGroup.length === 0) return;
-      
+
       // Use the first training as base
       const baseTraining = { ...trainingsGroup[0] };
-      
+
       // Collect all unique trainer names
       const trainerNamesSet = new Set<string>();
       const emailSet = new Set<string>();
       const trainingIds: number[] = [];
-      
+
       trainingsGroup.forEach(t => {
         if (t.trainer_name) {
           // Split by comma in case trainer_name already contains multiple names
@@ -2828,20 +2915,20 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
           trainingIds.push(t.id);
         }
       });
-      
+
       // Combine trainer names with comma separation
       baseTraining.trainer_name = Array.from(trainerNamesSet).join(', ');
       baseTraining.email = Array.from(emailSet).join(', ');
-      
+
       // Store all related training IDs for checking shared content
       (baseTraining as any).relatedTrainingIds = trainingIds;
-      
+
       // Use the first training ID as the primary one
       baseTraining.id = trainingIds[0];
-      
+
       grouped.push(baseTraining);
     });
-    
+
     return grouped;
   }
 
@@ -3053,7 +3140,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       default: return 'bg-gray-100 text-gray-700 border border-gray-300';
     }
   }
-  
+
   // Levels helper methods
   getFilteredSections(): Section[] {
     let sectionsToFilter = this.sections;
@@ -3080,7 +3167,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   getLevelTitle = (level: number) => ['Beginner', 'Basic', 'Intermediate', 'Advanced', 'Expert'][level - 1] || 'Unknown';
   getLevelIcon = (level: number) => ['fa-solid fa-seedling text-indigo-500', 'fa-solid fa-leaf text-indigo-500', 'fa-solid fa-tree text-indigo-600', 'fa-solid fa-rocket text-indigo-500', 'fa-solid fa-crown text-indigo-500'][level - 1] || 'fa-solid fa-circle';
   getComplexityDots = (level: number) => Array.from({ length: 5 }, (_, i) => i < level);
-  onSkillChange(): void {}
+  onSkillChange(): void { }
 
   // --- Levels Tab Helpers ---
   public getLevelKey(sectionTitle: string, level: number): string {
@@ -3102,9 +3189,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // <<< NEW METHOD FOR ACCORDION >>>
   public toggleSkillExpansion(skillTitle: string): void {
     if (this.expandedSkill === skillTitle) {
-        this.expandedSkill = null; // Collapse if clicking the same one again
+      this.expandedSkill = null; // Collapse if clicking the same one again
     } else {
-        this.expandedSkill = skillTitle; // Expand the new one
+      this.expandedSkill = skillTitle; // Expand the new one
     }
   }
 
@@ -3286,7 +3373,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const token = this.authService.getToken();
     if (!token) return;
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     // Check if assignment is shared (for trainers)
     this.http.get(this.apiService.trainerAssignmentsUrl(trainingId), { headers }).subscribe({
       next: (response: any) => {
@@ -3306,7 +3393,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         this.assignmentSharedBy.delete(trainingId);
       }
     });
-    
+
     // Check if feedback is shared (for trainers)
     this.http.get(this.apiService.trainerFeedbackUrl(trainingId), { headers }).subscribe({
       next: (response: any) => {
@@ -3355,9 +3442,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       return;
     }
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
-    this.http.get<{employee_empid: string, employee_name: string, attended: boolean}[]>(
-      this.apiService.getTrainingCandidatesUrl(trainingId), 
+
+    this.http.get<{ employee_empid: string, employee_name: string, attended: boolean }[]>(
+      this.apiService.getTrainingCandidatesUrl(trainingId),
       { headers }
     ).subscribe({
       next: (candidates) => {
@@ -3382,7 +3469,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     });
   }
 
-  getTrainingCandidates(trainingId: number): {employee_empid: string, employee_name: string, attended: boolean}[] {
+  getTrainingCandidates(trainingId: number): { employee_empid: string, employee_name: string, attended: boolean }[] {
     return this.trainingCandidates.get(trainingId) || [];
   }
 
@@ -3395,12 +3482,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     }
     this.selectedTrainingForAttendance = trainingId;
     const candidates = this.getTrainingCandidates(trainingId);
-    
+
     // Check if candidates list is empty (user might not be trainer or candidates not loaded)
     if (candidates.length === 0) {
       // Try to fetch candidates first
       this.fetchTrainingCandidates(trainingId);
-      
+
       // Wait a bit and check again, or show warning
       setTimeout(() => {
         const updatedCandidates = this.getTrainingCandidates(trainingId);
@@ -3414,7 +3501,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       }, 500);
       return;
     }
-    
+
     // Create a copy for editing
     this.attendanceCandidates = candidates.map(c => ({ ...c }));
     this.showAttendanceModal = true;
@@ -3444,26 +3531,26 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   markAttendance(): void {
     if (!this.selectedTrainingForAttendance) return;
-    
+
     const token = this.authService.getToken();
     if (!token) {
       this.toastService.warning('Authentication token missing. Please login again.');
       return;
     }
-    
+
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
     const attendedEmpids = this.attendanceCandidates
       .filter(c => c.attended)
       .map(c => c.employee_empid);
-    
+
     this.isMarkingAttendance = true;
-    
+
     // Get attended candidate names for better success message
     const attendedNames = this.attendanceCandidates
       .filter(c => c.attended)
       .map(c => c.employee_name)
       .join(', ');
-    
+
     this.http.post(
       this.apiService.markTrainingAttendanceUrl(this.selectedTrainingForAttendance),
       { candidate_empids: attendedEmpids },
@@ -3477,7 +3564,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         const attendedCount = response.attended_count || attendedEmpids.length;
         const totalCount = response.total_assigned || this.attendanceCandidates.length;
         const absentCount = totalCount - attendedCount;
-        
+
         // Prepare data for success popup
         this.attendanceSuccessData = {
           trainingName: trainingName,
@@ -3486,13 +3573,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
           totalCount: totalCount,
           attendedNames: attendedNames || ''
         };
-        
+
         // Close attendance modal first
         this.closeAttendanceModal();
-        
+
         // Show success popup in the center
         this.showAttendanceSuccessPopup = true;
-        
+
         // Refresh candidates list immediately
         this.fetchTrainingCandidates(this.selectedTrainingForAttendance!);
       },
@@ -3527,7 +3614,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   openShareAssignment(trainingId: number): void {
     this.resetNewAssignmentForm();
     this.newAssignment.trainingId = trainingId;
-    
+
     // Check shared status and load existing data if available
     const token = this.authService.getToken();
     if (token) {
@@ -3540,12 +3627,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             if (response.trainer_username) {
               this.assignmentSharedBy.set(trainingId, response.trainer_username);
             }
-            
+
             // Load existing assignment data
             this.newAssignment.title = response.title || '';
             this.newAssignment.description = response.description || '';
             this.newAssignment.questions = response.questions || [];
-            
+
             const currentUser = this.authService.getUsername() || this.manager?.id || '';
             if (response.trainer_username && response.trainer_username !== currentUser) {
               this.toastService.info(`Assignment already shared by your co-trainer (${response.trainer_username}). You can update it below.`);
@@ -3572,7 +3659,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   openShareFeedback(trainingId: number): void {
     this.resetNewFeedbackForm();
     this.newFeedback.trainingId = trainingId;
-    
+
     // Check shared status and load existing data if available
     const token = this.authService.getToken();
     if (token) {
@@ -3585,14 +3672,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             if (response.trainer_username) {
               this.feedbackSharedBy.set(trainingId, response.trainer_username);
             }
-            
+
             // Load existing feedback data
             this.newFeedback.customQuestions = (response.customQuestions || []).map((q: any) => ({
               text: q.text || '',
               options: q.options || [],
               isDefault: q.isDefault || false
             }));
-            
+
             const currentUser = this.authService.getUsername() || this.manager?.id || '';
             if (response.trainer_username && response.trainer_username !== currentUser) {
               this.toastService.info(`Feedback has already been shared by your co-trainer (${response.trainer_username}). You can update it below.`);
@@ -3780,12 +3867,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       return;
     }
     const finalCustomQuestions = this.newFeedback.customQuestions
-        .filter(q => q.text.trim() !== '')
-        .map(q => ({
-            ...q,
-            options: q.options.filter(opt => opt.trim() !== '')
-        }))
-        .filter(q => q.options.length > 0);
+      .filter(q => q.text.trim() !== '')
+      .map(q => ({
+        ...q,
+        options: q.options.filter(opt => opt.trim() !== '')
+      }))
+      .filter(q => q.options.length > 0);
 
     const token = this.authService.getToken();
     if (!token) {
@@ -4040,7 +4127,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
     this.isLoadingSolutions = true;
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    
+
     this.http.get<any[]>(this.apiService.trainerSolutionsUrl(trainingId), { headers }).subscribe({
       next: (solutions) => {
         this.solutionsList = solutions || [];
@@ -4074,8 +4161,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     }
 
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    this.http.get(this.apiService.solutionFileUrl(trainingId, employeeId), { 
-      headers, 
+    this.http.get(this.apiService.solutionFileUrl(trainingId, employeeId), {
+      headers,
       responseType: 'blob',
       observe: 'response'
     }).subscribe({
@@ -4089,7 +4176,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             filename = filenameMatch[1];
           }
         }
-        
+
         // Get media type from response or default based on file extension
         const contentType = response.headers.get('Content-Type') || 'application/octet-stream';
         const blob = new Blob([response.body!], { type: contentType });

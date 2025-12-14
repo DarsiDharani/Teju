@@ -711,62 +711,54 @@
                 <div *ngIf="activeTab === 'trainingCatalog'" @slideFadeIn class="space-y-4">
                     <!-- Live Trainings View -->
                     <div *ngIf="trainingCatalogType === 'live' && trainingCatalogView === 'list'">
-                        <div *ngIf="filteredTrainings.length === 0"
-                            class="text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-slate-300">
-                            <div class="w-20 h-20 bg-gradient-to-br from-sky-100 to-sky-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <div *ngIf="filteredTrainings.length === 0" #animatedElement
+                            class="animate-on-scroll text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-slate-300">
+                            <div
+                                class="w-20 h-20 bg-gradient-to-br from-sky-100 to-sky-200 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <i class="fa-solid fa-folder-open text-sky-500 text-4xl"></i>
                             </div>
                             <h4 class="text-2xl font-bold text-slate-800 mb-2">No Trainings Found</h4>
-                            <p class="text-slate-600 max-w-md mx-auto">No training sessions match your current filters. Try resetting the filters.</p>
+                            <p class="text-slate-600 max-w-md mx-auto">No training sessions match your current filters. Try resetting
+                                the filters.</p>
                         </div>
-
-                        <div *ngIf="filteredTrainings.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" [@listStagger]="filteredTrainings.length">
+                        <div *ngIf="filteredTrainings.length > 0"
+                            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+                            [@listStagger]="filteredTrainings.length">
                             <div *ngFor="let training of filteredTrainings"
-                                class="group bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 overflow-hidden transform hover:-translate-y-1.5 transition-all duration-300 ease-in-out hover:shadow-2xl flex flex-col">
-                                <div class="h-2 bg-gradient-to-r from-sky-500 to-cyan-400"></div>
-                                <div class="p-2.5 flex-grow flex flex-col">
+                                class="group bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 overflow-hidden transform hover:-translate-y-1.5 transition-all duration-300 ease-in-out hover:shadow-2xl flex flex-col">
+                                <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-400"></div>
+                                <div class="p-2 flex-grow flex flex-col">
                                     <div class="flex items-start gap-2 mb-1.5">
-                                        <div class="flex-shrink-0 w-9 h-9 bg-slate-100 text-sky-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                            <i [ngClass]="getTrainingCardIcon(training.skill)" class="text-lg"></i>
+                                        <div
+                                            class="flex-shrink-0 w-7 h-7 bg-slate-100 text-sky-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                            <i [ngClass]="getTrainingCardIcon(training.skill || '')" class="text-sm"></i>
                                         </div>
-                                        <div class="flex-1">
-                                            <div class="flex items-start justify-between">
-                                                <div>
-                                                    <h3 class="text-xs font-bold leading-tight text-slate-800">{{ training.training_name }}</h3>
-                                                    <p class="text-[10px] text-slate-500">by {{ training.trainer_name }}</p>
-                                                    <p class="text-[10px] text-slate-400">ID: {{ training.id }} | Status: {{ getRequestStatus(training.id) }}</p>
-                                                </div>
-                                                <!-- Status Badge -->
-                                                <div *ngIf="getRequestStatus(training.id) !== 'none'" class="ml-2">
-                                                    <span *ngIf="getRequestStatus(training.id) === 'pending'" 
-                                                          class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-800">
-                                                        <i class="fa-solid fa-clock mr-1"></i>Pending
-                                                    </span>
-                                                    <span *ngIf="getRequestStatus(training.id) === 'approved'" 
-                                                          class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-800">
-                                                        <i class="fa-solid fa-check mr-1"></i>Approved
-                                                    </span>
-                                                    <span *ngIf="getRequestStatus(training.id) === 'rejected'" 
-                                                          class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-800">
-                                                        <i class="fa-solid fa-times mr-1"></i>Rejected
-                                                    </span>
-                                                </div>
-                                            </div>
+                                        <div>
+                                            <h3 class="text-xs font-bold leading-tight text-slate-800">{{ training.training_name }}</h3>
+                                            <p class="text-[10px] text-slate-500">by {{ training.trainer_name }}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1.5 flex-wrap mb-1.5">
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-sky-100 text-sky-800 ring-1 ring-inset ring-sky-200"><i class="fa-solid fa-display mr-1"></i>{{ training.training_type || 'N/A' }}</span>
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-violet-100 text-violet-800 ring-1 ring-inset ring-violet-200"><i class="fa-solid fa-layer-group mr-1"></i>{{ training.skill_category || 'N/A' }}</span>
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-100 text-rose-800 ring-1 ring-inset ring-rose-200" *ngIf="training.seats"><i class="fa-solid fa-users mr-1"></i>{{ training.seats }} Seats</span>
+                                        <span
+                                            class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-sky-100 text-sky-800 ring-1 ring-inset ring-sky-200"><i
+                                                class="fa-solid fa-display mr-1"></i>{{ training.training_type || 'N/A' }}</span>
+                                        <span
+                                            class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-violet-100 text-violet-800 ring-1 ring-inset ring-violet-200"><i
+                                                class="fa-solid fa-layer-group mr-1"></i>{{ training.skill_category || 'N/A' }}</span>
+                                        <span
+                                            class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-100 text-rose-800 ring-1 ring-inset ring-rose-200"
+                                            *ngIf="training.seats"><i class="fa-solid fa-users mr-1"></i>{{ training.seats }} Seats</span>
                                     </div>
                                     <div class="flex-grow text-[11px] text-slate-600 mb-2">
-                                        <p><strong class="font-semibold text-slate-700">Topics:</strong> {{ training.training_topics || 'Not specified' }}</p>
+                                        <p><strong class="font-semibold text-slate-700">Topics:</strong> {{ training.training_topics || 'Not
+                                            specified' }}</p>
                                     </div>
                                     <div class="pt-2 mt-auto border-t border-slate-200/80 space-y-1.5 text-xs">
                                         <div class="flex items-center justify-between text-slate-600">
                                             <div class="flex items-center gap-1.5">
                                                 <i class="fa-solid fa-calendar-days text-slate-400 w-4 text-center"></i>
-                                                <span class="font-medium text-slate-800">{{ training.training_date ? (training.training_date | date:'mediumDate') : 'Date TBD' }}</span>
+                                                <span class="font-medium text-slate-800">{{ training.training_date ? (training.training_date |
+                                                    date:'mediumDate') : 'Date TBD' }}</span>
                                             </div>
                                             <div class="flex items-center gap-1.5">
                                                 <i class="fa-solid fa-clock text-slate-400 w-4 text-center"></i>
@@ -775,38 +767,13 @@
                                         </div>
                                     </div>
                                     <div class="pt-2 mt-2 border-t border-slate-200/80">
-                                        <!-- Request Status Display -->
-                                        <div *ngIf="getRequestStatus(training.id) !== 'none' && getRequestStatus(training.id) !== 'pending'" class="mb-2">
-                                            <div *ngIf="getRequestStatus(training.id) === 'approved'" 
-                                                 class="flex items-center justify-center gap-2 px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-xs font-semibold">
-                                                <i class="fa-solid fa-check-circle"></i>
-                                                <span>Request Approved</span>
-                                            </div>
-                                            <div *ngIf="getRequestStatus(training.id) === 'rejected'" 
-                                                 class="flex items-center justify-center gap-2 px-3 py-1.5 bg-red-100 text-red-800 rounded-lg text-xs font-semibold">
-                                                <i class="fa-solid fa-times-circle"></i>
-                                                <span>Request Rejected</span>
-                                            </div>
-                                            <!-- Request Date and Manager Notes -->
-                                            <div class="mt-1 text-xs text-slate-500">
-                                                <i class="fa-solid fa-calendar mr-1"></i>
-                                                Requested: {{ getRequestDetails(training.id)?.request_date | date:'short' }}
-                                            </div>
-                                            <div *ngIf="getRequestStatus(training.id) === 'rejected' && getRequestDetails(training.id)?.manager_notes" 
-                                                 class="mt-1 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
-                                                <strong>Manager Note:</strong> {{ getRequestDetails(training.id)?.manager_notes }}
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Action Button -->
-                                        <button *ngIf="getRequestStatus(training.id) === 'none'" 
-                                                (click)="enrollInTraining(training)" 
-                                                class="w-full bg-sky-600 text-white font-semibold py-1 rounded-lg hover:bg-sky-700 transition-colors duration-200 text-xs">
+                                        <button *ngIf="getRequestStatus(training.id) === 'none'" (click)="enrollInTraining(training)"
+                                            class="w-full bg-sky-600 text-white font-semibold py-1 rounded-lg hover:bg-sky-700 transition-colors duration-200 text-xs">
                                             <i class="fa-solid fa-user-plus mr-2"></i>Enroll
                                         </button>
                                         <div *ngIf="getRequestStatus(training.id) === 'pending'">
-                                            <button disabled 
-                                                    class="w-full bg-gray-400 text-white font-semibold py-1 rounded-lg cursor-not-allowed text-xs mb-1">
+                                            <button disabled
+                                                class="w-full bg-gray-400 text-white font-semibold py-1 rounded-lg cursor-not-allowed text-xs mb-1">
                                                 <i class="fa-solid fa-clock mr-2"></i>Request Pending
                                             </button>
                                             <div class="text-xs text-slate-500 text-center">
@@ -814,14 +781,12 @@
                                                 Requested: {{ getRequestDetails(training.id)?.request_date | date:'short' }}
                                             </div>
                                         </div>
-                                        <button *ngIf="getRequestStatus(training.id) === 'approved'" 
-                                                disabled 
-                                                class="w-full bg-green-600 text-white font-semibold py-1 rounded-lg cursor-not-allowed text-xs">
+                                        <button *ngIf="getRequestStatus(training.id) === 'approved'" disabled
+                                            class="w-full bg-green-600 text-white font-semibold py-1 rounded-lg cursor-not-allowed text-xs">
                                             <i class="fa-solid fa-check-circle mr-2"></i>Approved
                                         </button>
-                                        <button *ngIf="getRequestStatus(training.id) === 'rejected'" 
-                                                (click)="enrollInTraining(training)" 
-                                                class="w-full bg-sky-600 text-white font-semibold py-1 rounded-lg hover:bg-sky-700 transition-colors duration-200 text-xs">
+                                        <button *ngIf="getRequestStatus(training.id) === 'rejected'" (click)="enrollInTraining(training)"
+                                            class="w-full bg-sky-600 text-white font-semibold py-1 rounded-lg hover:bg-sky-700 transition-colors duration-200 text-xs">
                                             <i class="fa-solid fa-redo mr-2"></i>Request Again
                                         </button>
                                     </div>
@@ -831,41 +796,42 @@
                     </div>
 
                     <!-- Live Trainings Calendar View -->
-                    <div *ngIf="trainingCatalogType === 'live' && trainingCatalogView === 'calendar'" @fadeIn>
-                        <div class="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-200/60">
-                            <div class="flex justify-between items-center mb-6">
-                                <button (click)="previousMonth()" class="w-10 h-10 bg-slate-200/70 rounded-lg hover:bg-slate-300/80 transition-colors flex items-center justify-center">
-                                    <i class="fa-solid fa-chevron-left"></i>
-                                </button>
-                                <h3 class="text-2xl font-bold text-slate-800">{{ calendarMonth }} {{ calendarYear }}</h3>
-                                <button (click)="nextMonth()" class="w-10 h-10 bg-slate-200/70 rounded-lg hover:bg-slate-300/80 transition-colors flex items-center justify-center">
-                                    <i class="fa-solid fa-chevron-right"></i>
-                                </button>
+                    <div *ngIf="trainingCatalogType === 'live' && trainingCatalogView === 'calendar'">
+                        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-lg font-bold text-slate-800">Training Calendar</h3>
+                                <div class="flex items-center gap-2">
+                                    <button (click)="previousMonth()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                                        <i class="fa-solid fa-chevron-left text-slate-600"></i>
+                                    </button>
+                                    <span class="text-lg font-semibold text-slate-800 min-w-[200px] text-center">{{ calendarMonth }} {{
+                                        calendarYear }}</span>
+                                    <button (click)="nextMonth()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                                        <i class="fa-solid fa-chevron-right text-slate-600"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center">
-                                <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">SUN</div>
-                                <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">MON</div>
-                                <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">TUE</div>
-                                <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">WED</div>
-                                <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">THU</div>
-                                <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">FRI</div>
-                                <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">SAT</div>
-    
-                                <div *ngFor="let day of calendarDays" class="relative h-20 font-semibold rounded-lg transition-colors border border-slate-200/60"
-                                     [ngClass]="{
-                                       'bg-sky-50': isToday(day),
-                                       'bg-white': day && !isToday(day),
-                                       'bg-slate-50/50': !day,
-                                       'text-slate-400': !day || day.getMonth() !== currentDate.getMonth()
-                                     }">
-                                    <div *ngIf="day" class="absolute top-1.5 left-2 text-xs sm:text-sm w-6 h-6 flex items-center justify-center rounded-full"
-                                         [ngClass]="{'bg-sky-500 text-white': isToday(day), 'text-slate-800': !isToday(day)}">
-                                        {{ day.getDate() }}
+                            <div class="grid grid-cols-7 gap-1 mb-2">
+                                <div class="text-center text-sm font-semibold text-slate-600 py-2">Sun</div>
+                                <div class="text-center text-sm font-semibold text-slate-600 py-2">Mon</div>
+                                <div class="text-center text-sm font-semibold text-slate-600 py-2">Tue</div>
+                                <div class="text-center text-sm font-semibold text-slate-600 py-2">Wed</div>
+                                <div class="text-center text-sm font-semibold text-slate-600 py-2">Thu</div>
+                                <div class="text-center text-sm font-semibold text-slate-600 py-2">Fri</div>
+                                <div class="text-center text-sm font-semibold text-slate-600 py-2">Sat</div>
+                            </div>
+                            <div class="grid grid-cols-7 gap-1">
+                                <div *ngFor="let day of calendarDays"
+                                    class="aspect-square p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors relative"
+                                    [ngClass]="{'bg-slate-100': !day, 'bg-white': day}">
+                                    <div *ngIf="day" class="text-sm font-medium text-slate-800">{{ day.getDate() }}</div>
+                                    <div *ngIf="day && isToday(day)" class="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full">
                                     </div>
-                                    <div *ngIf="getEventForDate(day, allTrainingsCalendarEvents) as event"
-                                         class="absolute top-9 left-1 right-1 p-1 text-[10px] bg-sky-100 text-sky-900 rounded cursor-pointer leading-tight shadow-sm hover:bg-sky-200 hover:ring-2 hover:ring-sky-400 z-10 transition-all duration-200"
-                                         [title]="event.title + ' - by ' + event.trainer">
-                                        <p class="font-bold truncate"><i class="fa-solid fa-circle text-sky-500 text-[6px] mr-1 align-middle"></i>{{ event.title }}</p>
+                                    <div *ngIf="day" class="mt-1">
+                                        <div *ngFor="let event of getEventForDate(day, allTrainingsCalendarEvents)"
+                                            class="text-xs bg-blue-100 text-blue-800 px-1 py-0.5 rounded mb-1 truncate" [title]="event.title">
+                                            {{ event.title }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -874,48 +840,62 @@
 
                     <!-- Recorded Trainings View -->
                     <div *ngIf="trainingCatalogType === 'recorded'">
-                        <div *ngIf="filteredRecordedTrainings.length === 0"
-                            class="text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-slate-300">
-                            <div class="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <div *ngIf="filteredRecordedTrainings.length === 0" #animatedElement
+                            class="animate-on-scroll text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-slate-300">
+                            <div
+                                class="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <i class="fa-solid fa-video-slash text-purple-500 text-4xl"></i>
                             </div>
                             <h4 class="text-2xl font-bold text-slate-800 mb-2">No Recorded Trainings Found</h4>
-                            <p class="text-slate-600 max-w-md mx-auto">No recorded training sessions match your current filters. Try resetting the filters.</p>
+                            <p class="text-slate-600 max-w-md mx-auto">No recorded training sessions match your current filters. Try
+                                resetting the filters.</p>
                         </div>
-
-                        <div *ngIf="filteredRecordedTrainings.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" [@listStagger]="filteredRecordedTrainings.length">
+                        <div *ngIf="filteredRecordedTrainings.length > 0"
+                            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
+                            [@listStagger]="filteredRecordedTrainings.length">
                             <div *ngFor="let training of filteredRecordedTrainings"
-                                class="group bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 overflow-hidden transform hover:-translate-y-1.5 transition-all duration-300 ease-in-out hover:shadow-2xl flex flex-col">
-                                <div class="h-2 bg-gradient-to-r from-purple-500 to-pink-400"></div>
-                                <div class="p-2.5 flex-grow flex flex-col">
+                                class="group bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 overflow-hidden transform hover:-translate-y-1.5 transition-all duration-300 ease-in-out hover:shadow-2xl flex flex-col">
+                                <div class="h-1.5 bg-gradient-to-r from-purple-500 to-pink-400"></div>
+                                <div class="p-2 flex-grow flex flex-col">
                                     <div class="flex items-start gap-2 mb-1.5">
-                                        <div class="flex-shrink-0 w-9 h-9 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                            <i class="fa-solid fa-video text-lg"></i>
+                                        <div
+                                            class="flex-shrink-0 w-7 h-7 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                            <i class="fa-solid fa-video text-sm"></i>
                                         </div>
-                                        <div class="flex-1">
+                                        <div>
                                             <h3 class="text-xs font-bold leading-tight text-slate-800">{{ training.training_name }}</h3>
                                             <p class="text-[10px] text-slate-500">by {{ training.trainer_name }}</p>
                                             <p class="text-[10px] text-slate-400">ID: {{ training.id }}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1.5 flex-wrap mb-1.5">
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-purple-100 text-purple-800 ring-1 ring-inset ring-purple-200" *ngIf="training.skill"><i class="fa-solid fa-tag mr-1"></i>{{ training.skill }}</span>
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-violet-100 text-violet-800 ring-1 ring-inset ring-violet-200" *ngIf="training.skill_category"><i class="fa-solid fa-layer-group mr-1"></i>{{ training.skill_category }}</span>
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-100 text-rose-800 ring-1 ring-inset ring-rose-200" *ngIf="training.duration"><i class="fa-solid fa-clock mr-1"></i>{{ training.duration }}</span>
+                                        <span
+                                            class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-purple-100 text-purple-800 ring-1 ring-inset ring-purple-200"
+                                            *ngIf="training.skill"><i class="fa-solid fa-tag mr-1"></i>{{ training.skill }}</span>
+                                        <span
+                                            class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-violet-100 text-violet-800 ring-1 ring-inset ring-violet-200"
+                                            *ngIf="training.skill_category"><i class="fa-solid fa-layer-group mr-1"></i>{{
+                                            training.skill_category }}</span>
+                                        <span
+                                            class="inline-flex items-center px-1.5 py-0.5 rounded-md text-[10px] font-medium bg-rose-100 text-rose-800 ring-1 ring-inset ring-rose-200"
+                                            *ngIf="training.duration"><i class="fa-solid fa-clock mr-1"></i>{{ training.duration }}</span>
                                     </div>
                                     <div class="flex-grow text-[11px] text-slate-600 mb-2">
-                                        <p *ngIf="training.training_topics"><strong class="font-semibold text-slate-700">Topics:</strong> {{ training.training_topics }}</p>
-                                        <p *ngIf="training.description" class="mt-1 text-[10px] text-slate-500">{{ training.description }}</p>
+                                        <p *ngIf="training.training_topics"><strong class="font-semibold text-slate-700">Topics:</strong> {{
+                                            training.training_topics }}</p>
+                                        <p *ngIf="training.description" class="mt-1 text-[10px] text-slate-500">{{ training.description }}
+                                        </p>
                                     </div>
                                     <div class="pt-2 mt-auto border-t border-slate-200/80 space-y-1.5 text-xs">
                                         <div class="flex items-center gap-1.5 text-slate-600" *ngIf="training.recorded_date">
                                             <i class="fa-solid fa-calendar-days text-slate-400 w-4 text-center"></i>
-                                            <span class="font-medium text-slate-800">Recorded: {{ training.recorded_date | date:'mediumDate' }}</span>
+                                            <span class="font-medium text-slate-800">Recorded: {{ training.recorded_date | date:'mediumDate'
+                                                }}</span>
                                         </div>
                                     </div>
                                     <div class="pt-2 mt-2 border-t border-slate-200/80">
-                                        <button (click)="openRecordedTraining(training.lecture_url)" 
-                                                class="w-full bg-purple-600 text-white font-semibold py-1.5 rounded-lg hover:bg-purple-700 transition-colors duration-200 text-xs flex items-center justify-center gap-2">
+                                        <button (click)="openRecordedTraining(training.lecture_url)"
+                                            class="w-full bg-purple-600 text-white font-semibold py-1.5 rounded-lg hover:bg-purple-700 transition-colors duration-200 text-xs flex items-center justify-center gap-2">
                                             <i class="fa-solid fa-play mr-1"></i>Watch Lecture
                                         </button>
                                     </div>
@@ -1145,7 +1125,7 @@
                                     <!-- Training Event Display: Shows training name if training exists on this date
                                          Uses getEventForDate() to find matching training from assignedTrainingsCalendarEvents
                                          Styled with rose colors to differentiate from training catalog calendar -->
-                                    <div *ngIf="getEventForDate(day, assignedTrainingsCalendarEvents) as event"
+                                    <div *ngFor="let event of getEventForDate(day, assignedTrainingsCalendarEvents)"
                                         class="absolute top-9 left-1 right-1 p-1 text-[10px] bg-rose-100 text-rose-900 rounded cursor-pointer leading-tight shadow-sm hover:bg-rose-200 hover:ring-2 hover:ring-rose-400 z-10 transition-all duration-200"
                                         [title]="event.title + ' - by ' + event.trainer">
                                         <p class="font-bold truncate"><i class="fa-solid fa-circle text-rose-500 text-[6px] mr-1 align-middle"></i>{{ event.title }}</p>

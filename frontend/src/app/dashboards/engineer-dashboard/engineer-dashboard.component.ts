@@ -890,9 +890,9 @@ export class EngineerDashboardComponent implements OnInit {
       date.getFullYear() === today.getFullYear();
   }
 
-  getEventForDate(date: Date | null, events: CalendarEvent[]): CalendarEvent | undefined {
-    if (!date) return undefined;
-    return events.find(event =>
+  getEventForDate(date: Date | null, events: CalendarEvent[]): CalendarEvent[] {
+    if (!date) return [];
+    return events.filter(event =>
       event.date.getDate() === date.getDate() &&
       event.date.getMonth() === date.getMonth() &&
       event.date.getFullYear() === date.getFullYear()
