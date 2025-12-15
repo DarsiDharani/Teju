@@ -3311,9 +3311,9 @@ export class EngineerDashboardComponent implements OnInit {
   }
 
   /**
-   * Calculate expected progress for a skill based on assignment and target dates.
-   * Expected progress is computed in 3‑month (approximately 90‑day) intervals
-   * between assignment_start_date and target_completion_date.
+  * Calculate expected progress for a skill based on assignment and target dates.
+  * Expected progress is computed on a daily basis (elapsed/total time)
+  * between assignment_start_date and target_completion_date.
    */
   getExpectedProgress(competency: Skill | ModalSkill): number {
     const assignmentDateStr = (competency as any).assignment_start_date as string | undefined;
@@ -3338,14 +3338,8 @@ export class EngineerDashboardComponent implements OnInit {
     const totalMs = targetDate.getTime() - assignmentDate.getTime();
     const elapsedMs = Math.min(Math.max(now.getTime() - assignmentDate.getTime(), 0), totalMs);
 
-    // Approximate 3‑month intervals as 90‑day blocks and distribute 0‑100% across them
-    const totalDays = totalMs / (1000 * 60 * 60 * 24);
-    const intervalDays = 90;
-    const intervals = Math.max(1, Math.ceil(totalDays / intervalDays));
-    const intervalMs = totalMs / intervals;
-    const elapsedIntervals = Math.floor(elapsedMs / intervalMs);
-
-    let expected = Math.round((elapsedIntervals / intervals) * 100);
+    // Compute expected progress on a daily basis: fraction of elapsed time
+    let expected = Math.round((elapsedMs / totalMs) * 100);
     if (expected > 100) expected = 100;
     if (expected < 0) expected = 0;
     return expected;
@@ -3497,6 +3491,10 @@ export class EngineerDashboardComponent implements OnInit {
       }
       return null;
     }).filter((s): s is Section => s !== null);
+  }
+
+  get sectionTitles(): string[] {
+    return this.sections.map(section => section.title);
   }
 
   onSkillChange(): void {}

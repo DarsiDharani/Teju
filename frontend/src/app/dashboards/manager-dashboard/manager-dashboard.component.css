@@ -157,3 +157,51 @@
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
 }
+
+/* Segmented control styles */
+.segmented-control {
+  display: inline-flex;
+  gap: 6px;
+}
+.segmented-pill {
+  background: transparent;
+  border-radius: 12px;
+  color: #e6eefc;
+  border: none;
+  cursor: pointer;
+  transition: all 200ms ease;
+  padding: 0;
+}
+.segmented-pill .text-xs { color: #e6eefc; }
+.segmented-pill.active {
+  background: linear-gradient(90deg, rgba(99,102,241,0.95), rgba(59,130,246,0.95));
+  box-shadow: 0 6px 18px rgba(59,130,246,0.18);
+  transform: translateY(-2px);
+}
+
+/* Training card look inside table rows */
+.training-card {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.training-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+.training-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.type-badge-live { background: #ecfeff; color: #065f46; border: 1px solid rgba(6,95,70,0.08); }
+.type-badge-recorded { background: #f5f3ff; color: #5b21b6; border: 1px solid rgba(91,33,182,0.06); }
+
+/* Subtle meta text */
+.muted-xs { font-size: 10.5px; color: #64748b; }

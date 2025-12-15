@@ -186,13 +186,8 @@
                 </div>
                 <!-- Filter Controls: Search and filter options based on current view -->
                 <div class="flex flex-wrap items-center gap-1.5">
-                    <!-- Core Skills Filters: Search, skill name filter, and status filter -->
+                    <!-- Core Skills Filters: Skill name filter and status filter -->
                     <ng-container *ngIf="mySkillsView === 'core'">
-                        <!-- Search Input: Filter skills by text search -->
-                        <div class="relative">
-                            <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input type="text" [(ngModel)]="skillSearch" placeholder="Search..." class="w-full sm:w-36 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-48 text-sm">
-                        </div>
                         <!-- Skill Name Filter: Searchable dropdown to filter by specific skill name -->
                         <app-searchable-dropdown
                             [(ngModel)]="skillNameFilter"
@@ -283,10 +278,6 @@
                 </div>
             </div>
             <div class="flex items-center gap-1.5 flex-1 justify-end min-w-0">
-                <div class="relative">
-                    <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" [(ngModel)]="trainingSearch" placeholder="Search..." class="w-28 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-xs">
-                </div>
                 <app-searchable-dropdown
                     [(ngModel)]="trainingSkillFilter"
                     [options]="skillNames"
@@ -330,10 +321,6 @@
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-1.5">
-                <div class="relative">
-                    <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" [(ngModel)]="assignedSearch" placeholder="Search..." class="w-full sm:w-36 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-48 text-sm">
-                </div>
                 <app-searchable-dropdown
                     [(ngModel)]="assignedSkillFilter"
                     [options]="skillNames"

@@ -344,6 +344,16 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   assignedTrainingsView: 'list' | 'calendar' = 'list';
   trainingCatalogView: 'list' | 'calendar' = 'list';
   trainingCatalogType: 'live' | 'recorded' = 'live'; // Toggle between live and recorded trainings
+  // Assign Training selector type (controls left pane source for Assign Training tab)
+  assignTrainingType: 'live' | 'recorded' = 'live';
+
+  get liveAssignCount(): number {
+    return (this.trainingCatalog || []).length;
+  }
+
+  get recordedAssignCount(): number {
+    return (this.recordedTrainings || []).length;
+  }
 
   // --- Calendar & Dashboard Metrics ---
   allTrainingsCalendarEvents: CalendarEvent[] = [];
@@ -2209,8 +2219,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const validAssignments: { trainingId: number; memberId: string; trainingName: string; memberName: string }[] = [];
 
     this.selectedTrainingIds.forEach(trainingId => {
-      const training = this.trainingCatalog.find(t => t.id === trainingId);
-      const trainingName = training?.training_name || 'Unknown Training';
+      const trainingObj = this.getAssignTrainingById(trainingId);
+      const trainingName = trainingObj?.training_name || 'Unknown Training';
 
       this.selectedMemberIds.forEach(memberId => {
         const member = this.manager?.team.find(m => m.id === memberId);
@@ -2382,9 +2392,16 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   getAlreadyAssignedTrainingsForMember(memberId: string): string[] {
     const assignedTrainings: string[] = [];
-    this.trainingCatalog.forEach(training => {
+    // Check live trainings
+    (this.trainingCatalog || []).forEach(training => {
       if (this.isAlreadyAssigned(training.id, memberId)) {
         assignedTrainings.push(training.training_name);
+      }
+    });
+    // Check recorded trainings
+    (this.recordedTrainings || []).forEach(r => {
+      if (this.isAlreadyAssigned(r.id, memberId)) {
+        assignedTrainings.push(r.training_name);
       }
     });
     return assignedTrainings;
@@ -2394,7 +2411,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const alreadyAssigned: string[] = [];
     this.selectedTrainingIds.forEach(trainingId => {
       if (this.isAlreadyAssigned(trainingId, memberId)) {
-        const training = this.trainingCatalog.find(t => t.id === trainingId);
+        const training = this.getAssignTrainingById(trainingId);
         if (training) {
           alreadyAssigned.push(training.training_name);
         }
@@ -2488,13 +2505,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   getSelectedTrainingNames(): string {
     if (!this.selectedTrainingIds || this.selectedTrainingIds.length === 0) return '...';
     if (this.selectedTrainingIds.length === 1) {
-      return this.trainingCatalog.find(t => t.id === this.selectedTrainingIds[0])?.training_name || '...';
+      return this.getAssignTrainingById(this.selectedTrainingIds[0])?.training_name || '...';
     }
     return `${this.selectedTrainingIds.length} Trainings Selected`;
   }
 
   getTrainingNameById(trainingId: number): string {
-    return this.trainingCatalog.find(t => t.id === trainingId)?.training_name || '';
+    return this.getAssignTrainingById(trainingId)?.training_name || '';
   }
 
   getSelectedMemberNames(): string {
@@ -2646,9 +2663,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   /**
-   * Calculate expected progress for a skill based on assignment and target dates.
-   * Expected progress is computed in 3‑month (approximately 90‑day) intervals
-   * between assignment_start_date and target_completion_date.
+  * Calculate expected progress for a skill based on assignment and target dates.
+  * Expected progress is computed on a daily basis (elapsed/total time)
+  * between assignment_start_date and target_completion_date.
    */
   getExpectedProgress(skill: Competency): number {
     const assignmentDateStr = skill.assignment_start_date;
@@ -2673,14 +2690,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const totalMs = targetDate.getTime() - assignmentDate.getTime();
     const elapsedMs = Math.min(Math.max(now.getTime() - assignmentDate.getTime(), 0), totalMs);
 
-    // Approximate 3‑month intervals as 90‑day blocks and distribute 0‑100% across them
-    const totalDays = totalMs / (1000 * 60 * 60 * 24);
-    const intervalDays = 90;
-    const intervals = Math.max(1, Math.ceil(totalDays / intervalDays));
-    const intervalMs = totalMs / intervals;
-    const elapsedIntervals = Math.floor(elapsedMs / intervalMs);
-
-    let expected = Math.round((elapsedIntervals / intervals) * 100);
+    // Compute expected progress on a daily basis: fraction of elapsed time
+    let expected = Math.round((elapsedMs / totalMs) * 100);
     if (expected > 100) expected = 100;
     if (expected < 0) expected = 0;
     return expected;
@@ -2828,7 +2839,21 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   get filteredAssignTrainings(): TrainingDetail[] {
-    let list = [...(this.trainingCatalog || [])];
+    let list: any[] = [];
+    if (this.assignTrainingType === 'live') {
+      list = [...(this.trainingCatalog || [])];
+    } else {
+      // Normalize recorded trainings to TrainingDetail-like shape for filtering/UI
+      list = (this.recordedTrainings || []).map(r => ({
+        id: r.id,
+        training_name: r.training_name,
+        training_topics: r.training_topics || r.description || '',
+        trainer_name: r.trainer_name || '',
+        training_type: 'Recorded',
+        training_date: r.recorded_date || null,
+        skill_category: r.skill_category || null
+      }));
+    }
     const q = (this.assignTrainingSearch || '').trim().toLowerCase();
     if (q) {
       list = list.filter(t =>
@@ -2839,6 +2864,25 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       );
     }
     return list;
+  }
+
+  /**
+   * Helper to resolve a training by id from either live trainings or recorded trainings
+   */
+  getAssignTrainingById(trainingId: number): any | null {
+    const live = this.trainingCatalog.find(t => t.id === trainingId);
+    if (live) return live;
+    const rec = (this.recordedTrainings || []).find(r => r.id === trainingId);
+    if (rec) {
+      return {
+        id: rec.id,
+        training_name: rec.training_name,
+        trainer_name: rec.trainer_name,
+        training_topics: rec.training_topics || rec.description || '',
+        training_type: 'Recorded'
+      } as any;
+    }
+    return null;
   }
 
   /**
@@ -3160,6 +3204,10 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       }
       return null;
     }).filter((s: any) => s !== null);
+  }
+
+  get sectionTitles(): string[] {
+    return this.sections.map((section: any) => section.title);
   }
 
   getLevelHeaderClass = (level: number) => ['bg-red-50', 'bg-orange-50', 'bg-yellow-50', 'bg-indigo-50', 'bg-green-50'][level - 1] || 'bg-gray-50';

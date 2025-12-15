@@ -130,14 +130,8 @@
           </div>
           <!-- Filter Controls: Search and filter options based on current view -->
           <div class="flex flex-wrap items-center gap-1.5">
-            <!-- Core Skills Filters: Search, skill name filter, and status filter -->
+            <!-- Core Skills Filters: Skill name filter and status filter -->
             <ng-container *ngIf="mySkillsView === 'core'">
-              <!-- Search Input: Filter skills by text search -->
-              <div class="relative">
-                <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                <input type="text" [(ngModel)]="mySkillsSearch" placeholder="Search..."
-                  class="w-full sm:w-36 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-48 text-sm">
-              </div>
               <!-- Skill Name Filter: Searchable dropdown to filter by specific skill name -->
               <app-searchable-dropdown [(ngModel)]="mySkillsSkillFilter" [options]="uniqueMySkills"
                 placeholder="All Skills" allOptionLabel="All Skills" allOptionValue="" iconClass="fa-filter"
@@ -227,11 +221,6 @@
             </div>
           </div>
           <div class="flex items-center gap-1.5 flex-1 justify-end min-w-0">
-            <div class="relative">
-              <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-              <input type="text" [(ngModel)]="catalogSearch" placeholder="Search..."
-                class="w-28 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-xs">
-            </div>
             <app-searchable-dropdown [(ngModel)]="catalogTypeFilter" [options]="['Online', 'Offline']"
               placeholder="All Types" allOptionLabel="All Types" allOptionValue="All" iconClass="fa-filter"
               width="w-auto min-w-[110px] text-xs">
@@ -273,11 +262,6 @@
             </div>
           </div>
           <div class="flex flex-wrap items-center gap-1.5">
-            <div class="relative">
-              <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-              <input type="text" [(ngModel)]="assignedSearch" placeholder="Search..."
-                class="w-full sm:w-36 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-48 text-sm">
-            </div>
             <app-searchable-dropdown [(ngModel)]="assignedSkillFilter" [options]="uniqueMySkills"
               placeholder="All Skills" allOptionLabel="All Skills" allOptionValue="All" iconClass="fa-filter"
               width="w-full sm:w-auto min-w-[140px]">
@@ -1856,23 +1840,46 @@
 
       <div *ngIf="!isLoading && !errorMessage && activeTab === 'assignTraining' && manager" class="space-y-6">
         <!-- Header - Matching other tabs -->
-        <div class="bg-blue-600 px-6 py-3 shadow-lg rounded-2xl mx-6 mt-4">
+        <div class="bg-blue-600 px-6 py-2 shadow-lg rounded-2xl mx-6 mt-3">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3">
               <h2 class="text-sm font-semibold text-white whitespace-nowrap">Assign Training</h2>
+              <div class="ml-4">
+                <div class="segmented-control bg-indigo-900/30 backdrop-blur-sm rounded-full p-1 flex items-center gap-1">
+                  <button (click)="assignTrainingType = 'live'" class="segmented-pill" [ngClass]="{ 'active': assignTrainingType === 'live' }">
+                    <div class="flex items-center gap-2 px-3 py-2">
+                      <i class="fa-solid fa-chalkboard text-[13px]"></i>
+                      <div class="text-left">
+                        <div class="text-xs font-semibold">Class</div>
+                        <div class="text-[10px] text-slate-200">{{ liveAssignCount }} available</div>
+                      </div>
+                    </div>
+                  </button>
+                  <button (click)="assignTrainingType = 'recorded'" class="segmented-pill" [ngClass]="{ 'active': assignTrainingType === 'recorded' }">
+                    <div class="flex items-center gap-2 px-3 py-2">
+                      <i class="fa-solid fa-video-slash text-[13px]"></i>
+                      <div class="text-left">
+                        <div class="text-xs font-semibold">Recorded</div>
+                        <div class="text-[10px] text-slate-200">{{ recordedAssignCount }} available</div>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+                <div class="text-[11px] text-white/90 mt-1">Toggle between live/class sessions and polished recorded lectures.</div>
+              </div>
             </div>
             <div class="flex flex-wrap items-center gap-2 text-[11px] text-blue-100">
-              <div class="flex items-center gap-1 bg-blue-700/60 rounded-md px-2 py-1">
+                      <div class="flex items-center gap-1 bg-blue-700/60 rounded-md px-2 py-0.5 text-[10px]">
                 <i class="fa-solid fa-book-open text-[10px]"></i>
                 <span class="uppercase tracking-wide">Trainings</span>
                 <span class="font-semibold text-white">{{ selectedTrainingIds.length }}/{{ filteredAssignTrainings.length }}</span>
               </div>
-              <div class="flex items-center gap-1 bg-blue-700/60 rounded-md px-2 py-1">
+                      <div class="flex items-center gap-1 bg-blue-700/60 rounded-md px-2 py-0.5 text-[10px]">
                 <i class="fa-solid fa-users text-[10px]"></i>
                 <span class="uppercase tracking-wide">Members</span>
                 <span class="font-semibold text-white">{{ selectedMemberIds.length }}/{{ filteredAssignMembers.length }}</span>
               </div>
-              <div class="flex items-center gap-1 bg-emerald-400/90 text-emerald-950 rounded-md px-2 py-1">
+                      <div class="flex items-center gap-1 bg-emerald-400/90 text-emerald-950 rounded-md px-2 py-0.5 text-[10px]">
                 <i class="fa-solid fa-calculator text-[10px]"></i>
                 <span class="uppercase tracking-wide">Total</span>
                 <span class="font-semibold">{{ selectedTrainingIds.length * selectedMemberIds.length || 0 }}</span>
@@ -1915,19 +1922,18 @@
                   <div *ngIf="filteredAssignTrainings.length > 0" class="border border-slate-200 rounded-lg max-h-80 overflow-y-auto custom-scrollbar">
                     <table class="min-w-full text-xs">
                       <thead class="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
-                        <tr>
-                          <th class="px-3 py-2 text-left font-semibold text-slate-600 w-9">
-                            <input
-                              type="checkbox"
-                              (change)="onToggleAllTrainings($event)"
-                              [checked]="selectedTrainingIds.length > 0 && selectedTrainingIds.length === filteredAssignTrainings.length"
-                              class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 accent-indigo-600"
-                            />
-                          </th>
-                          <th class="px-3 py-2 text-left font-semibold text-slate-600">Training</th>
-                          <th class="px-3 py-2 text-left font-semibold text-slate-600 hidden xl:table-cell">Details</th>
-                        </tr>
-                      </thead>
+                          <tr>
+                            <th class="px-3 py-2 text-left font-semibold text-slate-600 w-9">
+                              <input
+                                type="checkbox"
+                                (change)="onToggleAllTrainings($event)"
+                                [checked]="selectedTrainingIds.length > 0 && selectedTrainingIds.length === filteredAssignTrainings.length"
+                                class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 accent-indigo-600"
+                              />
+                            </th>
+                            <th class="px-3 py-2 text-left font-semibold text-slate-600">Training</th>
+                          </tr>
+                        </thead>
                       <tbody>
                         <tr
                           *ngFor="let training of filteredAssignTrainings"
@@ -1948,29 +1954,25 @@
                             />
                           </td>
                           <td class="px-3 py-2 align-top">
-                            <div class="font-semibold text-slate-800 text-xs truncate" [title]="training.training_name">
-                              {{ training.training_name }}
-                            </div>
-                            <div *ngIf="training.training_topics" class="text-[11px] text-slate-500 truncate mt-0.5" [title]="training.training_topics">
-                              {{ training.training_topics }}
-                            </div>
-                            <div class="flex flex-wrap gap-1 mt-1 xl:hidden">
-                              <span
-                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100"
-                              >
-                                <i class="fa-solid fa-display text-[9px] mr-1"></i>{{ training.training_type || 'N/A' }}
-                              </span>
-                              <span
-                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100"
-                              >
-                                <i class="fa-solid fa-user text-[9px] mr-1"></i>{{ training.trainer_name }}
-                              </span>
-                              <span
-                                *ngIf="training.training_date"
-                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-50 text-slate-700 border border-slate-200"
-                              >
-                                <i class="fa-solid fa-calendar-day text-[9px] mr-1"></i>{{ training.training_date | date: 'MMM d, y' }}
-                              </span>
+                            <div class="training-card">
+                              <div class="flex items-start justify-between">
+                                <div class="font-semibold text-slate-800 text-xs truncate" [title]="training.training_name">
+                                  {{ training.training_name }}
+                                </div>
+                                <div>
+                                  <span [ngClass]="{'type-badge-recorded': (training.training_type || '').toLowerCase().includes('record'), 'type-badge-live': !(training.training_type || '').toLowerCase().includes('record')}" class="training-badge">
+                                    <i class="fa-solid" [ngClass]="{ 'fa-video-slash': (training.training_type || '').toLowerCase().includes('record'), 'fa-chalkboard': !(training.training_type || '').toLowerCase().includes('record') }"></i>
+                                    {{ training.training_type || 'Live' }}
+                                  </span>
+                                </div>
+                              </div>
+                              <div *ngIf="training.training_topics" class="text-[11px] text-slate-500 mt-2 line-clamp-2" [title]="training.training_topics">
+                                {{ training.training_topics }}
+                              </div>
+                              <div class="flex items-center gap-2 mt-3 flex-wrap">
+                                <div class="muted-xs"><i class="fa-solid fa-user mr-1 text-xs"></i> {{ training.trainer_name }}</div>
+                                <div *ngIf="training.training_date" class="muted-xs"><i class="fa-solid fa-calendar-day mr-1 text-xs"></i>{{ training.training_date | date: 'MMM d, y' }}</div>
+                              </div>
                             </div>
                             <div
                               *ngIf="getSelectedMembersAlreadyAssigned(training.id).length > 0 && isTrainingSelected(training.id)"
@@ -1980,32 +1982,7 @@
                               {{ getSelectedMembersAlreadyAssigned(training.id).length }} selected member(s) already assigned
                             </div>
                           </td>
-                          <td class="px-3 py-2 align-top hidden xl:table-cell">
-                            <div class="flex flex-wrap gap-1">
-                              <span
-                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100"
-                              >
-                                <i class="fa-solid fa-display text-[9px] mr-1"></i>{{ training.training_type || 'N/A' }}
-                              </span>
-                              <span
-                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100"
-                              >
-                                <i class="fa-solid fa-user text-[9px] mr-1"></i>{{ training.trainer_name }}
-                              </span>
-                              <span
-                                *ngIf="training.training_date"
-                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-50 text-slate-700 border border-slate-200"
-                              >
-                                <i class="fa-solid fa-calendar-day text-[9px] mr-1"></i>{{ training.training_date | date: 'MMM d, y' }}
-                              </span>
-                              <span
-                                *ngIf="training.skill_category"
-                                class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-50 text-slate-700 border border-slate-200"
-                              >
-                                <i class="fa-solid fa-layer-group text-[9px] mr-1"></i>{{ training.skill_category }}
-                              </span>
-                            </div>
-                          </td>
+                          
                         </tr>
                       </tbody>
                     </table>
