@@ -27,8 +27,8 @@ from typing import List
 from datetime import date, datetime
 
 from app.database import get_db_async
-from app.models import TrainingDetail, User, ManagerEmployee, TrainingAssignment
-from app.schemas import TrainingCreate, TrainingResponse
+from app.models import TrainingDetail, User, ManagerEmployee, TrainingAssignment, TrainingRecording
+from app.schemas import TrainingCreate, TrainingResponse, TrainingRecordingResponse
 from app.auth_utils import get_current_active_user
 
 router = APIRouter(prefix="/trainings", tags=["Trainings"])
@@ -83,6 +83,21 @@ async def create_new_training(
     await db.commit()
     await db.refresh(new_training)
 
+    # If a lecture_url or description was provided, save it in the separate recordings table
+    if getattr(training_data, 'lecture_url', None) or getattr(training_data, 'description', None):
+        recording = TrainingRecording(
+            training_id=new_training.id,
+            lecture_url=getattr(training_data, 'lecture_url', None),
+            description=getattr(training_data, 'description', None)
+        )
+        db.add(recording)
+        await db.commit()
+        await db.refresh(recording)
+
+        # Attach values to training object so response_model still contains them
+        new_training.lecture_url = recording.lecture_url
+        new_training.description = recording.description
+
     return new_training
 
 @router.get("/", response_model=List[TrainingResponse])
@@ -102,6 +117,48 @@ async def get_all_trainings(
     result = await db.execute(select(TrainingDetail).order_by(TrainingDetail.training_date.desc()))
     trainings = result.scalars().all()
     return trainings
+
+
+@router.get("/recorded", response_model=List[TrainingRecordingResponse])
+async def get_recorded_trainings(
+    db: AsyncSession = Depends(get_db_async),
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Returns recorded trainings stored in the `training_recordings` table joined
+    with basic training details for display in the Recorded tab.
+    """
+    # Simple join: select recordings and load related training info
+    stmt = select(TrainingRecording)
+    result = await db.execute(stmt)
+    recordings = result.scalars().all()
+
+    # Eagerly load training details for each recording
+    combined = []
+    for rec in recordings:
+        training = None
+        try:
+            stmt2 = select(TrainingDetail).where(TrainingDetail.id == rec.training_id)
+            res2 = await db.execute(stmt2)
+            training = res2.scalars().first()
+        except Exception:
+            training = None
+
+        combined.append(
+            TrainingRecordingResponse(
+                id=rec.id,
+                training_id=rec.training_id,
+                training_name=getattr(training, 'training_name', None) if training else None,
+                trainer_name=getattr(training, 'trainer_name', None) if training else None,
+                skill=getattr(training, 'skill', None) if training else None,
+                skill_category=getattr(training, 'skill_category', None) if training else None,
+                lecture_url=rec.lecture_url,
+                description=rec.description,
+                created_at=rec.created_at
+            )
+        )
+
+    return combined
 
 @router.get("/my-trainings", response_model=List[TrainingResponse])
 async def get_my_trainings(

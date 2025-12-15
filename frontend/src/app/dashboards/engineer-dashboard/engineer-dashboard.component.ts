@@ -204,7 +204,7 @@ export class EngineerDashboardComponent implements OnInit {
     training_topics?: string;
     duration?: string;
     recorded_date?: string;
-    lecture_url: string;
+    lecture_url?: string;
     description?: string;
   }> = [];
   dashboardUpcomingTrainings: TrainingDetail[] = [];
@@ -1027,7 +1027,13 @@ export class EngineerDashboardComponent implements OnInit {
     this.http.get<TrainingDetail[]>(this.apiService.getUrl('/trainings/'), { headers }).subscribe({
       next: (response) => {
         // Group duplicate trainings by training_name + date + time and combine trainer names
-        const groupedData = this.groupDuplicateTrainings(response || []);
+        // Exclude recordings from the class/live trainings list (recordings should appear only under the Recorded toggle)
+        const groupedDataRaw = this.groupDuplicateTrainings(response || []);
+        const groupedData = (groupedDataRaw || []).filter(t => {
+          const tt = (t.training_type || '').toString().toLowerCase();
+          const hasLecture = !!(t.lecture_url && t.lecture_url.toString().trim().length > 0);
+          return tt !== 'recorded' && !hasLecture;
+        });
         this.allTrainings = groupedData;
         // Clear cache when trainings are updated
         this._myTrainingsCache = [];
@@ -2472,85 +2478,44 @@ export class EngineerDashboardComponent implements OnInit {
 
   setTrainingCatalogType(type: 'live' | 'recorded'): void {
     this.trainingCatalogType = type;
+    if (type === 'recorded') {
+      this.initializeRecordedTrainings();
+    } else {
+      this.fetchScheduledTrainings();
+    }
   }
 
   // --- Recorded Trainings ---
   initializeRecordedTrainings(): void {
-    // Sample recorded trainings data - will be replaced with database data later
-    this.recordedTrainings = [
-      {
-        id: 1001,
-        training_name: 'Introduction to Angular Framework',
-        skill: 'Angular',
-        skill_category: 'L2',
-        trainer_name: 'John Smith',
-        training_topics: 'Components, Services, Dependency Injection, Routing',
-        duration: '3 hours',
-        recorded_date: '2024-01-15',
-        lecture_url: 'https://www.youtube.com/watch?v=k5E2AVpwsko',
-        description: 'Comprehensive introduction to Angular framework covering core concepts and best practices.'
+    const token = this.authService.getToken();
+    if (!token) {
+      console.warn('No token available for fetching recorded trainings');
+      this.recordedTrainings = [];
+      return;
+    }
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+    // Call the dedicated recordings endpoint which returns training_recordings joined with training info
+    this.http.get<any[]>(this.apiService.getUrl('/trainings/recorded'), { headers }).subscribe({
+      next: (response) => {
+        this.recordedTrainings = (response || []).map(r => ({
+          id: r.id,
+          training_name: r.training_name || '',
+          skill: r.skill || '',
+          skill_category: r.skill_category || '',
+          trainer_name: r.trainer_name || '',
+          training_topics: '',
+          duration: '',
+          recorded_date: r.created_at || '',
+          lecture_url: r.lecture_url || '',
+          description: r.description || ''
+        }));
+        console.log(`Loaded ${this.recordedTrainings.length} recorded trainings from API`);
       },
-      {
-        id: 1002,
-        training_name: 'Advanced TypeScript Patterns',
-        skill: 'TypeScript',
-        skill_category: 'L3',
-        trainer_name: 'Sarah Johnson',
-        training_topics: 'Generics, Decorators, Advanced Types, Design Patterns',
-        duration: '2.5 hours',
-        recorded_date: '2024-02-20',
-        lecture_url: 'https://www.youtube.com/watch?v=O6A-u_FoEX8',
-        description: 'Deep dive into advanced TypeScript features and design patterns for enterprise applications.'
-      },
-      {
-        id: 1003,
-        training_name: 'RESTful API Design Principles',
-        skill: 'API Design',
-        skill_category: 'L3',
-        trainer_name: 'Michael Chen',
-        training_topics: 'REST Architecture, HTTP Methods, Status Codes, API Versioning',
-        duration: '2 hours',
-        recorded_date: '2024-03-10',
-        lecture_url: 'https://www.youtube.com/watch?v=lsMQRaeKNDk',
-        description: 'Learn best practices for designing RESTful APIs that are scalable and maintainable.'
-      },
-      {
-        id: 1004,
-        training_name: 'Database Optimization Techniques',
-        skill: 'Database',
-        skill_category: 'L4',
-        trainer_name: 'Emily Davis',
-        training_topics: 'Query Optimization, Indexing, Normalization, Performance Tuning',
-        duration: '3.5 hours',
-        recorded_date: '2024-04-05',
-        lecture_url: 'https://www.youtube.com/watch?v=wTPGW1PNy_Y',
-        description: 'Master database optimization techniques to improve application performance.'
-      },
-      {
-        id: 1005,
-        training_name: 'Cloud Architecture Fundamentals',
-        skill: 'Cloud Computing',
-        skill_category: 'L2',
-        trainer_name: 'Robert Wilson',
-        training_topics: 'AWS Services, Scalability, Load Balancing, Microservices',
-        duration: '4 hours',
-        recorded_date: '2024-05-12',
-        lecture_url: 'https://www.youtube.com/watch?v=3hLmDS179mg',
-        description: 'Introduction to cloud computing concepts and AWS services for modern applications.'
-      },
-      {
-        id: 1006,
-        training_name: 'DevOps CI/CD Pipeline Setup',
-        skill: 'DevOps',
-        skill_category: 'L3',
-        trainer_name: 'Lisa Anderson',
-        training_topics: 'Jenkins, Docker, Kubernetes, Automated Testing',
-        duration: '3 hours',
-        recorded_date: '2024-06-18',
-        lecture_url: 'https://www.youtube.com/watch?v=9zn6N4j2kqs',
-        description: 'Complete guide to setting up CI/CD pipelines for automated deployment.'
+      error: (err) => {
+        console.error('Failed to fetch recorded trainings:', err);
+        this.recordedTrainings = [];
       }
-    ];
+    });
   }
 
   get filteredRecordedTrainings(): Array<{
@@ -2562,7 +2527,7 @@ export class EngineerDashboardComponent implements OnInit {
     training_topics?: string;
     duration?: string;
     recorded_date?: string;
-    lecture_url: string;
+    lecture_url?: string;
     description?: string;
   }> {
     let list = [...(this.recordedTrainings || [])];
@@ -2585,8 +2550,10 @@ export class EngineerDashboardComponent implements OnInit {
     return list;
   }
 
-  openRecordedTraining(url: string): void {
-    window.open(url, '_blank');
+  openRecordedTraining(url: string | undefined): void {
+    if (url) {
+      window.open(url, '_blank');
+    }
   }
 
   // --- User Actions ---

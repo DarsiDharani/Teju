@@ -23,7 +23,7 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-from .models import Trainer, TrainingDetail, ManagerEmployee, User, EmployeeCompetency
+from .models import Trainer, TrainingDetail, ManagerEmployee, User, EmployeeCompetency, TrainingRecording
 from datetime import datetime
 import logging
 from typing import Any, Optional
@@ -353,6 +353,8 @@ async def load_all_from_excel(excel_file_source: Any, db: AsyncSession):
             logging.info("=" * 80)
 
         trainings_to_add = []
+        # Parallel list aligned with trainings_to_add storing recording metadata
+        recordings_meta = []
         skipped_training_count = 0
         for i, row in enumerate(df_trainings.to_dict('records')):
             # Validate required fields before creating TrainingDetail object
@@ -514,7 +516,15 @@ async def load_all_from_excel(excel_file_source: Any, db: AsyncSession):
             logging.info(f"   Email string: {repr(email_str)}")
             logging.info(f"   Combined email: {combined_email}")
             
-            # Create single training record with all trainers
+            # Extract possible lecture_url/description for separate recordings table
+            lecture_url_val = find_column_flexible(row, [
+                'training_link', 'training_link_url', 'lecture_url', 'link', 'training_link'
+            ]) or row.get('training_link')
+            description_val = find_column_flexible(row, [
+                'description', 'details', 'training_description', 'summary'
+            ]) or row.get('description')
+
+            # Create single training record with all trainers (recording stored separately)
             trainings_to_add.append(
                 TrainingDetail(
                     division=division_val,
@@ -535,11 +545,95 @@ async def load_all_from_excel(excel_file_source: Any, db: AsyncSession):
                     assessment_details=assessment_details_val,
                 )
             )
+
+            # Record recording metadata for this training (None if not present)
+            if lecture_url_val or description_val:
+                recordings_meta.append({
+                    'lecture_url': lecture_url_val,
+                    'description': description_val
+                })
+            else:
+                recordings_meta.append(None)
             
             if len(trainer_names) > 1:
                 logging.info(f"✅ Row {i+2}: Training created with {len(trainer_names)} trainers: {combined_trainer_name}")
         
         logging.info(f"-> Training validation complete: {len(trainings_to_add)} valid rows, {skipped_training_count} skipped.")
+
+        # --- 2b. Optionally load 'Online Courses' sheet for recorded trainings ---
+        logging.info("Step 3: Attempting to read 'Online Courses' sheet (recorded trainings)...")
+        excel_file_source.seek(0)
+        try:
+            df_online_raw = pd.read_excel(excel_file_source, sheet_name="Online Courses", engine='openpyxl')
+            logging.info(f"-> Found {len(df_online_raw)} rows in 'Online Courses'.")
+            df_online = df_online_raw.replace({np.nan: None})
+            df_online = clean_headers(df_online)
+
+            # Map common columns from Online Courses to TrainingDetail fields
+            for i, row in enumerate(df_online.to_dict('records')):
+                try:
+                    # Flexible mapping
+                    training_name_val = find_column_flexible(row, [
+                        'training_name_program', 'training_name', 'training_name_program', 'trainingname', 'training name', 'program'
+                    ]) or row.get('training_name_program') or row.get('training_name')
+
+                    # Skip if no name
+                    if not training_name_val:
+                        logging.warning(f"Skipping Online Courses row {i+2}: missing training name")
+                        continue
+
+                    trainer_name_val = find_column_flexible(row, ['trainer_name', 'trainer', 'trainername']) or row.get('trainer_name')
+                    email_val = find_column_flexible(row, ['email_id', 'email', 'emailid']) or row.get('email_id')
+                    lecture_url_val = find_column_flexible(row, ['training_link', 'training_link_url', 'link', 'lecture_url']) or row.get('training_link')
+                    duration_val = find_column_flexible(row, ['duration', 'duration_(in_hrs)', 'duration_in_hrs']) or row.get('duration_(in_hrs)')
+                    training_topics_val = find_column_flexible(row, ['trainingtopics__material', 'training_topics', 'trainingtopics', 'topics']) or row.get('trainingtopics__material')
+                    prerequisites_val = find_column_flexible(row, ['perquisites', 'prerequisites', 'prerequisite']) or row.get('perquisites')
+                    skill_val = find_column_flexible(row, ['skill']) or row.get('skill')
+                    skill_category_val = find_column_flexible(row, ['skill_category_(l1_-_l5)', 'skill_category', 'skillcategory']) or row.get('skill_category_(l1_-_l5)')
+                    assessment_details_val = find_column_flexible(row, ['assessment_details', 'assessmentdetails', 'assessment']) or row.get('assessment_details')
+
+                    # Create TrainingDetail for each online course row
+                    lecture_url_val = find_column_flexible(row, ['training_link', 'training_link_url', 'link', 'lecture_url']) or row.get('training_link')
+                    description_val = training_topics_val or assessment_details_val
+
+                    trainings_to_add.append(
+                        TrainingDetail(
+                            division=find_column_flexible(row, ['division']) or row.get('division'),
+                            department=find_column_flexible(row, ['department']) or row.get('department'),
+                            competency=find_column_flexible(row, ['competency', 'competence']) or row.get('competency'),
+                            skill=skill_val,
+                            training_name=training_name_val,
+                            training_topics=training_topics_val,
+                            prerequisites=prerequisites_val,
+                            skill_category=skill_category_val,
+                            trainer_name=trainer_name_val or 'Not Assigned',
+                            email=email_val,
+                            training_date=None,
+                            duration=str(duration_val) if duration_val else None,
+                            seats=None,
+                            time=None,
+                            training_type='recorded',
+                            assessment_details=assessment_details_val
+                        )
+                    )
+                    # Add recordings metadata for the online course row
+                    if lecture_url_val or (training_topics_val or assessment_details_val):
+                        recordings_meta.append({
+                            'lecture_url': lecture_url_val,
+                            'description': (training_topics_val or assessment_details_val)
+                        })
+                    else:
+                        recordings_meta.append(None)
+                    if i < 3:
+                        logging.info(f"✅ Online Courses row {i+2} added: {training_name_val} (trainer={trainer_name_val})")
+                except Exception as row_err:
+                    logging.warning(f"Skipping Online Courses row {i+2} due to error: {row_err}")
+                    continue
+
+        except ValueError:
+            logging.info("'Online Courses' sheet not found — skipping recorded trainings import.")
+        except Exception as e_online:
+            logging.warning(f"Failed to process 'Online Courses' sheet: {e_online}")
 
         # --- 3. Load Employee Competency ---
         logging.info("Step 3.5: Reading 'Employee Competency' sheet from Excel...")
@@ -673,8 +767,24 @@ async def load_all_from_excel(excel_file_source: Any, db: AsyncSession):
             
             logging.info(f"-> Employee Competency validation complete: {len(competencies_to_add)} valid rows, {skipped_competency_count} skipped.")
 
-        # --- 4. Add all objects to the session ---
+        # --- 4. Ensure DB schema has new columns, then add all objects to the session ---
         logging.info(f"Step 4: Preparing to add {len(trainers_to_add)} trainers, {len(trainings_to_add)} trainings, and {len(competencies_to_add)} employee competencies to the database session.")
+
+        # Ensure the separate recordings table exists for storing recorded training links
+        try:
+            await db.execute(text("""
+                CREATE TABLE IF NOT EXISTS training_recordings (
+                    id SERIAL PRIMARY KEY,
+                    training_id INTEGER REFERENCES training_details(id),
+                    lecture_url VARCHAR,
+                    description TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            await db.commit()
+            logging.info("-> Ensured 'training_recordings' table exists.")
+        except Exception as schema_err:
+            logging.warning(f"Could not ensure training_recordings table: {schema_err}")
         if trainers_to_add:
             db.add_all(trainers_to_add)
             logging.info(f"✅ Added {len(trainers_to_add)} trainer records to session.")
@@ -693,6 +803,27 @@ async def load_all_from_excel(excel_file_source: Any, db: AsyncSession):
         else:
             logging.warning("⚠️ No employee competency records to add - all rows were skipped or sheet not found!")
         
+        # Before committing, flush to obtain assigned IDs so we can create recordings
+        recordings_to_add = []
+        try:
+            await db.flush()
+            # trainings_to_add and recordings_meta are aligned; create TrainingRecording rows
+            for idx, training in enumerate(trainings_to_add):
+                meta = recordings_meta[idx] if idx < len(recordings_meta) else None
+                if meta and (meta.get('lecture_url') or meta.get('description')):
+                    recordings_to_add.append(
+                        TrainingRecording(
+                            training_id=training.id,
+                            lecture_url=meta.get('lecture_url'),
+                            description=meta.get('description')
+                        )
+                    )
+            if recordings_to_add:
+                db.add_all(recordings_to_add)
+                logging.info(f"✅ Added {len(recordings_to_add)} recording records to session.")
+        except Exception as flush_err:
+            logging.warning(f"Could not flush session to create recordings: {flush_err}")
+
         # Final summary
         logging.info("=" * 80)
         logging.info("📊 FINAL SUMMARY:")

@@ -104,6 +104,10 @@ class TrainingDetail(Base):
     prerequisites = Column(String, nullable=True)
     skill_category = Column(String, nullable=True)
     trainer_name = Column(String, nullable=False)
+    # Optional: link to recorded lecture / online course URL
+    lecture_url = Column(String, nullable=True)
+    # Optional free-form description or summary for the training (used for online courses)
+    description = Column(String, nullable=True)
     email = Column(String, nullable=True)
     training_date = Column(Date, nullable=True) # CHANGED: From String to Date for proper sorting/filtering
     duration = Column(String, nullable=True)
@@ -253,6 +257,17 @@ class TrainingSolutionFile(Base):
     # Relationships
     training = relationship("TrainingDetail")
     employee = relationship("User", foreign_keys=[employee_empid])
+
+
+class TrainingRecording(Base):
+    __tablename__ = 'training_recordings'
+    id = Column(Integer, primary_key=True, index=True)
+    training_id = Column(Integer, ForeignKey('training_details.id'), nullable=False)
+    lecture_url = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    # Relationships
+    training = relationship("TrainingDetail")
 
 class Notification(Base):
     """

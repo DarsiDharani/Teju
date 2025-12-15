@@ -47,6 +47,10 @@ export interface TrainingDetail {
   seats?: string;
   /** Details about the assessment/assignment for this training */
   assessment_details?: string;
+  /** URL for recorded/online training content */
+  lecture_url?: string;
+  /** Description of the training (for recorded trainings) */
+  description?: string;
   /** Type of assignment: personal (individual) or team (group) */
   assignmentType?: 'personal' | 'team';
   /** Employee ID if training is assigned to a specific person */

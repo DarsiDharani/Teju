@@ -83,11 +83,32 @@ class TrainingCreate(BaseModel):
     training_type: Optional[str] = None
     seats: Optional[str] = None
     assessment_details: Optional[str] = None
+    # Optional URL to a recorded lecture or online course
+    lecture_url: Optional[str] = None
+    # Optional free-form description / summary
+    description: Optional[str] = None
 
 class TrainingResponse(TrainingCreate):
     id: int
     trainer_name: Optional[str] = None 
     email: Optional[str] = None
+    lecture_url: Optional[str] = None
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class TrainingRecordingResponse(BaseModel):
+    id: int
+    training_id: int
+    training_name: Optional[str] = None
+    trainer_name: Optional[str] = None
+    skill: Optional[str] = None
+    skill_category: Optional[str] = None
+    lecture_url: Optional[str] = None
+    description: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
