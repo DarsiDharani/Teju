@@ -126,3 +126,63 @@ def get_db_session(db: AsyncSession = Depends(get_db_async)):
         AsyncSession: Database session object
     """
     yield db
+
+def calculate_weighted_actual_progress(
+    training_attended: bool,
+    assignment_score: Optional[int],
+    manager_feedback_ratings: list
+) -> int:
+    """
+    Calculate weighted actual progress based on three components:
+    - Training Completion (30%): Attendance status
+    - Assignment Score (40%): Quiz/assignment performance
+    - Manager Feedback (30%): Average of manager performance ratings
+    
+    Weighted Formula:
+    Actual Progress = (Training × 30%) + (Assignment × 40%) + (Feedback × 30%)
+    
+    Args:
+        training_attended: Boolean indicating if training was attended
+        assignment_score: Assignment/quiz score (0-100), None if not submitted
+        manager_feedback_ratings: List of manager feedback ratings (1-5 scale)
+        
+    Returns:
+        int: Final actual progress percentage (0-100), rounded to nearest integer
+        
+    Examples:
+        # Full completion
+        >>> calculate_weighted_actual_progress(True, 95, [5, 5, 4, 5])
+        96  # (100*0.3) + (95*0.4) + ((5+5+4+5)/4*20*0.3) = 30 + 38 + 28 = 96
+        
+        # Partial completion
+        >>> calculate_weighted_actual_progress(True, 70, [3, 3, 2])
+        65  # (100*0.3) + (70*0.4) + ((3+3+2)/3*20*0.3) = 30 + 28 + 7 = 65
+        
+        # No assignment
+        >>> calculate_weighted_actual_progress(True, None, [4, 4, 4])
+        80  # (100*0.3) + (0*0.4) + ((4+4+4)/3*20*0.3) = 30 + 0 + 50 = 80
+    """
+    # Component 1: Training Completion (30% weightage)
+    # 100% if attended, 0% if not
+    training_score = 100 if training_attended else 0
+    training_contribution = training_score * 0.30
+    
+    # Component 2: Assignment Score (40% weightage)
+    # Use provided score (0-100) or 0 if not submitted
+    assignment_contribution = (assignment_score if assignment_score is not None else 0) * 0.40
+    
+    # Component 3: Manager Feedback (30% weightage)
+    # Average feedback ratings converted from 1-5 scale to 0-100 scale
+    # Formula: (rating / 5) * 100 to convert single rating to percentage
+    feedback_contribution = 0
+    if manager_feedback_ratings and len(manager_feedback_ratings) > 0:
+        avg_feedback_rating = sum(manager_feedback_ratings) / len(manager_feedback_ratings)
+        # Convert from 1-5 scale to 0-100 scale: (rating / 5) * 100
+        feedback_percentage = (avg_feedback_rating / 5) * 100
+        feedback_contribution = feedback_percentage * 0.30
+    
+    # Calculate final weighted actual progress
+    final_progress = training_contribution + assignment_contribution + feedback_contribution
+    
+    # Round to nearest integer and cap between 0-100
+    return int(round(max(0, min(100, final_progress))))

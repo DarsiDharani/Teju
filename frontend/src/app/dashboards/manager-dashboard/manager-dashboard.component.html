@@ -399,24 +399,24 @@
                   <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
                     <circle cx="60" cy="60" r="54" stroke-width="10" fill="none" class="stroke-slate-200/70" />
                     <circle cx="60" cy="60" r="54" stroke-width="10" fill="none"
-                      [attr.stroke]="getPersonalProgressPercentage() >= 100 ? '#10b981' : '#0ea5e9'"
+                      [attr.stroke]="getAvgProgressOnTrack() >= 100 ? '#10b981' : '#0ea5e9'"
                       [attr.stroke-dasharray]="339.29"
-                      [attr.stroke-dashoffset]="339.29 - (339.29 * getPersonalProgressPercentage() / 100)"
+                      [attr.stroke-dashoffset]="339.29 - (339.29 * getAvgProgressOnTrack() / 100)"
                       class="transition-all duration-1000 ease-out" stroke-linecap="round"></circle>
                   </svg>
                   <div class="absolute inset-0 flex items-center justify-center">
                     <div class="text-center">
-                      <div class="text-xl font-extrabold text-slate-900">{{ getPersonalProgressPercentage() }}%</div>
-                      <p class="text-[10px] text-slate-500 font-medium">Complete</p>
+                      <div class="text-xl font-extrabold text-slate-900">{{ getAvgProgressOnTrack() }}%</div>
+                      <p class="text-[10px] text-slate-500 font-medium">On Track</p>
                     </div>
                   </div>
                 </div>
                 <div class="w-full">
-                  <h3 class="text-base font-bold text-slate-900 mb-1 text-center sm:text-left"><b>Overall Progress</b>
+                  <h3 class="text-base font-bold text-slate-900 mb-1 text-center sm:text-left"><b>Skills On Track</b>
                   </h3>
-                  <p class="text-sm text-slate-600 text-center sm:text-left">You have met <span
-                      class="font-bold text-slate-800">{{ getMySkillsMetCount() }}</span> out of <span
-                      class="font-bold text-slate-800">{{ (manager.skills.length || 0) }}</span> core skills.</p>
+                  <p class="text-sm text-slate-600 text-center sm:text-left"><span
+                      class="font-bold text-slate-800">{{ getTeamSkillsOnTrack() }}</span> skills on track with <span
+                      class="font-bold text-slate-800">{{ getAvgProgressOnTrack() }}%</span> average progress</p>
                 </div>
               </div>
             </div>
@@ -889,6 +889,10 @@
                       <span>Target: <span class="font-bold text-slate-700">{{ competency.target_expertise
                           }}</span></span>
                     </div>
+                    <!-- Target Completion Date -->
+                    <div *ngIf="competency.target_completion_date" class="text-[11px] text-slate-600 bg-blue-50/60 px-2 py-1 rounded border border-blue-200/40">
+                      <strong class="text-slate-700">Target Date:</strong> {{ competency.target_completion_date | date:'short' }}
+                    </div>
                     <div>
                       <div class="flex justify-between items-center mb-1">
                         <span class="text-xs font-medium text-slate-600">Progress</span>
@@ -897,14 +901,14 @@
                         </span>
                       </div>
                       <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden shadow-inner relative">
-                        <!-- Expected progress (background bar) -->
+                        <!-- Expected progress (background bar - Light Blue) -->
                         <div
-                          class="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-300 to-amber-500 h-full transition-all duration-700"
+                          class="absolute inset-y-0 left-0 bg-gradient-to-r from-sky-300 to-sky-400 h-full transition-all duration-700"
                           [style.width.%]="getExpectedProgress(competency)">
                         </div>
-                        <!-- Actual progress (foreground bar) -->
+                        <!-- Actual progress (foreground bar - Deep Blue) -->
                         <div
-                          class="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 to-cyan-600 h-full transition-all duration-700"
+                          class="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-600 to-blue-700 h-full transition-all duration-700"
                           [style.width.%]="getSkillProgress(competency)">
                         </div>
                       </div>

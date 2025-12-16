@@ -59,6 +59,8 @@ export interface TrainingDetail {
   attendance_marked?: boolean;
   /** Whether the employee attended the training (true if attended, false if marked absent) */
   attendance_attended?: boolean;
+  /** Target completion date for this assignment (set by manager when assigning training) */
+  target_date?: string;
 }
 
 /**

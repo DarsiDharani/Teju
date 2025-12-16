@@ -96,7 +96,7 @@ async def assign_training_to_employee(
             training_id=assignment.training_id,
             employee_empid=assignment.employee_username,
             manager_empid=manager_username,
-            # target_date=assignment.target_date,  # Uncomment after running migration
+            target_date=assignment.target_date,
         )
         db.add(db_assignment)
         await db.commit()
@@ -136,8 +136,8 @@ async def get_my_assigned_trainings(
     """
     employee_username = current_user.get("username")
 
-    # Get all assigned trainings (show all, not just those with attendance marked)
-    stmt = select(models.TrainingDetail).join(
+    # Get all assigned trainings with their assignment details (target_date)
+    stmt = select(models.TrainingDetail, models.TrainingAssignment).join(
         models.TrainingAssignment,
         models.TrainingAssignment.training_id == models.TrainingDetail.id
     ).where(
@@ -145,10 +145,11 @@ async def get_my_assigned_trainings(
     )
 
     result = await db.execute(stmt)
-    trainings = result.scalars().all()
+    training_pairs = result.all()
+    trainings_with_assignments = [(row[0], row[1]) for row in training_pairs]
 
     # Get attendance records for all trainings for this employee
-    training_ids = [t.id for t in trainings]
+    training_ids = [t[0].id for t in trainings_with_assignments]
     attendance_map = {}
     if training_ids:
         attendance_stmt = select(models.TrainingAttendance).where(
@@ -173,7 +174,7 @@ async def get_my_assigned_trainings(
                 return val
         return None
 
-    def serialize(td: models.TrainingDetail):
+    def serialize(td: models.TrainingDetail, assignment: models.TrainingAssignment):
         # Check if attendance has been marked (record exists) and if attended is True
         attendance_status = attendance_map.get(td.id)
         attendance_marked = attendance_status is not None  # Record exists
@@ -198,10 +199,11 @@ async def get_my_assigned_trainings(
             "seats": td.seats,
             "assessment_details": td.assessment_details,
             "attendance_marked": attendance_marked,  # Whether trainer has marked attendance
-            "attendance_attended": attendance_attended  # Whether employee attended (True) or not (False)
+            "attendance_attended": attendance_attended,  # Whether employee attended (True) or not (False)
+            "target_date": to_iso(assignment.target_date) if assignment.target_date else None  # Target completion date set by manager
         }
 
-    return [serialize(t) for t in trainings]
+    return [serialize(t[0], t[1]) for t in trainings_with_assignments]
 
 @router.get("/manager/team")
 async def get_team_assigned_trainings(

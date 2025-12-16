@@ -140,6 +140,8 @@ export class EngineerDashboardComponent implements OnInit {
   totalSkills: number = 0;
   skillsMet: number = 0;
   skillsGap: number = 0;
+  skillsOnTrack: number = 0;
+  avgProgressOnTrack: number = 0;
   progressPercentage: number = 0;
   isLoading: boolean = true;
   errorMessage: string = '';
@@ -924,7 +926,8 @@ export class EngineerDashboardComponent implements OnInit {
 
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 
-    this.http.get<any>(this.apiService.getUrl(this.API_ENDPOINT), { headers }).pipe(
+    // Use the new endpoint that includes assignment dates
+    this.http.get<any>(this.apiService.getUrl('/data/engineer/skills-with-assignments'), { headers }).pipe(
       map(response => {
         this.employeeId = response.username;
         this.employeeName = response.employee_name || 'Employee';
@@ -966,18 +969,31 @@ export class EngineerDashboardComponent implements OnInit {
     
     if (!this.skills || this.skills.length === 0) {
       // Use hardcoded defaults if API fails or returns no skills
-      this.skillsMet = 3; // Default value for Skills Met
-      this.skillsGap = 7; // Default value for Skills Gap
-      this.progressPercentage = 30; // 3/10 = 30%
+      this.skillsMet = 3;
+      this.skillsGap = 7;
+      this.skillsOnTrack = 0;
+      this.avgProgressOnTrack = 0;
+      this.progressPercentage = 30;
       this.skillGaps = [];
       this.badges = [];
       return;
     }
 
-    // Skills "Met" (Completed) and "Gap" (Behind) are now based on timeline status,
-    // which uses expected vs actual progress from manager feedback and target dates.
+    // Count skills by status
     this.skillsMet = this.skills.filter(s => this.getTimelineStatus(s) === 'Completed').length;
     this.skillsGap = this.skills.filter(s => this.getTimelineStatus(s) === 'Behind').length;
+    
+    // Calculate On Track skills and their average progress
+    const onTrackSkills = this.skills.filter(s => this.getTimelineStatus(s) === 'On Track');
+    this.skillsOnTrack = onTrackSkills.length;
+    
+    if (this.skillsOnTrack > 0) {
+      const totalProgress = onTrackSkills.reduce((sum, skill) => sum + (this.getSkillProgress(skill) || 0), 0);
+      this.avgProgressOnTrack = Math.round(totalProgress / this.skillsOnTrack);
+    } else {
+      this.avgProgressOnTrack = 0;
+    }
+    
     this.progressPercentage = this.totalSkills > 0
       ? Math.round((this.skillsMet / this.totalSkills) * 100)
       : 0;
@@ -3219,97 +3235,73 @@ export class EngineerDashboardComponent implements OnInit {
   }
 
   getSkillProgress(competency: Skill | ModalSkill): number {
-    // Calculate progress based on average overall performance across L1-L5 levels
-    const skillName = competency.skill;
-    if (!skillName) return 0;
-
-    // Get all feedback for this skill
-    const feedbackList = this.getFeedbackForSkill(skillName);
-    if (!feedbackList || feedbackList.length === 0) return 0;
-
-    // Group feedback by skill category (L1, L2, L3, L4, L5)
-    const feedbackByLevel = new Map<string, any[]>();
-    feedbackList.forEach(feedback => {
-      const skillCategory = feedback.skill_category || 'Unknown';
-      if (skillCategory.startsWith('L') && ['L1', 'L2', 'L3', 'L4', 'L5'].includes(skillCategory)) {
-        if (!feedbackByLevel.has(skillCategory)) {
-          feedbackByLevel.set(skillCategory, []);
-        }
-        feedbackByLevel.get(skillCategory)!.push(feedback);
-      }
-    });
-
-    // Sort feedback within each level by updated_at (most recent first)
-    feedbackByLevel.forEach((feedbackList, level) => {
-      feedbackList.sort((a, b) => {
-        const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
-        const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
-        return dateB - dateA;
-      });
-    });
-
-    // Get latest overall_performance for each level (L1-L5)
-    const performanceScores: number[] = [];
-    const levels = ['L1', 'L2', 'L3', 'L4', 'L5'];
-    
-    levels.forEach(level => {
-      const levelFeedback = feedbackByLevel.get(level);
-      if (levelFeedback && levelFeedback.length > 0) {
-        const latestFeedback = levelFeedback[0];
-        if (latestFeedback.overall_performance != null && latestFeedback.overall_performance > 0) {
-          performanceScores.push(latestFeedback.overall_performance);
-        }
-      }
-    });
-
-    // If no performance scores found, return 0
-    if (performanceScores.length === 0) return 0;
-
-    // Calculate average of overall performance scores
-    const sum = performanceScores.reduce((acc, score) => acc + score, 0);
-    const average = sum / performanceScores.length;
-
-    // Convert to percentage: (average/5) * 100
-    // Since overall_performance is on a 1-5 scale, we convert it to percentage
-    let percent = Math.round((average / 5) * 100);
-    if (percent > 100) percent = 100;
-    if (percent < 0) percent = 0;
-    return percent;
+    /**
+     * Returns weighted actual progress calculated by backend.
+     * 
+     * Formula: Weighted Actual Progress = (Training × 30%) + (Assignment × 40%) + (Feedback × 30%)
+     * 
+     * Where:
+     * - Training: 100% if attended, 0% if not
+     * - Assignment: Score from assignment submission (0-100)
+     * - Feedback: Average of manager performance ratings converted to 0-100
+     */
+    return (competency as any).weighted_actual_progress || 0;
   }
 
   /**
   * Calculate expected progress for a skill based on assignment and target dates.
   * Expected progress is computed on a daily basis (elapsed/total time)
   * between assignment_start_date and target_completion_date.
+   * 
+   * For skills with multiple levels, calculates average expected progress across all levels.
    */
   getExpectedProgress(competency: Skill | ModalSkill): number {
-    const assignmentDateStr = (competency as any).assignment_start_date as string | undefined;
-    const targetDateStr = (competency as any).target_completion_date as string | undefined;
+    // Get all levels of this skill
+    const skillName = competency.skill;
+    const skillsWithSameName = this.skills.filter(s => s.skill === skillName);
+    
+    // Calculate expected progress for each level
+    const progressValues: number[] = [];
+    
+    for (const skill of skillsWithSameName) {
+      const assignmentDateStr = (skill as any).assignment_start_date as string | undefined;
+      const targetDateStr = (skill as any).target_completion_date as string | undefined;
 
-    if (!assignmentDateStr || !targetDateStr) {
-      // If no timeline is defined, we cannot compute an expected value
+      if (!assignmentDateStr || !targetDateStr) {
+        // If no timeline is defined, skip this level
+        continue;
+      }
+
+      const assignmentDate = new Date(assignmentDateStr);
+      const targetDate = new Date(targetDateStr);
+      if (isNaN(assignmentDate.getTime()) || isNaN(targetDate.getTime()) || targetDate <= assignmentDate) {
+        continue;
+      }
+
+      const now = new Date();
+      if (now <= assignmentDate) {
+        progressValues.push(0);
+        continue;
+      }
+
+      const totalMs = targetDate.getTime() - assignmentDate.getTime();
+      const elapsedMs = Math.min(Math.max(now.getTime() - assignmentDate.getTime(), 0), totalMs);
+
+      // Compute expected progress on a daily basis: fraction of elapsed time
+      let expected = Math.round((elapsedMs / totalMs) * 100);
+      if (expected > 100) expected = 100;
+      if (expected < 0) expected = 0;
+      progressValues.push(expected);
+    }
+
+    // If no progress values were calculated, return 0
+    if (progressValues.length === 0) {
       return 0;
     }
 
-    const assignmentDate = new Date(assignmentDateStr);
-    const targetDate = new Date(targetDateStr);
-    if (isNaN(assignmentDate.getTime()) || isNaN(targetDate.getTime()) || targetDate <= assignmentDate) {
-      return 0;
-    }
-
-    const now = new Date();
-    if (now <= assignmentDate) {
-      return 0;
-    }
-
-    const totalMs = targetDate.getTime() - assignmentDate.getTime();
-    const elapsedMs = Math.min(Math.max(now.getTime() - assignmentDate.getTime(), 0), totalMs);
-
-    // Compute expected progress on a daily basis: fraction of elapsed time
-    let expected = Math.round((elapsedMs / totalMs) * 100);
-    if (expected > 100) expected = 100;
-    if (expected < 0) expected = 0;
-    return expected;
+    // Calculate average of all progress values
+    const sum = progressValues.reduce((acc, val) => acc + val, 0);
+    return Math.round(sum / progressValues.length);
   }
 
   /**

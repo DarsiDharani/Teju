@@ -188,6 +188,12 @@
                 <div class="flex flex-wrap items-center gap-1.5">
                     <!-- Core Skills Filters: Skill name filter and status filter -->
                     <ng-container *ngIf="mySkillsView === 'core'">
+                        <!-- Color Code Legend -->
+                        <div class="text-xs text-blue-100 font-medium">
+                            <span class="inline-flex items-center gap-1"><span class="w-4 h-1.5 rounded bg-yellow-300 border border-yellow-400"></span>Yellow = Expected</span>
+                            <span class="mx-3">•</span>
+                            <span class="inline-flex items-center gap-1"><span class="w-4 h-1.5 rounded bg-purple-300 border border-purple-400"></span>Purple = Actual</span>
+                        </div>
                         <!-- Skill Name Filter: Searchable dropdown to filter by specific skill name -->
                         <app-searchable-dropdown
                             [(ngModel)]="skillNameFilter"
@@ -212,17 +218,6 @@
                         <button (click)="resetSkillFilters()" title="Reset Filters" class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors">
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
-                        <!-- Progress Legend: Indicates what each color in the stacked bar represents -->
-                        <div class="flex items-center gap-3 text-[10px] text-blue-100 ml-2">
-                            <span class="flex items-center gap-1">
-                                <span class="w-4 h-1.5 rounded-full bg-gradient-to-r from-amber-300 to-amber-500"></span>
-                                <span>Expected</span>
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <span class="w-4 h-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600"></span>
-                                <span>Actual</span>
-                            </span>
-                        </div>
                     </ng-container>
                     <!-- Additional Skills Controls: Add new skill button -->
                     <ng-container *ngIf="mySkillsView === 'additional'">
@@ -450,15 +445,15 @@
                             <div class="relative w-24 h-24 flex-shrink-0">
                                 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
                                     <circle cx="60" cy="60" r="54" stroke-width="10" fill="none" class="stroke-slate-200/70" />
-                                    <circle cx="60" cy="60" r="54" stroke-width="10" fill="none" [attr.stroke]="progressPercentage >= 100 ? '#10b981' : '#0ea5e9'" [attr.stroke-dasharray]="339.29" [attr.stroke-dashoffset]="339.29 - (339.29 * progressPercentage / 100)" class="transition-all duration-1000 ease-out" stroke-linecap="round"></circle>
+                                    <circle cx="60" cy="60" r="54" stroke-width="10" fill="none" [attr.stroke]="avgProgressOnTrack >= 100 ? '#10b981' : '#0ea5e9'" [attr.stroke-dasharray]="339.29" [attr.stroke-dashoffset]="339.29 - (339.29 * avgProgressOnTrack / 100)" class="transition-all duration-1000 ease-out" stroke-linecap="round"></circle>
                                 </svg>
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <div class="text-center"><div class="text-xl font-extrabold text-slate-900">{{ progressPercentage }}%</div><p class="text-[10px] text-slate-500 font-medium">Complete</p></div>
+                                    <div class="text-center"><div class="text-xl font-extrabold text-slate-900">{{ avgProgressOnTrack }}%</div><p class="text-[10px] text-slate-500 font-medium">On Track</p></div>
                                 </div>
                             </div>
                             <div class="w-full">
-                                <h3 class="text-base font-bold text-slate-900 mb-1 text-center sm:text-left"><b>Overall Progress</b></h3>
-                                <p class="text-sm text-slate-600 text-center sm:text-left">You have met <span class="font-bold text-slate-800">{{ skillsMet }}</span> out of <span class="font-bold text-slate-800">{{ totalSkills }}</span> core skills.</p>
+                                <h3 class="text-base font-bold text-slate-900 mb-1 text-center sm:text-left"><b>Skills On Track</b></h3>
+                                <p class="text-sm text-slate-600 text-center sm:text-left"><span class="font-bold text-slate-800">{{ skillsOnTrack }}</span> skills on track with <span class="font-bold text-slate-800">{{ avgProgressOnTrack }}%</span> average progress</p>
                             </div>
                         </div>
                     </div>
@@ -572,20 +567,23 @@
                                             <span>Current: <span class="font-bold text-slate-700">{{ competency.current_expertise }}</span></span>
                                             <span>Target: <span class="font-bold text-slate-700">{{ competency.target_expertise }}</span></span>
                                         </div>
+                                        <!-- Target Completion Date -->
+                                        <div *ngIf="competency.target_completion_date" class="text-[11px] text-slate-600 bg-blue-50/60 px-2 py-1 rounded border border-blue-200/40">
+                                            <strong class="text-slate-700">Target Date:</strong> {{ competency.target_completion_date | date:'short' }}
+                                        </div>
                                         <div>
                                             <div class="flex justify-between items-center mb-1">
-                                                <span class="text-xs font-medium text-slate-600">Progress</span>
-                                                <span class="text-[11px] font-semibold text-slate-700">
-                                                    Exp: {{ getExpectedProgress(competency) }}% • Act: {{ getSkillProgress(competency) }}%
-                                                </span>
+                                                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Progress</span>
+                                                <span class="text-[10px] font-semibold text-slate-600">Exp: {{ getExpectedProgress(competency) }}% • Act: {{ getSkillProgress(competency) }}%</span>
                                             </div>
-                                            <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden shadow-inner relative">
-                                                <!-- Expected progress (background bar) -->
-                                                <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-amber-300 to-amber-500 h-full transition-all duration-700"
+                                            <!-- Single Progress Bar with Two Light Colors -->
+                                            <div class="w-full bg-slate-200/80 rounded-full h-4 overflow-hidden shadow-inner relative border-2 border-slate-300">
+                                                <!-- Expected Progress (Light Yellow Background) -->
+                                                <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-yellow-200 via-yellow-300 to-yellow-300 transition-all duration-700"
                                                      [style.width.%]="getExpectedProgress(competency)">
                                                 </div>
-                                                <!-- Actual progress (foreground bar) -->
-                                                <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-cyan-400 to-cyan-600 h-full transition-all duration-700"
+                                                <!-- Actual Progress (Light Purple Foreground) -->
+                                                <div class="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-200 via-purple-300 to-purple-300 transition-all duration-700 shadow-md"
                                                      [style.width.%]="getSkillProgress(competency)">
                                                 </div>
                                             </div>
@@ -955,6 +953,10 @@
                                         <i class="fa-solid fa-clock text-slate-400"></i>
                                         <span class="font-semibold text-slate-800">{{ t.time || 'Time TBD' }}</span>
                                     </div>
+                                </div>
+                                <!-- Target Date Section: Display target completion date if available -->
+                                <div *ngIf="t.target_date" class="text-[11px] text-slate-600 bg-blue-50/60 px-2 py-1 rounded border border-blue-200/40 text-center">
+                                    <strong class="text-slate-700">Target Completion:</strong> {{ t.target_date | date:'short' }}
                                 </div>
                                 <!-- Training Metadata Tags: Type, skill category, and skill name badges -->
                                 <div class="flex items-center gap-1.5 flex-wrap pt-1">
