@@ -86,3 +86,36 @@
   scrollbar-width: thin;
   scrollbar-color: #86efac #f1f5f9;
 }
+
+/* Progress bar layering for My Skills cards */
+.progress-track {
+  position: relative;
+}
+
+.progress-expected {
+  position: absolute;
+  inset: 0;
+  width: 3px;
+  right: auto;
+  border-radius: 0;
+  background: #fbbf24;
+  opacity: 1;
+  border: none;
+  box-shadow: 0 0 8px #fbbf24;
+  transition: left 0.7s ease;
+  z-index: 3;
+  margin-left: calc(var(--expected-width, 2%) - 1.5px);
+}
+
+.progress-actual {
+  position: absolute;
+  inset: 0;
+  left: 0;
+  border-radius: 9999px;
+  background: #10b981;
+  opacity: 0.9;
+  border: none;
+  box-shadow: 0 4px 12px -4px rgba(16, 185, 129, 0.5);
+  transition: width 0.7s ease;
+  z-index: 2;
+}

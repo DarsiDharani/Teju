@@ -128,8 +128,8 @@ type Section = { title: string; subtitle?: string; levels: LevelBlock[] };
 export class EngineerDashboardComponent implements OnInit {
   // --- Component State & Filters ---
   skillSearch: string = '';
-  skillStatusFilter: string = '';
-  skillNameFilter: string = '';
+  skillStatusFilter: string[] = [];
+  skillNameFilter: string[] = [];
   skillNames: string[] = [];
   mySkillsView: 'core' | 'additional' = 'core'; // Toggle between core and additional skills
   userName: string = '';
@@ -171,7 +171,7 @@ export class EngineerDashboardComponent implements OnInit {
 
   // --- Levels Definitions ---
   levelsSearch = '';
-  selectedSkill = '';
+  selectedSkills: string[] = [];
 
   // --- Badges Search ---
   badgeSearch: string = '';
@@ -228,17 +228,21 @@ export class EngineerDashboardComponent implements OnInit {
   selectedSkillTypeForHistory: string = '';
   selectedSkillNameForHistory: string = '';
   feedbackHistoryList: any[] = [];
+
+  // --- Training Selection for Highlighting ---
+  selectedTrainingIdForEnrollment: number | null = null; // Track selected training for visual highlighting
+  hoveredTrainingId: number | null = null; // Track hovered training for visual highlighting
   trainingSearch: string = '';
-  trainingSkillFilter: string = 'All';
-  trainingLevelFilter: string = 'All';
+  trainingSkillFilter: string[] = [];
+  trainingLevelFilter: string[] = [];
   trainingDateFilter: string = '';
   trainingCatalogView: 'list' | 'calendar' = 'list';
   trainingCatalogType: 'live' | 'recorded' = 'live'; // Toggle between live and recorded trainings
 
   // --- Assigned Trainings Filters ---
   assignedSearch: string = '';
-  assignedSkillFilter: string = 'All';
-  assignedLevelFilter: string = 'All';
+  assignedSkillFilter: string[] = [];
+  assignedLevelFilter: string[] = [];
   assignedDateFilter: string = '';
   assignedTrainingsView: 'list' | 'calendar' = 'list';
 
@@ -270,6 +274,9 @@ export class EngineerDashboardComponent implements OnInit {
   selectedTrainingForAttendance: number | null = null;
   attendanceCandidates: {employee_empid: string, employee_name: string, attended: boolean}[] = [];
   isMarkingAttendance: boolean = false;
+  
+  // Calendar view - Track selected training from calendar to highlight in list view
+  selectedTrainingFromCalendar: number | null = null;
   
   // Attendance success popup
   showAttendanceSuccessPopup: boolean = false;
@@ -453,6 +460,10 @@ export class EngineerDashboardComponent implements OnInit {
     this.assignmentScores.clear();
     this.feedbackSubmissionStatus.clear();
     this.questionFilesUploaded.clear();
+    // Initialize date filters to current date for Training Catalog and Assigned Trainings tabs
+    const today = new Date();
+    this.trainingDateFilter = today.toISOString().split('T')[0];
+    this.assignedDateFilter = today.toISOString().split('T')[0];
     // Always fetch all data fresh on component initialization
     // This ensures data consistency after logout/login cycles
     this.fetchDashboardData();
@@ -901,6 +912,89 @@ export class EngineerDashboardComponent implements OnInit {
     );
   }
 
+  /**
+   * Handle clicking on a training event in the calendar view
+   * Switches to list view and highlights the corresponding training
+   */
+  onCalendarEventClick(event: CalendarEvent): void {
+    if (event.trainingId) {
+      // Store the selected training ID
+      this.selectedTrainingFromCalendar = event.trainingId;
+      
+      // Ensure filters don't hide the selected training
+      this.assignedSearch = '';
+      this.assignedSkillFilter = [];
+      this.assignedLevelFilter = [];
+      this.assignedDateFilter = '';
+
+      // Switch to list view
+      this.setAssignedTrainingsView('list');
+
+      // Attempt smooth scroll with retries until the card renders
+      this.scrollToTrainingCard(event.trainingId);
+    }
+  }
+
+  /**
+   * Handle clicking on a training event in the Training Catalog calendar
+   * Switches to catalog list view and highlights the corresponding training
+   */
+  onCatalogCalendarEventClick(event: CalendarEvent): void {
+    if (event.trainingId) {
+      this.selectedTrainingFromCalendar = event.trainingId;
+      // Clear catalog filters so the selected training is visible
+      this.trainingSearch = '';
+      this.trainingSkillFilter = [];
+      this.trainingLevelFilter = [];
+      this.trainingDateFilter = '';
+
+      this.setTrainingCatalogView('list');
+      this.scrollToTrainingCard(event.trainingId);
+    }
+  }
+
+  /**
+   * Retry-based smooth scroll to training card in the current list view.
+   */
+  private scrollToTrainingCard(trainingId: number, attempts: number = 50, delayMs: number = 100): void {
+    const doScroll = (el: HTMLElement) => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      // Compensate for sticky headers/toolbars
+      setTimeout(() => {
+        try { window.scrollBy({ top: -120, behavior: 'smooth' }); } catch {}
+      }, 150);
+      setTimeout(() => { this.selectedTrainingFromCalendar = null; }, 3000);
+    };
+
+    const tryScroll = (remaining: number) => {
+      const el = document.querySelector(`[data-training-id="${trainingId}"]`) as HTMLElement | null;
+      if (el) {
+        doScroll(el);
+      } else if (remaining > 0) {
+        setTimeout(() => tryScroll(remaining - 1), delayMs);
+      } else {
+        // Final fallback: observe for DOM changes briefly
+        const observer = new MutationObserver((_) => {
+          const target = document.querySelector(`[data-training-id="${trainingId}"]`) as HTMLElement | null;
+          if (target) {
+            observer.disconnect();
+            doScroll(target);
+          }
+        });
+        try {
+          observer.observe(document.body, { childList: true, subtree: true });
+          // Stop observing after a short window
+          setTimeout(() => observer.disconnect(), 2000);
+        } catch {
+          // Give up and clear highlight anyway
+          setTimeout(() => { this.selectedTrainingFromCalendar = null; }, 3000);
+        }
+      }
+    };
+    // Start attempts after a tick to allow view switch rendering
+    setTimeout(() => tryScroll(attempts), delayMs);
+  }
+
   // --- Data Fetching & Processing ---
   fetchDashboardData(): void {
     this.isLoading = true;
@@ -1055,12 +1149,13 @@ export class EngineerDashboardComponent implements OnInit {
         this._myTrainingsCache = [];
         this._myTrainingsCacheKey = '';
         this.allTrainingsCalendarEvents = this.allTrainings
-            .filter(t => t.training_date)
-            .map(t => ({
-                date: new Date(t.training_date as string),
-                title: t.training_name,
-                trainer: t.trainer_name || 'N/A'
-            }));
+          .filter(t => t.training_date)
+          .map(t => ({
+            date: new Date(t.training_date as string),
+            title: t.training_name,
+            trainer: t.trainer_name || 'N/A',
+            trainingId: t.id
+          }));
         // Refresh my trainings from backend when all trainings are updated
         this.fetchMyTrainings();
       },
@@ -1138,7 +1233,8 @@ export class EngineerDashboardComponent implements OnInit {
             .map(t => ({
                 date: new Date(t.training_date as string),
                 title: t.training_name,
-                trainer: t.trainer_name || 'N/A'
+                trainer: t.trainer_name || 'N/A',
+                trainingId: t.id
             }));
         this.generateCalendar();
         this.processDashboardTrainings();
@@ -1681,11 +1777,13 @@ export class EngineerDashboardComponent implements OnInit {
         (t.skill || '').toLowerCase().includes(q)
       );
     }
-    if (this.trainingSkillFilter !== 'All') {
-        list = list.filter(t => t.skill === this.trainingSkillFilter);
+    if (this.trainingSkillFilter && this.trainingSkillFilter.length > 0) {
+        const names = new Set(this.trainingSkillFilter);
+        list = list.filter(t => t.skill && names.has(t.skill));
     }
-    if (this.trainingLevelFilter !== 'All') {
-        list = list.filter(t => t.skill_category === this.trainingLevelFilter);
+    if (this.trainingLevelFilter && this.trainingLevelFilter.length > 0) {
+        const levels = new Set(this.trainingLevelFilter);
+        list = list.filter(t => t.skill_category && levels.has(t.skill_category));
     }
     if (this.trainingDateFilter) {
         // Normalize dates for comparison (extract YYYY-MM-DD from both)
@@ -1853,11 +1951,13 @@ export class EngineerDashboardComponent implements OnInit {
           (t.skill || '').toLowerCase().includes(q)
         );
       }
-      if (this.assignedSkillFilter !== 'All') {
-        list = list.filter(t => t.skill === this.assignedSkillFilter);
+      if (this.assignedSkillFilter && this.assignedSkillFilter.length > 0) {
+        const names = new Set(this.assignedSkillFilter);
+        list = list.filter(t => t.skill && names.has(t.skill));
       }
-      if (this.assignedLevelFilter !== 'All') {
-        list = list.filter(t => t.skill_category === this.assignedLevelFilter);
+      if (this.assignedLevelFilter && this.assignedLevelFilter.length > 0) {
+        const levels = new Set(this.assignedLevelFilter);
+        list = list.filter(t => t.skill_category && levels.has(t.skill_category));
       }
       if (this.assignedDateFilter) {
         // Normalize dates for comparison (extract YYYY-MM-DD from both)
@@ -1873,9 +1973,14 @@ export class EngineerDashboardComponent implements OnInit {
           return String(date || '').trim();
         };
         const filterDate = normalizeDate(this.assignedDateFilter);
+        const filterDateObj = new Date(filterDate);
         list = list.filter(t => {
-          const trainingDate = normalizeDate(t.training_date);
-          return trainingDate === filterDate;
+          const trainingDateStr = normalizeDate(t.training_date);
+          if (!trainingDateStr) return false;
+          const trainingDateObj = new Date(trainingDateStr);
+          if (isNaN(trainingDateObj.getTime())) return false;
+          // Show trainings on the selected date and all future dates
+          return trainingDateObj >= filterDateObj;
         });
       }
       list.sort((a, b) => {
@@ -2459,21 +2564,21 @@ export class EngineerDashboardComponent implements OnInit {
   // --- Filter Reset Logic ---
   resetSkillFilters(): void {
     this.skillSearch = '';
-    this.skillNameFilter = '';
-    this.skillStatusFilter = '';
+    this.skillNameFilter = [];
+    this.skillStatusFilter = [];
   }
 
   resetTrainingFilters(): void {
     this.trainingSearch = '';
-    this.trainingSkillFilter = 'All';
-    this.trainingLevelFilter = 'All';
+    this.trainingSkillFilter = [];
+    this.trainingLevelFilter = [];
     this.trainingDateFilter = '';
   }
 
   resetAssignedTrainingFilters(): void {
     this.assignedSearch = '';
-    this.assignedSkillFilter = 'All';
-    this.assignedLevelFilter = 'All';
+    this.assignedSkillFilter = [];
+    this.assignedLevelFilter = [];
     this.assignedDateFilter = '';
   }
   
@@ -2557,11 +2662,13 @@ export class EngineerDashboardComponent implements OnInit {
         (t.description || '').toLowerCase().includes(q)
       );
     }
-    if (this.trainingSkillFilter !== 'All') {
-      list = list.filter(t => t.skill === this.trainingSkillFilter);
+    if (this.trainingSkillFilter && this.trainingSkillFilter.length > 0) {
+      const names = new Set(this.trainingSkillFilter);
+      list = list.filter(t => t.skill && names.has(t.skill));
     }
-    if (this.trainingLevelFilter !== 'All') {
-      list = list.filter(t => t.skill_category === this.trainingLevelFilter);
+    if (this.trainingLevelFilter && this.trainingLevelFilter.length > 0) {
+      const levels = new Set(this.trainingLevelFilter);
+      list = list.filter(t => t.skill_category && levels.has(t.skill_category));
     }
     return list;
   }
@@ -2574,6 +2681,9 @@ export class EngineerDashboardComponent implements OnInit {
 
   // --- User Actions ---
   enrollInTraining(training: TrainingDetail): void {
+    // Set the selected training for highlighting
+    this.selectedTrainingIdForEnrollment = training.id;
+
     const token = this.authService.getToken();
     if (!token) {
       // Silently redirect to login on token expiration
@@ -2588,10 +2698,18 @@ export class EngineerDashboardComponent implements OnInit {
     this.http.post<TrainingRequest>(this.apiService.getUrl('/training-requests/'), requestData, { headers }).subscribe({
       next: (response) => {
         this.toastService.success(`Training request submitted successfully! Your manager will review your request for "${training.training_name}".`);
+        // Keep highlight visible for 2 seconds, then clear
+        setTimeout(() => {
+          this.selectedTrainingIdForEnrollment = null;
+        }, 2000);
         this.fetchTrainingRequests(); // Refresh the requests list
       },
       error: (err) => {
         console.error('Failed to submit training request:', err);
+        // Keep highlight visible for 2 seconds even on error, then clear
+        setTimeout(() => {
+          this.selectedTrainingIdForEnrollment = null;
+        }, 2000);
         if (err.status === 400) {
           this.toastService.warning(err.error?.detail || 'You have already requested this training.');
         } else if (err.status === 404) {
@@ -3170,12 +3288,14 @@ export class EngineerDashboardComponent implements OnInit {
   // --- General Helpers ---
   getFilteredSkills(): Skill[] {
     let filtered = this.skills;
-    if (this.skillNameFilter) {
-      filtered = filtered.filter(skill => skill.skill === this.skillNameFilter);
+    if (this.skillNameFilter && this.skillNameFilter.length > 0) {
+      const names = new Set(this.skillNameFilter);
+      filtered = filtered.filter(skill => names.has(skill.skill));
     }
     // Apply status filter based on timeline status (Not Started/Behind/On Track/Completed)
-    if (this.skillStatusFilter) {
-      filtered = filtered.filter(skill => this.getTimelineStatus(skill) === this.skillStatusFilter);
+    if (this.skillStatusFilter && this.skillStatusFilter.length > 0) {
+      const statuses = new Set(this.skillStatusFilter);
+      filtered = filtered.filter(skill => statuses.has(this.getTimelineStatus(skill)));
     }
     return filtered;
   }
@@ -3368,12 +3488,18 @@ export class EngineerDashboardComponent implements OnInit {
       // Refresh training catalog and requests
       this.fetchScheduledTrainings();
       this.fetchTrainingRequests();
+      // Reset date filter to current date when entering Training Catalog tab
+      const today = new Date();
+      this.trainingDateFilter = today.toISOString().split('T')[0];
     }
     if (tabName === 'assignedTrainings') {
       // Refresh assigned trainings
       this.fetchAssignedTrainings();
       // Refresh manager feedback when viewing assigned trainings
       this.fetchManagerFeedback();
+      // Reset date filter to current date when entering Assigned Trainings tab
+      const today = new Date();
+      this.assignedDateFilter = today.toISOString().split('T')[0];
     }
     if (tabName === 'myRequests') {
       // Refresh training requests
@@ -3428,8 +3554,8 @@ export class EngineerDashboardComponent implements OnInit {
 
   getFilteredSections(): Section[] {
     let sectionsToFilter = this.sections;
-    if (this.selectedSkill) {
-      sectionsToFilter = this.sections.filter(sec => sec.title === this.selectedSkill);
+    if (this.selectedSkills && this.selectedSkills.length > 0) {
+      sectionsToFilter = this.sections.filter(sec => this.selectedSkills.includes(sec.title));
     }
     const q = this.levelsSearch.trim().toLowerCase();
     if (!q) return sectionsToFilter;

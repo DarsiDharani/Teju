@@ -79,6 +79,28 @@
         </div>
         <span class="font-medium">Assigned Trainings</span>
       </button>
+      <button (click)="selectTab('myRequests')"
+        class="w-full text-left px-4 py-2 rounded-lg flex items-center gap-4 transition-all duration-200" [ngClass]="{
+          'bg-slate-800/80 text-white border-l-4 border-sky-400 px-3': activeTab === 'myRequests',
+          'hover:bg-slate-800/50 hover:text-white': activeTab !== 'myRequests'
+        }">
+        <div
+          class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-gradient-to-br from-rose-500 to-pink-400 shadow-md">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <span class="font-medium">My Requests</span>
+      </button>
+      <button (click)="selectTab('myBadges')"
+        class="w-full text-left px-4 py-2 rounded-lg flex items-center gap-4 transition-all duration-200" [ngClass]="{
+          'bg-slate-800/80 text-white border-l-4 border-sky-400 px-3': activeTab === 'myBadges',
+          'hover:bg-slate-800/50 hover:text-white': activeTab !== 'myBadges'
+        }">
+        <div
+          class="w-8 h-8 rounded-lg flex items-center justify-center text-white bg-gradient-to-br from-orange-500 to-amber-400 shadow-md">
+          <i class="fa-solid fa-award"></i>
+        </div>
+        <span class="font-medium">My Badges</span>
+      </button>
       <button *ngIf="managerIsTrainer" (click)="selectTab('trainerZone')"
         class="w-full text-left px-4 py-2 rounded-lg flex items-center gap-4 transition-all duration-200" [ngClass]="{
           'bg-slate-800/80 text-white border-l-4 border-sky-400 px-3': activeTab === 'trainerZone',
@@ -106,7 +128,7 @@
 
   <div class="flex-1 flex flex-col">
 
-    <div *ngIf="activeTab === 'mySkills' || activeTab === 'trainingCatalog' || activeTab === 'assignedTrainings'"
+    <div *ngIf="activeTab === 'mySkills' || activeTab === 'trainingCatalog' || activeTab === 'assignedTrainings' || activeTab === 'myRequests'"
       class="bg-blue-600 px-6 py-3 shadow-lg rounded-2xl mx-6 mt-4">
       <!-- My Skills Filter Bar: Toggle between core skills and additional skills views -->
       <div *ngIf="activeTab === 'mySkills'" @fadeIn>
@@ -132,33 +154,37 @@
           <div class="flex flex-wrap items-center gap-1.5">
             <!-- Core Skills Filters: Skill name filter and status filter -->
             <ng-container *ngIf="mySkillsView === 'core'">
+              <!-- Color Code Legend -->
+              <div class="text-xs text-blue-100 font-medium flex items-center gap-2">
+                <span class="inline-flex items-center gap-1"><span class="w-px h-4 rounded" style="background:#fbbf24;box-shadow:0 0 6px #fbbf24"></span>Expected</span>
+                <span class="inline-flex items-center gap-1"><span class="w-4 h-2 rounded" style="background:#10b981"></span>Actual</span>
+              </div>
               <!-- Skill Name Filter: Searchable dropdown to filter by specific skill name -->
-              <app-searchable-dropdown [(ngModel)]="mySkillsSkillFilter" [options]="uniqueMySkills"
-                placeholder="All Skills" allOptionLabel="All Skills" allOptionValue="" iconClass="fa-filter"
+              <app-searchable-dropdown
+                [(ngModel)]="mySkillsSkillFilter"
+                [options]="uniqueMySkills"
+                placeholder="All Skills"
+                allOptionLabel="All Skills"
+                allOptionValue=""
+                iconClass="fa-filter"
+                [multiple]="true"
                 width="w-full sm:w-auto min-w-[140px]">
               </app-searchable-dropdown>
               <!-- Status Filter: Searchable dropdown to filter by timeline status (Not Started, Behind, On Track, Completed) -->
-              <app-searchable-dropdown [(ngModel)]="mySkillsStatusFilter"
-                [options]="['Not Started', 'Behind', 'On Track', 'Completed']" placeholder="All Statuses"
-                allOptionLabel="All Statuses" allOptionValue="" iconClass="fa-filter"
+              <app-searchable-dropdown
+                [(ngModel)]="mySkillsStatusFilter"
+                [options]="['Not Started', 'Behind', 'On Track', 'Completed']"
+                placeholder="All Statuses"
+                allOptionLabel="All Statuses"
+                allOptionValue=""
+                iconClass="fa-filter"
+                [multiple]="true"
                 width="w-full sm:w-auto min-w-[140px]">
               </app-searchable-dropdown>
               <!-- Reset Filters Button: Clear all filter selections -->
-              <button (click)="resetMySkillsFilters()" title="Reset Filters"
-                class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors">
+              <button (click)="resetMySkillsFilters()" title="Reset Filters" class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors">
                 <i class="fa-solid fa-rotate-right"></i>
               </button>
-              <!-- Progress Legend: Indicates what each color in the stacked bar represents -->
-              <div class="flex items-center gap-3 text-[10px] text-blue-100 ml-2">
-                <span class="flex items-center gap-1">
-                  <span class="w-4 h-1.5 rounded-full bg-gradient-to-r from-amber-300 to-amber-500"></span>
-                  <span>Expected</span>
-                </span>
-                <span class="flex items-center gap-1">
-                  <span class="w-4 h-1.5 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-600"></span>
-                  <span>Actual</span>
-                </span>
-              </div>
             </ng-container>
             <!-- Additional Skills Controls: Add new skill button -->
             <ng-container *ngIf="mySkillsView === 'additional'">
@@ -223,10 +249,12 @@
           <div class="flex items-center gap-1.5 flex-1 justify-end min-w-0">
             <app-searchable-dropdown [(ngModel)]="catalogTypeFilter" [options]="['Online', 'Offline']"
               placeholder="All Types" allOptionLabel="All Types" allOptionValue="All" iconClass="fa-filter"
+              [multiple]="true"
               width="w-auto min-w-[110px] text-xs">
             </app-searchable-dropdown>
             <app-searchable-dropdown [(ngModel)]="catalogCategoryFilter" [options]="skillCategoryLevels"
               placeholder="All Categories" allOptionLabel="All Categories" allOptionValue="All" iconClass="fa-filter"
+              [multiple]="true"
               width="w-auto min-w-[100px] text-xs">
             </app-searchable-dropdown>
             <div class="relative">
@@ -264,10 +292,12 @@
           <div class="flex flex-wrap items-center gap-1.5">
             <app-searchable-dropdown [(ngModel)]="assignedSkillFilter" [options]="uniqueMySkills"
               placeholder="All Skills" allOptionLabel="All Skills" allOptionValue="All" iconClass="fa-filter"
+              [multiple]="true"
               width="w-full sm:w-auto min-w-[140px]">
             </app-searchable-dropdown>
             <app-searchable-dropdown [(ngModel)]="assignedLevelFilter" [options]="skillCategoryLevels"
               placeholder="All Levels" allOptionLabel="All Levels" allOptionValue="All" iconClass="fa-filter"
+              [multiple]="true"
               width="w-full sm:w-auto min-w-[140px]">
             </app-searchable-dropdown>
             <input type="date" [(ngModel)]="assignedDateFilter"
@@ -276,6 +306,49 @@
               class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors">
               <i class="fa-solid fa-rotate-right"></i>
             </button>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="activeTab === 'myRequests'" @fadeIn>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-clock-rotate-left text-white text-lg"></i>
+              <h2 class="text-sm font-semibold text-white">My Training Requests</h2>
+            </div>
+            <div class="inline-flex rounded-lg shadow-sm bg-blue-700 p-1">
+              <button (click)="requestStatusFilter = 'all'"
+                class="px-3 py-1 text-xs font-semibold rounded-md transition-colors duration-200"
+                [ngClass]="{'bg-white text-blue-600 shadow': requestStatusFilter === 'all', 'text-blue-200 hover:bg-blue-500': requestStatusFilter !== 'all'}">
+                <i class="fa-solid fa-list mr-1.5"></i>All
+              </button>
+              <button (click)="requestStatusFilter = 'pending'"
+                class="px-3 py-1 text-xs font-semibold rounded-md transition-colors duration-200"
+                [ngClass]="{'bg-white text-blue-600 shadow': requestStatusFilter === 'pending', 'text-blue-200 hover:bg-blue-500': requestStatusFilter !== 'pending'}">
+                <i class="fa-solid fa-clock mr-1.5"></i>Pending
+              </button>
+              <button (click)="requestStatusFilter = 'approved'"
+                class="px-3 py-1 text-xs font-semibold rounded-md transition-colors duration-200"
+                [ngClass]="{'bg-white text-blue-600 shadow': requestStatusFilter === 'approved', 'text-blue-200 hover:bg-blue-500': requestStatusFilter !== 'approved'}">
+                <i class="fa-solid fa-check mr-1.5"></i>Approved
+              </button>
+              <button (click)="requestStatusFilter = 'rejected'"
+                class="px-3 py-1 text-xs font-semibold rounded-md transition-colors duration-200"
+                [ngClass]="{'bg-white text-blue-600 shadow': requestStatusFilter === 'rejected', 'text-blue-200 hover:bg-blue-500': requestStatusFilter !== 'rejected'}">
+                <i class="fa-solid fa-times mr-1.5"></i>Rejected
+              </button>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <div class="relative">
+              <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input type="text" [(ngModel)]="requestSearch" placeholder="Search requests..."
+                class="w-full sm:w-36 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-48 text-sm">
+            </div>
+            <div class="text-xs text-blue-200 font-medium">
+              <i class="fa-solid fa-file-lines mr-1"></i>
+              <span>{{ getFilteredRequests().length }} Request{{ getFilteredRequests().length !== 1 ? 's' : '' }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -299,71 +372,42 @@
       </div>
 
       <div *ngIf="!isLoading && !errorMessage && activeTab === 'dashboard' && manager" class="space-y-6">
-        <div #animatedElement class="animate-on-scroll relative mx-6 mt-4">
-          <div
-            class="relative bg-gradient-to-br from-indigo-600 via-blue-600 to-purple-600 rounded-2xl p-4 shadow-2xl overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-            <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12">
+        <div #animatedElement class="animate-on-scroll">
+          <div class="flex justify-between items-center bg-gradient-to-r from-blue-700 to-blue-700 text-white px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm border border-white/10">
+            <div class="flex items-center gap-2">
+              <h2 class="text-xs font-bold tracking-tight">Welcome, {{ managerDisplayName }}!</h2>
+              <div class="w-px h-3 bg-white/20"></div>
             </div>
-            <div class="absolute top-1/2 right-1/4 w-2 h-2 bg-white/20 rounded-full"></div>
-            <div class="absolute top-1/3 left-1/3 w-1 h-1 bg-white/30 rounded-full"></div>
-
-            <div class="relative z-10 flex items-center justify-between">
-              <div class="flex items-center gap-6">
-                <div>
-                  <h2 class="text-lg font-bold text-white">Welcome back, {{ managerDisplayName }}!</h2>
-                  <p class="text-blue-100 text-sm">
-                    <span *ngIf="dashboardView === 'personal'">Personal development overview</span>
-                    <span *ngIf="dashboardView === 'team'">Team management overview</span>
-                  </p>
-                </div>
-
-                <div *ngIf="dashboardView === 'personal'" class="flex items-center gap-3">
-                  <button (click)="openDetailModal('coreSkills')"
-                    class="group bg-white/15 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/20 hover:bg-white/25 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                    <div class="text-center">
-                      <div class="text-lg font-bold text-white">{{ (manager.skills.length || 0) }}</div>
-                      <div class="text-xs text-blue-100">Core Skills</div>
-                    </div>
-                  </button>
-                  <button (click)="openDetailModal('mySkillsMet')"
-                    class="group bg-white/15 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/20 hover:bg-white/25 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                    <div class="text-center">
-                      <div class="text-lg font-bold text-white">{{ getMySkillsMetCount() }}</div>
-                      <div class="text-xs text-blue-100">Skills Met</div>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              <div class="flex items-center">
-                <div class="relative">
+            <div class="flex items-center gap-2">
+              <p class="hidden lg:block text-white/90 text-lg font-bold tracking-tight">
+                <b><span *ngIf="dashboardView === 'personal'">Personal development overview</span><span *ngIf="dashboardView === 'team'">Team management overview</span></b>
+              </p>
+              <div class="relative">
+                <div
+                  class="bg-indigo-900/50 backdrop-blur-sm rounded-2xl p-1 border border-white/30 ring-1 ring-white/50">
                   <div
-                    class="bg-indigo-900/50 backdrop-blur-sm rounded-2xl p-1 border border-white/30 ring-1 ring-white/50">
-                    <div
-                      class="absolute top-1 bottom-1 w-1/2 bg-gradient-to-r from-green-300 to-green-300 rounded-xl transition-all duration-500 ease-out shadow-lg"
-                      [style.transform]="dashboardView === 'personal' ? 'translateX(0)' : 'translateX(100%)'"></div>
+                    class="absolute top-1 bottom-1 w-1/2 bg-gradient-to-r from-green-300 to-green-300 rounded-xl transition-all duration-500 ease-out shadow-lg"
+                    [style.transform]="dashboardView === 'personal' ? 'translateX(0)' : 'translateX(100%)'"></div>
 
-                    <div class="relative flex">
-                      <button (click)="dashboardView = 'personal'"
-                        class="relative z-10 px-6 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 group"
-                        [ngClass]="{
-                          'text-indigo-600': dashboardView === 'personal',
-                          'text-white hover:text-blue-200': dashboardView !== 'personal'
-                        }">
-                        <i class="fa-solid fa-user text-sm group-hover:scale-110 transition-transform"></i>
-                        <span>Individual</span>
-                      </button>
-                      <button (click)="dashboardView = 'team'"
-                        class="relative z-10 px-6 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 group"
-                        [ngClass]="{
-                          'text-indigo-600': dashboardView === 'team',
-                          'text-white hover:text-blue-200': dashboardView !== 'team'
-                        }">
-                        <i class="fa-solid fa-users text-sm group-hover:scale-110 transition-transform"></i>
-                        <span>Team</span>
-                      </button>
-                    </div>
+                  <div class="relative flex">
+                    <button (click)="dashboardView = 'personal'"
+                      class="relative z-10 px-6 py-2 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center gap-2 group"
+                      [ngClass]="{
+                        'text-indigo-600': dashboardView === 'personal',
+                        'text-white hover:text-blue-200': dashboardView !== 'personal'
+                      }">
+                      <i class="fa-solid fa-user text-sm group-hover:scale-110 transition-transform"></i>
+                      <span>Individual</span>
+                    </button>
+                    <button (click)="dashboardView = 'team'"
+                      class="relative z-10 px-6 py-2 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center gap-2 group"
+                      [ngClass]="{
+                        'text-indigo-600': dashboardView === 'team',
+                        'text-white hover:text-blue-200': dashboardView !== 'team'
+                      }">
+                      <i class="fa-solid fa-users text-sm group-hover:scale-110 transition-transform"></i>
+                      <span>Team</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -376,7 +420,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div @slideFadeIn
-              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-3 space-y-3">
+              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-3 space-y-3 section-card">
               <div class="flex-shrink-0">
                 <h3 class="text-base font-bold text-slate-900 mb-2 cursor-pointer hover:text-sky-600 transition-colors"
                   title="Skills required for your job role" (click)="openSkillsModal('all')"><b>Core Skills</b></h3>
@@ -422,7 +466,7 @@
             </div>
 
             <div @slideFadeIn
-              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-2 flex flex-col h-full">
+              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-2 flex flex-col h-full section-card">
               <div class="flex-shrink-0">
                 <h3 class="text-base font-bold text-slate-900 mb-2"
                   title="Skills you have in addition to your job role."><b>Additional Skills</b></h3>
@@ -452,7 +496,7 @@
 
             <div class="flex flex-col h-full space-y-2">
               <div @slideFadeIn
-                class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-2 flex-shrink-0">
+                class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-2 flex-shrink-0 section-card">
                 <h3 class="text-base font-bold text-slate-900 mb-3"><b>Training Overview</b></h3>
                 <div class="grid grid-cols-3 gap-3 text-center">
                   <button (click)="selectTab('trainingCatalog')"
@@ -480,7 +524,7 @@
               </div>
 
               <div @slideFadeIn
-                class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-2 flex flex-col flex-1 min-h-0">
+                class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-2 flex flex-col flex-1 min-h-0 section-card">
                 <div class="flex-shrink-0">
                   <h3 class="text-base font-bold text-slate-900 mb-2"><b>Upcoming Trainings</b></h3>
                 </div>
@@ -513,7 +557,7 @@
         </div>
 
         <div *ngIf="dashboardView === 'team'" class="space-y-4">
-          <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4">
+          <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 section-card">
             <h3 class="text-lg font-bold text-slate-900 mb-2">Team Skills Matrix</h3>
             <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
               <table class="w-full">
@@ -523,13 +567,13 @@
                     <th class="text-center py-1.5 px-2 text-xs font-semibold text-slate-700">
                       <div class="flex items-center justify-center gap-1">
                         <i class="fa-solid fa-check-circle text-slate-600 text-[10px]"></i>
-                        <span>Skills Met</span>
+                        <span>Skills Completed</span>
                       </div>
                     </th>
                     <th class="text-center py-1.5 px-2 text-xs font-semibold text-slate-700">
                       <div class="flex items-center justify-center gap-1">
                         <i class="fa-solid fa-exclamation-triangle text-slate-600 text-[10px]"></i>
-                        <span>Skill Gaps</span>
+                        <span>Skills Behind</span>
                       </div>
                     </th>
                     <th class="text-center py-1.5 px-2 text-xs font-semibold text-slate-700">Total Skills</th>
@@ -560,7 +604,7 @@
                     </td>
                     <td class="py-1.5 px-2 text-center">
                       <span class="text-xs font-medium text-slate-600">
-                        {{ member.skills.length }}
+                        {{ coreSkillsTotal }}
                       </span>
                     </td>
                     <td class="py-1.5 px-2 text-center">
@@ -617,7 +661,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             <!-- Team Submissions Section -->
             <div
-              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 flex flex-col max-h-[500px]">
+              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 flex flex-col max-h-[500px] section-card">
               <div class="flex items-center justify-between mb-4 flex-shrink-0">
                 <div class="flex items-center gap-3">
                   <button (click)="fetchTeamSubmissions()"
@@ -742,7 +786,7 @@
               </div>
             </div>
             <div
-              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 flex flex-col max-h-[500px]">
+              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 flex flex-col max-h-[500px] section-card">
               <div class="flex items-center justify-between mb-4 flex-shrink-0">
                 <div class="flex items-center gap-3">
                   <button (click)="fetchPendingRequests()"
@@ -895,22 +939,19 @@
                     </div>
                     <div>
                       <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs font-medium text-slate-600">Progress</span>
-                        <span class="text-[11px] font-semibold text-slate-700">
-                          Exp: {{ getExpectedProgress(competency) }}% • Act: {{ getSkillProgress(competency) }}%
-                        </span>
+                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Progress</span>
+                        <span class="text-[10px] font-semibold text-slate-600">Exp: {{ getExpectedProgress(competency) }}% • Act: {{ getSkillProgress(competency) }}%</span>
                       </div>
-                      <div class="w-full bg-slate-200/80 rounded-full h-2 overflow-hidden shadow-inner relative">
-                        <!-- Expected progress (background bar - Light Blue) -->
-                        <div
-                          class="absolute inset-y-0 left-0 bg-gradient-to-r from-sky-300 to-sky-400 h-full transition-all duration-700"
-                          [style.width.%]="getExpectedProgress(competency)">
-                        </div>
-                        <!-- Actual progress (foreground bar - Deep Blue) -->
-                        <div
-                          class="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-600 to-blue-700 h-full transition-all duration-700"
-                          [style.width.%]="getSkillProgress(competency)">
-                        </div>
+                      <!-- Single Progress Bar with Two Light Colors -->
+                      <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner relative border-2 border-slate-300 progress-track">
+                         <!-- Expected Progress (thin marker line at expected %) -->
+                         <div class="progress-expected"
+                             [style.--expected-width.%]="getExpectedProgress(competency)">
+                         </div>
+                         <!-- Actual Progress (solid fill bar) -->
+                         <div class="progress-actual"
+                             [style.width.%]="getSkillProgress(competency)">
+                         </div>
                       </div>
                     </div>
                   </div>
@@ -1455,39 +1496,43 @@
                     class="fa-solid fa-user mr-2 text-indigo-600"></i>Filter by Team Member</label>
                 <app-searchable-dropdown id="team-name-filter" [(ngModel)]="teamMemberNameFilter"
                   [options]="uniqueTeamMembers" placeholder="All Members" allOptionLabel="All Members"
-                  allOptionValue="All" iconClass="fa-user" size="large" width="w-full">
+                  allOptionValue="All" iconClass="fa-user" size="large" width="w-full"
+                  [multiple]="true">
                 </app-searchable-dropdown>
               </div>
               <div>
                 <label for="team-skill-filter" class="block text-sm font-semibold text-slate-700 mb-2 transition-colors"
-                  [ngClass]="{'text-slate-400': teamCompetencyFilter !== 'All'}"><i
+                  [ngClass]="{'text-slate-400': teamCompetencyFilter.length > 0}"><i
                     class="fa-solid fa-brain mr-2 text-green-600"></i>Filter by Skill</label>
                 <app-searchable-dropdown id="team-skill-filter" [(ngModel)]="teamSkillsSkillFilter"
                   [options]="uniqueTeamSkills" placeholder="All Skills" allOptionLabel="All Skills" allOptionValue="All"
-                  iconClass="fa-brain" [disabled]="teamCompetencyFilter !== 'All'" size="large" width="w-full">
+                  iconClass="fa-brain" [disabled]="teamCompetencyFilter.length > 0" size="large" width="w-full"
+                  [multiple]="true">
                 </app-searchable-dropdown>
               </div>
               <div>
                 <label for="team-competency-filter"
                   class="block text-sm font-semibold text-slate-700 mb-2 transition-colors"
-                  [ngClass]="{'text-slate-400': teamSkillsSkillFilter !== 'All'}"><i
+                  [ngClass]="{'text-slate-400': teamSkillsSkillFilter.length > 0}"><i
                     class="fa-solid fa-cogs mr-2 text-orange-600"></i>Filter by Competency</label>
                 <app-searchable-dropdown id="team-competency-filter" [(ngModel)]="teamCompetencyFilter"
                   [options]="uniqueCompetencies" placeholder="All Competencies" allOptionLabel="All Competencies"
-                  allOptionValue="All" iconClass="fa-cogs" [disabled]="teamSkillsSkillFilter !== 'All'" size="large"
-                  width="w-full">
+                  allOptionValue="All" iconClass="fa-cogs" [disabled]="teamSkillsSkillFilter.length > 0" size="large"
+                  width="w-full"
+                  [multiple]="true">
                 </app-searchable-dropdown>
               </div>
               <div>
                 <label for="team-skill-level-filter"
                   class="block text-sm font-semibold text-slate-700 mb-2 transition-colors"
-                  [ngClass]="{'text-slate-400': teamSkillsSkillFilter === 'All' && teamCompetencyFilter === 'All'}"><i
+                  [ngClass]="{'text-slate-400': teamSkillsSkillFilter.length === 0 && teamCompetencyFilter.length === 0}"><i
                     class="fa-solid fa-signal mr-2 text-indigo-600"></i>Filter by Current Level</label>
                 <app-searchable-dropdown id="team-skill-level-filter" [(ngModel)]="teamSkillsCurrentLevelFilter"
                   [options]="skillLevelsForFilter" placeholder="All Levels" allOptionLabel="All Levels"
                   allOptionValue="All" iconClass="fa-signal"
-                  [disabled]="teamSkillsSkillFilter === 'All' && teamCompetencyFilter === 'All'" size="large"
-                  width="w-full">
+                  [disabled]="teamSkillsSkillFilter.length === 0 && teamCompetencyFilter.length === 0" size="large"
+                  width="w-full"
+                  [multiple]="true">
                 </app-searchable-dropdown>
               </div>
               <div>
@@ -1495,8 +1540,9 @@
                   class="block text-sm font-semibold text-slate-700 mb-2 transition-colors"><i
                     class="fa-solid fa-chart-line mr-2 text-purple-600"></i>Filter by Status</label>
                 <app-searchable-dropdown id="team-status-filter" [(ngModel)]="teamSkillsStatusFilter"
-                  [options]="['Met', 'Gap']" placeholder="All Status" allOptionLabel="All Status" allOptionValue="All"
-                  iconClass="fa-chart-line" size="large" width="w-full">
+                  [options]="['Not Started', 'Behind', 'On Track', 'Completed']" placeholder="All Statuses" allOptionLabel="All Statuses" allOptionValue="All"
+                  iconClass="fa-chart-line" size="large" width="w-full"
+                  [multiple]="true">
                 </app-searchable-dropdown>
               </div>
             </div>
@@ -1511,13 +1557,13 @@
                 <div class="relative mb-3">
                   <img src="https://ui-avatars.com/api/?name={{member.name}}&background=random&color=fff&size=60"
                     alt="avatar" class="rounded-full h-16 w-16 ring-3 ring-indigo-500 ring-opacity-50">
-                  <span *ngIf="getTeamSkillsMetCount(member) === member.skills.length"
+                  <span *ngIf="getTeamSkillsMetCount(member) === coreSkillsTotal"
                     class="absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4 bg-green-500 text-white rounded-full p-2 text-xs"><i
                       class="fa-solid fa-check"></i></span>
                 </div>
                 <h3 class="font-bold text-xl text-slate-900">{{ member.name }}</h3>
                 <p class="text-sm text-slate-500 mt-1"><span class="font-semibold">{{ getTeamSkillsMetCount(member)
-                    }}</span> out of <span class="font-semibold">{{ member.skills.length }}</span> skills met</p>
+                  }}</span> out of <span class="font-semibold">{{ coreSkillsTotal }}</span> core skills completed</p>
                 <div class="relative w-24 h-24 my-3 flex items-center justify-center">
                   <svg class="w-full h-full transform -rotate-90">
                     <circle class="text-slate-200" stroke-width="12" stroke="currentColor" fill="transparent" r="42"
@@ -1601,8 +1647,13 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap"><span
                             class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                            [ngClass]="{'bg-green-100 text-green-800': skill.status === 'Met', 'bg-orange-100 text-orange-800': skill.status === 'Gap'}">{{
-                            skill.status }}</span></td>
+                            [ngClass]="{
+                              'bg-slate-100 text-slate-700': getTimelineStatus(skill, selectedTeamMember.skills) === 'Not Started',
+                              'bg-orange-100 text-orange-800': getTimelineStatus(skill, selectedTeamMember.skills) === 'Behind',
+                              'bg-sky-100 text-sky-800': getTimelineStatus(skill, selectedTeamMember.skills) === 'On Track',
+                              'bg-emerald-100 text-emerald-800': getTimelineStatus(skill, selectedTeamMember.skills) === 'Completed'
+                            }">{{
+                            getTimelineStatus(skill, selectedTeamMember.skills) }}</span></td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <ng-container *ngIf="!isEditingSkill(selectedTeamMember.id, i)">
                             <button (click)="startEditSkill(selectedTeamMember.id, i)"
@@ -1680,7 +1731,18 @@
             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
             [@listStagger]="filteredCatalog.length">
             <div *ngFor="let training of filteredCatalog"
-              class="group bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 overflow-hidden transform hover:-translate-y-1.5 transition-all duration-300 ease-in-out hover:shadow-2xl flex flex-col">
+              [attr.data-training-id]="training.id"
+              class="group bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 overflow-hidden transform transition-all duration-300 ease-in-out flex flex-col relative"
+              [ngClass]="{
+                'hover:-translate-y-1.5 hover:shadow-2xl': hoveredTrainingId !== training.id,
+                'scale-105 -translate-y-2 shadow-2xl bg-gradient-to-br from-sky-50 to-blue-50 border-sky-300': hoveredTrainingId === training.id || selectedTrainingIdForEnrollment === training.id,
+                'ring-4 ring-amber-400 shadow-amber-300/50': selectedTrainingFromCalendar === training.id
+              }"
+              (mouseenter)="hoveredTrainingId = training.id"
+              (mouseleave)="hoveredTrainingId = null">
+              <!-- Glow effect layer -->
+              <div *ngIf="hoveredTrainingId === training.id || selectedTrainingIdForEnrollment === training.id" 
+                class="absolute inset-0 bg-gradient-to-r from-sky-400/20 to-cyan-400/20 rounded-xl blur-lg opacity-75 -z-10 animate-pulse"></div>
               <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-400"></div>
               <div class="p-2 flex-grow flex flex-col">
                 <div class="flex items-start gap-2 mb-1.5">
@@ -1733,43 +1795,63 @@
         </div>
 
         <!-- Live Trainings Calendar View -->
-        <div *ngIf="trainingCatalogType === 'live' && trainingCatalogView === 'calendar'">
-          <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
-            <div class="flex items-center justify-between mb-6">
-              <h3 class="text-lg font-bold text-slate-800">Training Calendar</h3>
-              <div class="flex items-center gap-2">
-                <button (click)="previousMonth()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors">
-                  <i class="fa-solid fa-chevron-left text-slate-600"></i>
-                </button>
-                <span class="text-lg font-semibold text-slate-800 min-w-[200px] text-center">{{ calendarMonth }} {{
-                  calendarYear }}</span>
-                <button (click)="nextMonth()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors">
-                  <i class="fa-solid fa-chevron-right text-slate-600"></i>
-                </button>
-              </div>
+        <div *ngIf="trainingCatalogType === 'live' && trainingCatalogView === 'calendar'" @fadeIn>
+          <div class="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-200/60">
+            <!-- Calendar Header: Month navigation controls and current month/year display -->
+            <div class="flex justify-between items-center mb-6">
+              <!-- Previous Month Button: Navigates to previous month -->
+              <button (click)="previousMonth()" class="w-10 h-10 bg-slate-200/70 rounded-lg hover:bg-slate-300/80 transition-colors flex items-center justify-center">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <!-- Current Month/Year Display: Shows the calendar month and year -->
+              <h3 class="text-2xl font-bold text-slate-800">{{ calendarMonth }} {{ calendarYear }}</h3>
+              <!-- Next Month Button: Navigates to next month -->
+              <button (click)="nextMonth()" class="w-10 h-10 bg-slate-200/70 rounded-lg hover:bg-slate-300/80 transition-colors flex items-center justify-center">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
             </div>
-            <div class="grid grid-cols-7 gap-1 mb-2">
-              <div class="text-center text-sm font-semibold text-slate-600 py-2">Sun</div>
-              <div class="text-center text-sm font-semibold text-slate-600 py-2">Mon</div>
-              <div class="text-center text-sm font-semibold text-slate-600 py-2">Tue</div>
-              <div class="text-center text-sm font-semibold text-slate-600 py-2">Wed</div>
-              <div class="text-center text-sm font-semibold text-slate-600 py-2">Thu</div>
-              <div class="text-center text-sm font-semibold text-slate-600 py-2">Fri</div>
-              <div class="text-center text-sm font-semibold text-slate-600 py-2">Sat</div>
-            </div>
-            <div class="grid grid-cols-7 gap-1">
-              <div *ngFor="let day of calendarDays"
-                class="aspect-square p-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors relative"
-                [ngClass]="{'bg-slate-100': !day, 'bg-white': day}">
-                <div *ngIf="day" class="text-sm font-medium text-slate-800">{{ day.getDate() }}</div>
-                <div *ngIf="day && isToday(day)" class="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full">
-                </div>
-                <div *ngIf="day" class="mt-1">
+            <!-- Calendar Grid: 7-column grid for days of the week -->
+            <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center">
+              <!-- Day Headers: Column labels for each day of the week -->
+              <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">SUN</div>
+              <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">MON</div>
+              <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">TUE</div>
+              <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">WED</div>
+              <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">THU</div>
+              <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">FRI</div>
+              <div class="font-bold text-slate-500 py-2 text-xs sm:text-sm">SAT</div>
+
+              <!-- 
+                CALENDAR DAY CELLS
+                Purpose: Individual day cells in the calendar grid
+                Features:
+                - Dynamic background based on day state (today, current month, other month)
+                - Date number display
+                - Training event display if training exists on that date
+                - Conditional styling for today highlighting
+              -->
+              <div *ngFor="let day of calendarDays" class="relative h-20 font-semibold rounded-lg transition-colors border border-slate-200/60"
+                   [ngClass]="{
+                     'bg-sky-50': isToday(day),
+                     'bg-white': day && !isToday(day),
+                     'bg-slate-50/50': !day,
+                     'text-slate-400': !day || day.getMonth() !== currentDate.getMonth()
+                   }">
+                  <!-- Date Number: Displays the day number (1-31)
+                       Styled differently for today (sky-500 background) vs other days -->
+                  <div *ngIf="day" class="absolute top-1.5 left-2 text-xs sm:text-sm w-6 h-6 flex items-center justify-center rounded-full"
+                      [ngClass]="{'bg-sky-500 text-white': isToday(day), 'text-slate-800': !isToday(day)}">
+                     {{ day.getDate() }}
+                 </div>
+                  <!-- Training Event Display: Shows training name if training exists on this date
+                       Uses getEventForDate() to find matching training from allTrainingsCalendarEvents
+                       Styled with blue colors for training catalog calendar -->
                   <div *ngFor="let event of getEventForDate(day, allTrainingsCalendarEvents)"
-                    class="text-xs bg-blue-100 text-blue-800 px-1 py-0.5 rounded mb-1 truncate" [title]="event.title">
-                    {{ event.title }}
+                      class="absolute top-9 left-1 right-1 p-1 text-[10px] bg-blue-100 text-blue-900 rounded cursor-pointer leading-tight shadow-sm hover:bg-blue-200 hover:ring-2 hover:ring-blue-400 z-10 transition-all duration-200"
+                      [title]="event.title + ' - by ' + event.trainer"
+                      (click)="onCatalogCalendarEventClick(event)">
+                      <p class="font-bold truncate"><i class="fa-solid fa-circle text-blue-500 text-[6px] mr-1 align-middle"></i>{{ event.title }}</p>
                   </div>
-                </div>
               </div>
             </div>
           </div>
@@ -3180,7 +3262,9 @@
           <div *ngIf="filteredAssignedTrainings && filteredAssignedTrainings.length > 0; else noAssigned"
             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div *ngFor="let training of filteredAssignedTrainings"
-              class="bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+              [attr.data-training-id]="training.id"
+              class="bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              [ngClass]="{'ring-4 ring-amber-400 shadow-amber-300/50': selectedTrainingFromCalendar === training.id}">
               <div class="flex items-start gap-3 mb-3">
                 <div
                   class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-sky-100 text-sky-600">
@@ -3286,7 +3370,8 @@
                 <div
                   *ngFor="let event of getEventForDate(day, assignedTrainingsCalendarEvents); trackBy: trackByEventId"
                   class="absolute top-9 left-1 right-1 p-1 text-xs bg-rose-100 text-rose-900 rounded cursor-pointer leading-tight shadow-sm hover:bg-rose-200 hover:ring-2 hover:ring-rose-400 z-10 transition-all duration-200"
-                  [title]="event.title + ' - by ' + event.trainer">
+                  [title]="event.title + ' - by ' + event.trainer"
+                  (click)="onCalendarEventClick(event)">
                   <p class="font-bold truncate">
                     <i class="fa-solid fa-circle text-rose-500 text-xs mr-1 align-middle"></i>{{ event.title }}
                   </p>
@@ -3296,66 +3381,179 @@
           </div>
         </div>
       </div>
-      <div *ngIf="activeTab === 'levels'" @slideFadeIn>
-        <div class="bg-sky-50/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden mb-6">
-          <div class="bg-gradient-to-r from-indigo-600 to-blue-600 px-8 py-6 text-white">
-            <div class="flex items-center justify-between">
-              <div>
-                <h2 class="text-3xl font-bold">Levels Definitions</h2>
-                <p class="text-indigo-100 mt-1">Define and manage skill competency levels for your organization</p>
-              </div>
-              <div class="flex gap-3">
-                <div class="relative">
-                  <select [(ngModel)]="selectedSkill" (ngModelChange)="onSkillChange()"
-                    class="w-48 appearance-none px-3 py-2 rounded-lg border border-white/30 focus:ring-2 focus:ring-white/50 outline-none bg-white/20 text-white cursor-pointer pr-8 text-sm">
-                    <option value="" class="text-slate-800">All Skills</option>
-                    <option *ngFor="let section of sections" [value]="section.title" class="text-slate-800">{{
-                      section.title }}</option>
-                  </select>
-                  <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                    <i class="fa-solid fa-chevron-down text-white/70 text-xs"></i>
-                  </div>
+      
+      <div *ngIf="activeTab === 'myRequests'" @slideFadeIn class="space-y-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4" [@listStagger]="getFilteredRequests().length">
+          <div *ngFor="let request of getFilteredRequests()"
+            class="bg-white/70 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-slate-200/60 transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl flex flex-col gap-3">
+            <div class="flex items-start justify-between">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <i [ngClass]="getTrainingCardIcon(request.training.skill)" class="text-lg"></i>
                 </div>
-                <input [(ngModel)]="levelsSearch" type="text" placeholder="Search levels..."
-                  class="w-64 px-3 py-2 rounded-lg border border-white/30 focus:ring-2 focus:ring-white/50 outline-none bg-white/20 text-white placeholder-white/70 text-sm" />
+                <div>
+                  <h3 class="text-sm font-bold text-slate-800">{{ request.training.training_name }}</h3>
+                  <p class="text-xs text-slate-500">by {{ request.training.trainer_name }}</p>
+                </div>
+              </div>
+              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold"
+                [ngClass]="{
+                  'bg-yellow-100 text-yellow-800 ring-1 ring-inset ring-yellow-200': request.status === 'pending',
+                  'bg-green-100 text-green-800 ring-1 ring-inset ring-green-200': request.status === 'approved',
+                  'bg-red-100 text-red-800 ring-1 ring-inset ring-red-200': request.status === 'rejected'
+                }">
+                <i class="fa-solid fa-clock mr-1" *ngIf="request.status === 'pending'"></i>
+                <i class="fa-solid fa-check mr-1" *ngIf="request.status === 'approved'"></i>
+                <i class="fa-solid fa-times mr-1" *ngIf="request.status === 'rejected'"></i>
+                {{ request.status | titlecase }}
+              </span>
+            </div>
+            
+            <div class="border-t border-slate-200/80 pt-3">
+              <div class="flex items-center justify-between text-xs text-slate-600 mb-2">
+                <div class="flex items-center gap-1.5">
+                  <i class="fa-solid fa-calendar-days text-slate-400"></i>
+                  <span class="font-semibold text-slate-800">Requested: {{ request.request_date | date:'mediumDate' }}</span>
+                </div>
+                <div class="flex items-center gap-1.5" *ngIf="request.response_date">
+                  <i class="fa-solid fa-clock text-slate-400"></i>
+                  <span class="font-semibold text-slate-800">Responded: {{ request.response_date | date:'mediumDate' }}</span>
+                </div>
+              </div>
+              
+              <div class="flex items-center gap-1.5 flex-wrap mb-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200">
+                  <i class="fa-solid fa-display mr-1"></i>{{ request.training.training_type || 'N/A' }}
+                </span>
+                <span *ngIf="request.training.skill_category" class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200">
+                  <i class="fa-solid fa-layer-group mr-1"></i>{{ request.training.skill_category }}
+                </span>
+                <span *ngIf="request.training.skill" class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200">
+                  <i class="fa-solid fa-code mr-1"></i>{{ request.training.skill }}
+                </span>
+              </div>
+
+              <div *ngIf="request.manager_notes" class="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                <p class="text-xs text-slate-600">
+                  <strong class="font-semibold text-slate-700">Manager Notes:</strong> {{ request.manager_notes }}
+                </p>
               </div>
             </div>
           </div>
         </div>
 
+        <div *ngIf="getFilteredRequests().length === 0" class="text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-slate-300">
+          <div class="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i class="fa-solid fa-inbox text-slate-400 text-4xl"></i>
+          </div>
+          <h4 class="text-2xl font-bold text-slate-800 mb-2">
+            <span *ngIf="trainingRequests.length === 0">No Training Requests</span>
+            <span *ngIf="trainingRequests.length > 0">No Requests Match Your Filters</span>
+          </h4>
+          <p class="text-slate-600 max-w-md mx-auto">
+            <span *ngIf="trainingRequests.length === 0">You haven't requested any trainings yet. Browse the Training Catalog to find courses you'd like to take!</span>
+            <span *ngIf="trainingRequests.length > 0">Try adjusting your filters or search terms to see more results.</span>
+          </p>
+        </div>
+      </div>
+
+      <div *ngIf="activeTab === 'myBadges'" @slideFadeIn>
+        <div class="bg-blue-600 px-6 py-3 shadow-lg rounded-2xl mx-6 mt-4 mb-6">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-white">
+              <h2 class="text-sm font-semibold">My Badges & Achievements</h2>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <div class="relative">
+                <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" [(ngModel)]="badgeSearch" placeholder="Search badges..."
+                  class="w-full sm:w-48 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-64 text-sm">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="getFilteredBadges().length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8" [@listStagger]="getFilteredBadges().length">
+          <div *ngFor="let badge of getFilteredBadges()"
+            class="group flex flex-col items-center text-center p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+            <div class="relative w-36 h-36">
+              <div
+                class="absolute inset-0 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full transform group-hover:scale-110 transition-transform duration-300 shadow-lg">
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-28 h-28 bg-white/30 backdrop-blur-sm rounded-full"></div>
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-24 h-24 bg-white rounded-full shadow-inner">
+                  <i class="fa-solid fa-award text-5xl text-amber-500 group-hover:animate-pulse mt-5"></i>
+                </div>
+              </div>
+            </div>
+            <h3 class="mt-6 text-xl font-bold text-slate-800">{{ badge.skill }}</h3>
+            <p class="text-sm text-slate-500 mt-1">Competency Met</p>
+            <p class="text-xs text-slate-400 mt-2">Achieved on {{ getFormattedDate() }}</p>
+          </div>
+        </div>
+        <div *ngIf="getFilteredBadges().length === 0"
+          class="text-center py-12 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60">
+          <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-award text-slate-400 text-3xl"></i>
+          </div>
+          <h4 class="text-xl font-semibold text-slate-900 mb-2">No Badges Earned Yet</h4>
+          <p class="text-slate-600">Keep learning and meeting your skill targets to earn badges!</p>
+        </div>
+      </div>
+      
+      <div *ngIf="activeTab === 'levels'" @slideFadeIn>
+        <div class="bg-blue-600 px-6 py-3 shadow-lg rounded-2xl mx-6 mt-4 mb-6">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-white">
+              <h2 class="text-sm font-semibold">Levels Definitions</h2>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <div class="relative">
+                <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input [(ngModel)]="levelsSearch" type="text" placeholder="Search levels, keywords..."
+                  class="w-full sm:w-48 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-64 text-sm" />
+              </div>
+              <app-searchable-dropdown
+                [(ngModel)]="selectedSkills"
+                [options]="sectionTitles"
+                placeholder="All Skills"
+                allOptionLabel="All Skills"
+                allOptionValue=""
+                iconClass="fa-filter"
+                [multiple]="true"
+                width="w-full sm:w-auto min-w-[140px]">
+              </app-searchable-dropdown>
+            </div>
+          </div>
+        </div>
+      
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 overflow-auto">
-          <div class="grid min-w-[1200px] sticky top-0 z-20"
-            style="grid-template-columns: minmax(220px, 16%) repeat(5, 1fr);">
-            <div class="px-4 py-3 font-bold text-xs text-slate-700 uppercase bg-slate-200/70 border-b border-slate-300">
-              Skill</div>
-            <div *ngFor="let header of levelHeaders"
-              class="px-4 py-3 font-bold text-xs text-slate-700 uppercase bg-slate-200/70 border-b border-l border-slate-300">
+          <div class="grid min-w-[1200px] sticky top-0 z-20" style="grid-template-columns: minmax(220px, 16%) repeat(5, 1fr);">
+            <div class="px-4 py-3 font-bold text-xs text-slate-700 uppercase bg-slate-200/70 border-b border-slate-300">Skill</div>
+            <div *ngFor="let header of levelHeaders" class="px-4 py-3 font-bold text-xs text-slate-700 uppercase bg-slate-200/70 border-b border-l border-slate-300">
               L{{ header.num }} - {{ header.title }}
             </div>
           </div>
-
+          
           <div class="min-w-[1200px]">
             <ng-container *ngIf="getFilteredSections().length > 0; else noLevelsFound">
-              <div *ngFor="let section of getFilteredSections()" class="grid border-b border-slate-200 last:border-b-0"
-                style="grid-template-columns: minmax(220px, 16%) repeat(5, 1fr);">
-
-                <div
-                  class="sticky left-0 z-10 px-4 py-3 font-bold text-slate-800 bg-slate-50/90 border-r border-slate-200 flex items-center">
+              <div *ngFor="let section of getFilteredSections()" class="grid border-b border-slate-200 last:border-b-0" style="grid-template-columns: minmax(220px, 16%) repeat(5, 1fr);">
+                
+                <div class="sticky left-0 z-10 px-4 py-3 font-bold text-slate-800 bg-slate-50/90 border-r border-slate-200 flex items-center">
                   <div class="flex items-start gap-3">
-                    <div
-                      class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-sky-100 to-sky-50">
+                    <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-sky-100 to-sky-50">
                       <i [ngClass]="getTrainingCardIcon(section.title)" class="text-sky-600"></i>
                     </div>
                     <div>
                       {{ section.title }}
-                      <p *ngIf="section.subtitle" class="text-xs font-normal text-slate-500">{{ section.subtitle }}
-                      </p>
+                      <p *ngIf="section.subtitle" class="text-xs font-normal text-slate-500">{{ section.subtitle }}</p>
                     </div>
                   </div>
                 </div>
-
-                <div *ngFor="let header of levelHeaders"
-                  class="text-sm px-4 py-3 align-top border-l border-slate-200 bg-white">
+                
+                <div *ngFor="let header of levelHeaders" class="text-sm px-4 py-3 align-top border-l border-slate-200 bg-white">
                   <ng-container *ngIf="getLevelItems(section, header.num) as items">
                     <ul *ngIf="items.length > 0" class="space-y-1.5 list-disc list-inside text-slate-700">
                       <li *ngFor="let item of items">{{ item }}</li>
@@ -3367,13 +3565,11 @@
           </div>
           <ng-template #noLevelsFound>
             <div class="min-w-[1200px] text-center py-20">
-              <div
-                class="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div class="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i class="fa-solid fa-magnifying-glass text-slate-400 text-4xl"></i>
               </div>
               <h4 class="text-2xl font-bold text-slate-800 mb-2">No Levels Found</h4>
-              <p class="text-slate-600 max-w-md mx-auto">No skills or levels match your current filters. Try changing
-                your search.</p>
+              <p class="text-slate-600 max-w-md mx-auto">No skills or levels match your current filters. Try changing your search.</p>
             </div>
           </ng-template>
         </div>
@@ -3411,9 +3607,14 @@
               <p class="font-bold text-slate-800">{{ skill.skill || skill.skill_name }}</p>
               <p *ngIf="skill.memberName" class="text-sm text-slate-500">Member: {{ skill.memberName }}</p>
             </div>
-            <div *ngIf="skill.status" class="px-3 py-1 text-sm font-semibold rounded-full"
-              [ngClass]="{'bg-green-100 text-green-700': skill.status === 'Met', 'bg-orange-100 text-orange-700': skill.status === 'Gap'}">
-              {{ skill.status }}
+            <div *ngIf="skill.current_expertise || skill.target_expertise || skill.status" class="px-3 py-1 text-sm font-semibold rounded-full"
+              [ngClass]="{
+                'bg-slate-100 text-slate-700': getTimelineStatus(skill) === 'Not Started',
+                'bg-orange-100 text-orange-700': getTimelineStatus(skill) === 'Behind',
+                'bg-sky-100 text-sky-800': getTimelineStatus(skill) === 'On Track',
+                'bg-emerald-100 text-emerald-700': getTimelineStatus(skill) === 'Completed'
+              }">
+              {{ getTimelineStatus(skill) }}
             </div>
             <div *ngIf="skill.skill_level" class="px-3 py-1 text-sm font-semibold rounded-full"
               [ngClass]="getSkillLevelColor(skill.skill_level)">
@@ -3947,10 +4148,11 @@
       <div *ngIf="modalSkills.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div *ngFor="let competency of modalSkills" @fadeIn
           class="relative overflow-hidden bg-white p-6 rounded-2xl shadow-lg border border-slate-200/60" [ngClass]="{
-                           'border-t-4 border-green-500': competency.status === 'Met',
-                           'border-t-4 border-orange-500': competency.status === 'Gap',
-                           'border-t-4 border-red-500': competency.status === 'Error',
-                           'border-t-4 border-sky-500': !competency.status
+                           'border-t-4 border-emerald-500': competency.status === 'Completed',
+                           'border-t-4 border-orange-500': competency.status === 'Behind',
+                           'border-t-4 border-sky-500': competency.status === 'On Track',
+                           'border-t-4 border-slate-300': competency.status === 'Not Started' || !competency.status,
+                           'border-t-4 border-red-500': competency.status === 'Error'
                        }">
           <div class="flex flex-col justify-between h-full">
             <div class="flex items-start justify-between mb-4">
@@ -3966,8 +4168,10 @@
               </div>
               <span *ngIf="competency.status"
                 class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider" [ngClass]="{
-                                   'bg-green-100 text-green-800': competency.status === 'Met',
-                                   'bg-orange-100 text-orange-800': competency.status === 'Gap',
+                                   'bg-emerald-100 text-emerald-800': competency.status === 'Completed',
+                                   'bg-orange-100 text-orange-800': competency.status === 'Behind',
+                                   'bg-sky-100 text-sky-800': competency.status === 'On Track',
+                                   'bg-slate-100 text-slate-700': competency.status === 'Not Started',
                                    'bg-red-100 text-red-800': competency.status === 'Error'
                                }">
                 {{ competency.status }}
@@ -3998,7 +4202,7 @@
         </div>
       </div>
       <p *ngIf="modalSkills.length === 0" class="text-center text-slate-500 py-8">
-        {{ modalTitle === 'Skills Met' ? 'No skills have been marked as "Met" yet.' : 'No core skills data available.'
+        {{ modalTitle === 'Completed Skills' ? 'No skills have been marked as completed yet.' : 'No core skills data available.'
         }}
       </p>
     </div>

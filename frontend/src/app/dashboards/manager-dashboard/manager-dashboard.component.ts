@@ -248,6 +248,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   selectedTrainingIds: number[] = [];
   selectedMemberIds: string[] = [];
+  hoveredTrainingId: number | null = null; // Track hovered training for visual highlighting
 
   assignTrainingSearch: string = '';
   assignMemberSearch: string = '';
@@ -270,15 +271,15 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // Existing assignments for duplicate checking (format: "trainingId_employeeId")
   existingAssignments: Set<string> = new Set();
 
-  mySkillsStatusFilter: string = '';
-  mySkillsSkillFilter: string = '';
+  mySkillsStatusFilter: string[] = [];
+  mySkillsSkillFilter: string[] = [];
   mySkillsSearch: string = '';
   mySkillsView: 'core' | 'additional' = 'core'; // New property for the toggle UI
-  teamSkillsStatusFilter: 'All' | 'Met' | 'Gap' = 'All';
-  teamSkillsSkillFilter: 'All' | string = 'All';
-  teamMemberNameFilter: 'All' | string = 'All';
-  teamCompetencyFilter: 'All' | string = 'All';
-  teamSkillsCurrentLevelFilter: 'All' | string = 'All';
+  teamSkillsStatusFilter: string[] = [];
+  teamSkillsSkillFilter: string[] = [];
+  teamMemberNameFilter: string[] = [];
+  teamCompetencyFilter: string[] = [];
+  teamSkillsCurrentLevelFilter: string[] = [];
 
   uniqueMySkills: string[] = [];
   uniqueTeamSkills: string[] = [];
@@ -332,20 +333,29 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     description?: string;
   }> = [];
   catalogSearch: string = '';
-  catalogTypeFilter: string = 'All';
-  catalogCategoryFilter: string = 'All';
+  catalogTypeFilter: string[] = [];
+  catalogCategoryFilter: string[] = [];
   catalogDateFilter: string = '';
 
   // --- Assigned Trainings Filters ---
   assignedSearch: string = '';
-  assignedSkillFilter: string = 'All';
-  assignedLevelFilter: string = 'All';
+  assignedSkillFilter: string[] = [];
+  assignedLevelFilter: string[] = [];
   assignedDateFilter: string = '';
   assignedTrainingsView: 'list' | 'calendar' = 'list';
   trainingCatalogView: 'list' | 'calendar' = 'list';
   trainingCatalogType: 'live' | 'recorded' = 'live'; // Toggle between live and recorded trainings
   // Assign Training selector type (controls left pane source for Assign Training tab)
   assignTrainingType: 'live' | 'recorded' = 'live';
+
+  // --- Training Requests Properties ---
+  trainingRequests: TrainingRequest[] = [];
+  requestStatusFilter: string = 'all';
+  requestSearch: string = '';
+
+  // --- Badges Properties ---
+  badges: any[] = [];
+  badgeSearch: string = '';
 
   get liveAssignCount(): number {
     return (this.trainingCatalog || []).length;
@@ -375,6 +385,11 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   selectedTrainingForAttendance: number | null = null;
   attendanceCandidates: { employee_empid: string, employee_name: string, attended: boolean }[] = [];
   isMarkingAttendance: boolean = false;
+  selectedTrainingIdForEnrollment: number | null = null; // Track selected training for visual highlighting in catalog
+  
+  // Calendar view - Track selected training from calendar to highlight in list view
+  selectedTrainingFromCalendar: number | null = null;
+  
   private _myTrainingsCache: TrainingDetail[] = [];
   private _myTrainingsCacheKey: string = '';
 
@@ -496,7 +511,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   private readonly API_ENDPOINT = '/data/manager/dashboard';
 
   levelsSearch = '';
-  selectedSkill = '';
+  selectedSkills: string[] = [];
   public expandedLevels = new Set<string>();
   public expandedSkill: string | null = null;
   levelHeaders = [
@@ -623,6 +638,10 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     // Clear question file status map on init to ensure fresh state after logout/login
     this.questionFilesUploaded.clear();
+    // Initialize date filters to current date for Training Catalog and Assigned Trainings tabs
+    const today = new Date();
+    this.catalogDateFilter = today.toISOString().split('T')[0];
+    this.assignedDateFilter = today.toISOString().split('T')[0];
     this.loadPinnedItems();
     this.fetchDashboardData();
     this.fetchTrainingCatalog();
@@ -671,6 +690,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       'trainingCatalog',
       'assignTraining',
       'assignedTrainings',
+      'myRequests',
+      'myBadges',
       'trainerZone',
       'levels'
     ]);
@@ -714,14 +735,26 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     if (tabName === 'assignedTrainings') {
       this.fetchAssignedTrainings();
     }
+    if (tabName === 'myRequests') {
+      this.fetchTrainingRequests();
+    }
+    // Reset date filters to current date when entering Training Catalog or Assigned Trainings tabs
+    if (tabName === 'trainingCatalog' || tabName === 'assignTraining') {
+      const today = new Date();
+      this.catalogDateFilter = today.toISOString().split('T')[0];
+    }
+    if (tabName === 'assignedTrainings') {
+      const today = new Date();
+      this.assignedDateFilter = today.toISOString().split('T')[0];
+    }
     this.selectedTeamMember = null;
-    this.mySkillsStatusFilter = '';
-    this.mySkillsSkillFilter = '';
-    this.teamSkillsStatusFilter = 'All';
-    this.teamSkillsSkillFilter = 'All';
-    this.teamMemberNameFilter = 'All';
-    this.teamCompetencyFilter = 'All';
-    this.teamSkillsCurrentLevelFilter = 'All';
+    this.mySkillsStatusFilter = [];
+    this.mySkillsSkillFilter = [];
+    this.teamSkillsStatusFilter = [];
+    this.teamSkillsSkillFilter = [];
+    this.teamMemberNameFilter = [];
+    this.teamCompetencyFilter = [];
+    this.teamSkillsCurrentLevelFilter = [];
     this.activeTab = tabName;
     setTimeout(() => {
       this.animatedElements.forEach(el => this.observer.observe(el.nativeElement));
@@ -768,12 +801,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // Team dashboard specific methods
   getTeamSkillGaps(): any[] {
     if (!this.manager) return [];
-    const allTeamSkills = this.manager.team.flatMap(member => member.skills);
     const skillGapCount: { [key: string]: number } = {};
-    allTeamSkills.forEach(skill => {
-      if (skill.status === 'Gap') {
-        skillGapCount[skill.skill] = (skillGapCount[skill.skill] || 0) + 1;
-      }
+    this.manager.team.forEach(member => {
+      const evaluation = this.evaluateCoreSkillStatuses(member.skills);
+      evaluation.statusBySkill.forEach((status, skillName) => {
+        if (status === 'Behind') {
+          skillGapCount[skillName] = (skillGapCount[skillName] || 0) + 1;
+        }
+      });
     });
     return Object.entries(skillGapCount)
       .map(([skill, count]) => ({ skill, count }))
@@ -782,9 +817,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   getTeamMembersWithGaps(): TeamMember[] {
     if (!this.manager) return [];
-    return this.manager.team.filter(member =>
-      member.skills.some(skill => skill.status === 'Gap')
-    );
+    return this.manager.team.filter(member => this.evaluateCoreSkillStatuses(member.skills).behind > 0);
   }
 
   getTeamProgressByMember(): { member: TeamMember; progress: number }[] {
@@ -903,18 +936,19 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         competency: section.subtitle || 'Core Competency'
       }));
     } else if (filterStatus === 'Met') {
-      this.modalTitle = 'Skills Met';
-      // For Skills Met, we use the timeline status logic
-      // Since manager might not have "skills" property exactly like engineer, we adapt
+      this.modalTitle = 'Completed Skills';
+      // For completed skills, derive status from the same timeline logic used in engineer view
       const skills = this.manager?.skills || [];
-      this.modalSkills = skills.filter(s => this.getTimelineStatus(s) === 'Completed').map((skill, index) => ({
-        id: index + 1, // Generate temporary ID since Competency doesn't have one
-        skill: skill.skill,
-        competency: skill.competency,
-        current_expertise: skill.current_expertise,
-        target_expertise: skill.target_expertise,
-        status: 'Met'
-      }));
+      this.modalSkills = skills
+        .filter(s => this.getTimelineStatus(s, skills) === 'Completed')
+        .map((skill, index) => ({
+          id: index + 1, // Generate temporary ID since Competency doesn't have one
+          skill: skill.skill,
+          competency: skill.competency,
+          current_expertise: skill.current_expertise,
+          target_expertise: skill.target_expertise,
+          status: 'Completed'
+        }));
     }
 
     // Force change detection and then show modal
@@ -1750,17 +1784,17 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         this.modalDataType = 'skills';
         break;
       case 'mySkillsMet':
-        this.modalTitle = 'My Skills Met';
+        this.modalTitle = 'My Completed Skills';
         this.modalData = this.manager.skills.filter(s => this.getTimelineStatus(s) === 'Completed');
         this.modalDataType = 'skills';
         break;
       case 'mySkillGaps':
-        this.modalTitle = 'My Skill Gaps';
+        this.modalTitle = 'My Skills Behind';
         this.modalData = this.manager.skills.filter(s => this.getTimelineStatus(s) === 'Behind');
         this.modalDataType = 'skills';
         break;
       case 'teamSkillsMet':
-        this.modalTitle = 'Team Skills Met';
+        this.modalTitle = 'Team Completed Skills';
         this.modalData = this.manager.team.flatMap(m =>
           m.skills
             .filter(s => this.getTimelineStatus(s) === 'Completed')
@@ -1769,7 +1803,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         this.modalDataType = 'skills';
         break;
       case 'teamSkillGaps':
-        this.modalTitle = 'Team Skill Gaps';
+        this.modalTitle = 'Team Skills Behind';
         this.modalData = this.manager.team.flatMap(m =>
           m.skills
             .filter(s => this.getTimelineStatus(s) === 'Behind')
@@ -1910,7 +1944,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
           .map(t => ({
             date: new Date(t.training_date as string),
             title: t.training_name,
-            trainer: t.trainer_name || 'N/A'
+            trainer: t.trainer_name || 'N/A',
+            trainingId: t.id
           }));
       },
       error: (err) => {
@@ -1938,7 +1973,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
           .map(t => ({
             date: new Date(t.training_date as string),
             title: t.training_name,
-            trainer: t.trainer_name || 'N/A'
+            trainer: t.trainer_name || 'N/A',
+            trainingId: t.id
           }));
       },
       error: (err) => {
@@ -1981,7 +2017,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
           .map(t => ({
             date: new Date(t.training_date as string),
             title: t.training_name,
-            trainer: t.trainer_name || 'N/A'
+            trainer: t.trainer_name || 'N/A',
+            trainingId: t.id
           }));
         this.generateCalendar();
       },
@@ -2004,11 +2041,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         (t.skill || '').toLowerCase().includes(q)
       );
     }
-    if (this.catalogTypeFilter !== 'All') {
-      list = list.filter(t => (t.training_type || '').toLowerCase() === this.catalogTypeFilter.toLowerCase());
+    if (this.catalogTypeFilter && this.catalogTypeFilter.length > 0) {
+      const types = new Set(this.catalogTypeFilter.map(t => t.toLowerCase()));
+      list = list.filter(t => t.training_type && types.has(t.training_type.toLowerCase()));
     }
-    if (this.catalogCategoryFilter !== 'All') {
-      list = list.filter(t => (t.skill_category || '').toLowerCase() === this.catalogCategoryFilter.toLowerCase());
+    if (this.catalogCategoryFilter && this.catalogCategoryFilter.length > 0) {
+      const categories = new Set(this.catalogCategoryFilter.map(c => c.toLowerCase()));
+      list = list.filter(t => t.skill_category && categories.has(t.skill_category.toLowerCase()));
     }
     if (this.catalogDateFilter) {
       // Normalize dates for comparison (extract YYYY-MM-DD from both)
@@ -2136,6 +2175,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
           || '';
         this.managerIsTrainer = !!response.manager_is_trainer;
         this.processDashboardData();
+        this.populateBadges();
         this.extractUniqueMySkills();
         this.extractUniqueTeamSkills();
         this.extractUniqueTeamMembers();
@@ -2156,16 +2196,25 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   processDashboardData(): void {
     if (!this.manager) return;
     this.totalTeamMembers = this.manager.team.length;
-    const allTeamSkills = this.manager.team.flatMap((member: TeamMember) => member.skills);
-    this.teamSkillsMet = allTeamSkills.filter((skill: Competency) => skill.status === 'Met').length;
-    this.teamSkillsGap = allTeamSkills.filter((skill: Competency) => skill.status === 'Gap').length;
 
+    let completedCount = 0;
+    let behindCount = 0;
     const skillGapCount: { [key: string]: number } = {};
-    allTeamSkills.forEach((skill: Competency) => {
-      if (skill.status === 'Gap') {
-        skillGapCount[skill.skill] = (skillGapCount[skill.skill] || 0) + 1;
-      }
+
+    this.manager.team.forEach(member => {
+      const evaluation = this.evaluateCoreSkillStatuses(member.skills);
+      completedCount += evaluation.completed;
+      behindCount += evaluation.behind;
+
+      evaluation.statusBySkill.forEach((status, skillName) => {
+        if (status === 'Behind') {
+          skillGapCount[skillName] = (skillGapCount[skillName] || 0) + 1;
+        }
+      });
     });
+
+    this.teamSkillsMet = completedCount;
+    this.teamSkillsGap = behindCount;
 
     this.topSkillGaps = Object.entries(skillGapCount)
       .map(([skill, count]) => ({ skill, count }))
@@ -2529,44 +2578,69 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   calculateProgress(skills: Competency[]): number {
-    const total = skills.length;
-    const completed = skills.filter(s => this.getTimelineStatus(s) === 'Completed').length;
-    return total > 0 ? (completed / total) * 100 : 0;
+    const evaluation = this.evaluateCoreSkillStatuses(skills);
+    return evaluation.total > 0 ? Math.round((evaluation.completed / evaluation.total) * 100) : 0;
   }
 
   getTeamProgressPercentage(): number {
-    const totalSkills = this.manager?.team.flatMap(member => member.skills).length || 0;
-    const completedSkills = this.manager?.team
-      .flatMap(member => member.skills)
-      .filter(skill => this.getTimelineStatus(skill) === 'Completed').length || 0;
+    if (!this.manager?.team || this.manager.team.length === 0) return 0;
+
+    let totalSkills = 0;
+    let completedSkills = 0;
+
+    this.manager.team.forEach(member => {
+      const evaluation = this.evaluateCoreSkillStatuses(member.skills);
+      totalSkills += evaluation.total;
+      completedSkills += evaluation.completed;
+    });
+
     return totalSkills > 0 ? Math.round((completedSkills / totalSkills) * 100) : 0;
   }
 
   getMySkillsMetCount(): number {
     // "Met" count on dashboard is now based on timeline status "Completed"
-    return this.manager?.skills.filter(skill => this.getTimelineStatus(skill) === 'Completed').length || 0;
+    const skills = this.manager?.skills || [];
+    return skills.filter(skill => this.getTimelineStatus(skill, skills) === 'Completed').length;
   }
 
   getTeamSkillsOnTrack(): number {
     // Count all skills from all team members that are "On Track"
     if (!this.manager?.team || this.manager.team.length === 0) return 0;
-    return this.manager.team
-      .flatMap((member: TeamMember) => member.skills || [])
-      .filter((skill: Competency) => this.getTimelineStatus(skill) === 'On Track').length || 0;
+
+    let onTrackCount = 0;
+    this.manager.team.forEach(member => {
+      const evaluation = this.evaluateCoreSkillStatuses(member.skills);
+      evaluation.statusBySkill.forEach(status => {
+        if (status === 'On Track') {
+          onTrackCount++;
+        }
+      });
+    });
+    return onTrackCount;
   }
 
   getAvgProgressOnTrack(): number {
     // Get average progress for all "On Track" skills across team
     if (!this.manager?.team || this.manager.team.length === 0) return 0;
-    
-    const onTrackSkills = this.manager.team
-      .flatMap((member: TeamMember) => member.skills || [])
-      .filter((skill: Competency) => this.getTimelineStatus(skill) === 'On Track');
-    
-    if (onTrackSkills.length === 0) return 0;
-    
-    const totalProgress = onTrackSkills.reduce((sum: number, skill: Competency) => sum + (this.getSkillProgress(skill) || 0), 0);
-    return Math.round(totalProgress / onTrackSkills.length);
+
+    const onTrackProgress: number[] = [];
+
+    this.manager.team.forEach(member => {
+      const evaluation = this.evaluateCoreSkillStatuses(member.skills);
+      evaluation.statusBySkill.forEach((status, skillName) => {
+        if (status === 'On Track') {
+          const skill = member.skills.find(s => s.skill === skillName);
+          if (skill) {
+            onTrackProgress.push(this.getSkillProgress(skill) || 0);
+          }
+        }
+      });
+    });
+
+    if (onTrackProgress.length === 0) return 0;
+
+    const totalProgress = onTrackProgress.reduce((sum, value) => sum + value, 0);
+    return Math.round(totalProgress / onTrackProgress.length);
   }
 
   // Helper method to get feedback for a specific skill (similar to engineer dashboard)
@@ -2645,6 +2719,63 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     return (skill as any).weighted_actual_progress || 0;
   }
 
+  private resolveSkillCollection(skill: Competency, skillCollection?: Competency[]): Competency[] {
+    if (skillCollection && skillCollection.length > 0) {
+      return skillCollection;
+    }
+
+    if (this.manager?.skills?.includes(skill)) {
+      return this.manager.skills;
+    }
+
+    const owner = (this.manager?.team || []).find(member => member.skills?.includes(skill));
+    if (owner && owner.skills.length > 0) {
+      return owner.skills;
+    }
+
+    return [skill];
+  }
+
+  private evaluateCoreSkillStatuses(skillCollection: Competency[]): {
+    completed: number;
+    behind: number;
+    total: number;
+    statusBySkill: Map<string, 'Not Started' | 'Behind' | 'On Track' | 'Completed'>;
+  } {
+    const coreSkills = new Set(this.sections.map(s => s.title));
+    const statusBySkill = new Map<string, 'Not Started' | 'Behind' | 'On Track' | 'Completed'>();
+
+    for (const skill of skillCollection) {
+      if (!coreSkills.has(skill.skill)) continue;
+      const status = this.getTimelineStatus(skill, skillCollection);
+      const existing = statusBySkill.get(skill.skill);
+
+      if (status === 'Completed') {
+        statusBySkill.set(skill.skill, 'Completed');
+        continue;
+      }
+
+      if (existing === 'Completed') {
+        continue;
+      }
+
+      if (status === 'Behind') {
+        statusBySkill.set(skill.skill, 'Behind');
+        continue;
+      }
+
+      if (!existing) {
+        statusBySkill.set(skill.skill, status);
+      }
+    }
+
+    const completed = Array.from(statusBySkill.values()).filter(v => v === 'Completed').length;
+    const behind = Array.from(statusBySkill.values()).filter(v => v === 'Behind').length;
+    const total = coreSkills.size;
+
+    return { completed, behind, total, statusBySkill };
+  }
+
   /**
   * Calculate expected progress for a skill based on assignment and target dates.
   * Expected progress is computed on a daily basis (elapsed/total time)
@@ -2652,14 +2783,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
    * 
    * For skills with multiple levels, calculates average expected progress across all levels.
    */
-  getExpectedProgress(skill: Competency): number {
-    // Get all levels of this skill
-    const skillName = skill.skill;
-    const skillsWithSameName = (this.manager?.skills || []).filter((s: Competency) => s.skill === skillName);
-    
+  getExpectedProgress(skill: Competency, skillCollection?: Competency[]): number {
+    // Get all levels of this skill for the same owner
+    const skillsWithSameName = this.resolveSkillCollection(skill, skillCollection)
+      .filter((s: Competency) => s.skill === skill.skill);
+
     // Calculate expected progress for each level
     const progressValues: number[] = [];
-    
+
     for (const s of skillsWithSameName) {
       const assignmentDateStr = s.assignment_start_date;
       const targetDateStr = s.target_completion_date;
@@ -2705,9 +2836,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
    * Derive timeline-based status for a skill using expected vs actual progress.
    * Statuses: Not Started, Behind, On Track, Completed.
    */
-  getTimelineStatus(skill: Competency): 'Not Started' | 'Behind' | 'On Track' | 'Completed' {
+  getTimelineStatus(skill: Competency, skillCollection?: Competency[]): 'Not Started' | 'Behind' | 'On Track' | 'Completed' {
     const actual = this.getSkillProgress(skill);
-    const expected = this.getExpectedProgress(skill);
+    const expected = this.getExpectedProgress(skill, skillCollection);
 
     const assignmentDateStr = skill.assignment_start_date;
     const targetDateStr = skill.target_completion_date;
@@ -2778,22 +2909,28 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       return [];
     }
     let filtered = [...this.manager.skills];
-    if (this.mySkillsSkillFilter) {
-      filtered = filtered.filter(skill => skill.skill === this.mySkillsSkillFilter);
+    if (this.mySkillsSkillFilter && this.mySkillsSkillFilter.length > 0) {
+      const names = new Set(this.mySkillsSkillFilter);
+      filtered = filtered.filter(skill => names.has(skill.skill));
     }
     // Apply status filter based on timeline status (Not Started/Behind/On Track/Completed)
-    if (this.mySkillsStatusFilter) {
-      filtered = filtered.filter(skill => this.getTimelineStatus(skill) === this.mySkillsStatusFilter);
+    if (this.mySkillsStatusFilter && this.mySkillsStatusFilter.length > 0) {
+      const statuses = new Set(this.mySkillsStatusFilter);
+      filtered = filtered.filter(skill => statuses.has(this.getTimelineStatus(skill)));
     }
     return filtered;
   }
 
+  get coreSkillsTotal(): number {
+    return this.sections.length;
+  }
+
   getTeamSkillsMetCount(member: TeamMember): number {
-    return member.skills.filter(s => s.status === 'Met').length;
+    return this.evaluateCoreSkillStatuses(member.skills).completed;
   }
 
   getTeamSkillsGapCount(member: TeamMember): number {
-    return member.skills.filter(s => s.status === 'Gap').length;
+    return this.evaluateCoreSkillStatuses(member.skills).behind;
   }
 
   getMemberProgressPercentage(member: TeamMember): number {
@@ -2825,16 +2962,26 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       return [];
     }
     let filteredMembers = [...this.manager.team];
-    if (this.teamMemberNameFilter !== 'All') {
-      filteredMembers = filteredMembers.filter(member => member.name === this.teamMemberNameFilter);
+    if (this.teamMemberNameFilter && this.teamMemberNameFilter.length > 0) {
+      const names = new Set(this.teamMemberNameFilter);
+      filteredMembers = filteredMembers.filter(member => names.has(member.name));
     }
-    if (this.teamSkillsStatusFilter !== 'All' || this.teamSkillsSkillFilter !== 'All' || this.teamCompetencyFilter !== 'All' || this.teamSkillsCurrentLevelFilter !== 'All') {
+    const hasSkillFilters = (this.teamSkillsStatusFilter && this.teamSkillsStatusFilter.length > 0) ||
+                            (this.teamSkillsSkillFilter && this.teamSkillsSkillFilter.length > 0) ||
+                            (this.teamCompetencyFilter && this.teamCompetencyFilter.length > 0) ||
+                            (this.teamSkillsCurrentLevelFilter && this.teamSkillsCurrentLevelFilter.length > 0);
+    if (hasSkillFilters) {
+      const statuses = new Set(this.teamSkillsStatusFilter);
+      const skills = new Set(this.teamSkillsSkillFilter);
+      const competencies = new Set(this.teamCompetencyFilter);
+      const levels = new Set(this.teamSkillsCurrentLevelFilter);
       filteredMembers = filteredMembers.filter(member => {
         return member.skills.some(skill => {
-          const statusMatch = this.teamSkillsStatusFilter === 'All' || skill.status === this.teamSkillsStatusFilter;
-          const skillMatch = this.teamSkillsSkillFilter === 'All' || skill.skill === this.teamSkillsSkillFilter;
-          const competencyMatch = this.teamCompetencyFilter === 'All' || skill.competency === this.teamCompetencyFilter;
-          const levelMatch = this.teamSkillsCurrentLevelFilter === 'All' || skill.current_expertise === this.teamSkillsCurrentLevelFilter;
+          // Compare against timeline-based status to align with UI filter options
+          const statusMatch = statuses.size === 0 || statuses.has(this.getTimelineStatus(skill));
+          const skillMatch = skills.size === 0 || skills.has(skill.skill);
+          const competencyMatch = competencies.size === 0 || competencies.has(skill.competency);
+          const levelMatch = levels.size === 0 || levels.has(skill.current_expertise);
           return statusMatch && skillMatch && competencyMatch && levelMatch;
         });
       });
@@ -2990,11 +3137,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         (t.skill || '').toLowerCase().includes(q)
       );
     }
-    if (this.assignedSkillFilter !== 'All') {
-      list = list.filter(t => t.skill === this.assignedSkillFilter);
+    if (this.assignedSkillFilter && this.assignedSkillFilter.length > 0) {
+      const names = new Set(this.assignedSkillFilter);
+      list = list.filter(t => t.skill && names.has(t.skill));
     }
-    if (this.assignedLevelFilter !== 'All') {
-      list = list.filter(t => t.skill_category === this.assignedLevelFilter);
+    if (this.assignedLevelFilter && this.assignedLevelFilter.length > 0) {
+      const levels = new Set(this.assignedLevelFilter);
+      list = list.filter(t => t.skill_category && levels.has(t.skill_category));
     }
     if (this.assignedDateFilter) {
       // Normalize dates for comparison (extract YYYY-MM-DD from both)
@@ -3010,9 +3159,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         return String(date || '').trim();
       };
       const filterDate = normalizeDate(this.assignedDateFilter);
+      const filterDateObj = new Date(filterDate);
       list = list.filter(t => {
-        const trainingDate = normalizeDate(t.training_date);
-        return trainingDate === filterDate;
+        const trainingDateStr = normalizeDate(t.training_date);
+        if (!trainingDateStr) return false;
+        const trainingDateObj = new Date(trainingDateStr);
+        if (isNaN(trainingDateObj.getTime())) return false;
+        // Show trainings on the selected date and all future dates
+        return trainingDateObj >= filterDateObj;
       });
     }
     list.sort((a, b) => {
@@ -3192,8 +3346,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // Levels helper methods
   getFilteredSections(): Section[] {
     let sectionsToFilter = this.sections;
-    if (this.selectedSkill) {
-      sectionsToFilter = this.sections.filter((sec: any) => sec.title === this.selectedSkill);
+    if (this.selectedSkills && this.selectedSkills.length > 0) {
+      sectionsToFilter = this.sections.filter((sec: any) => this.selectedSkills.includes(sec.title));
     }
     const q = this.levelsSearch.trim().toLowerCase();
     if (!q) return sectionsToFilter;
@@ -3255,21 +3409,21 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   // --- Filter Reset Logic ---
   resetMySkillsFilters(): void {
     this.mySkillsSearch = '';
-    this.mySkillsSkillFilter = '';
-    this.mySkillsStatusFilter = '';
+    this.mySkillsSkillFilter = [];
+    this.mySkillsStatusFilter = [];
   }
 
   resetCatalogFilters(): void {
     this.catalogSearch = '';
-    this.catalogTypeFilter = 'All';
-    this.catalogCategoryFilter = 'All';
+    this.catalogTypeFilter = [];
+    this.catalogCategoryFilter = [];
     this.catalogDateFilter = '';
   }
 
   resetAssignedTrainingFilters(): void {
     this.assignedSearch = '';
-    this.assignedSkillFilter = 'All';
-    this.assignedLevelFilter = 'All';
+    this.assignedSkillFilter = [];
+    this.assignedLevelFilter = [];
     this.assignedDateFilter = '';
   }
 
@@ -3352,8 +3506,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         (t.description || '').toLowerCase().includes(q)
       );
     }
-    if (this.catalogCategoryFilter !== 'All') {
-      list = list.filter(t => t.skill_category === this.catalogCategoryFilter);
+    if (this.catalogCategoryFilter && this.catalogCategoryFilter.length > 0) {
+      const categories = new Set(this.catalogCategoryFilter.map(c => c.toLowerCase()));
+      list = list.filter(t => t.skill_category && categories.has(t.skill_category.toLowerCase()));
     }
     return list;
   }
@@ -4029,11 +4184,101 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     return event.title + event.trainer + event.date.getTime();
   }
 
+  /**
+   * Handle clicking on a training event in the calendar view
+   * Switches to list view and highlights the corresponding training
+   */
+  onCalendarEventClick(event: CalendarEvent): void {
+    if (event.trainingId) {
+      // Store the selected training ID
+      this.selectedTrainingFromCalendar = event.trainingId;
+      
+      // Ensure filters don't hide the selected training
+      this.assignedSearch = '';
+      this.assignedSkillFilter = [];
+      this.assignedLevelFilter = [];
+      this.assignedDateFilter = '';
+
+      // Switch to list view
+      this.setAssignedTrainingsView('list');
+
+      // Attempt smooth scroll with retries until the card renders
+      this.scrollToTrainingCard(event.trainingId);
+    }
+  }
+
+  /**
+   * Handle clicking on a training event in the Training Catalog calendar
+   * Switches to catalog list view and highlights the corresponding training
+   */
+  onCatalogCalendarEventClick(event: CalendarEvent): void {
+    if (event.trainingId) {
+      this.selectedTrainingFromCalendar = event.trainingId;
+      // Clear catalog filters so the selected training is visible
+      this.catalogSearch = '';
+      this.catalogTypeFilter = [];
+      this.catalogCategoryFilter = [];
+      this.catalogDateFilter = '';
+
+      this.setTrainingCatalogView('list');
+      this.scrollToTrainingCard(event.trainingId);
+    }
+  }
+
+  /**
+   * Retry-based smooth scroll to training card in the current list view.
+   */
+  private scrollToTrainingCard(trainingId: number, attempts: number = 50, delayMs: number = 100): void {
+    const doScroll = (el: HTMLElement) => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+      // Compensate for sticky headers/toolbars
+      setTimeout(() => {
+        try { window.scrollBy({ top: -120, behavior: 'smooth' }); } catch {}
+      }, 150);
+      setTimeout(() => { this.selectedTrainingFromCalendar = null; }, 3000);
+    };
+
+    const tryScroll = (remaining: number) => {
+      const el = document.querySelector(`[data-training-id="${trainingId}"]`) as HTMLElement | null;
+      if (el) {
+        doScroll(el);
+      } else if (remaining > 0) {
+        setTimeout(() => tryScroll(remaining - 1), delayMs);
+      } else {
+        // Final fallback: observe for DOM changes briefly
+        const observer = new MutationObserver((_) => {
+          const target = document.querySelector(`[data-training-id="${trainingId}"]`) as HTMLElement | null;
+          if (target) {
+            observer.disconnect();
+            doScroll(target);
+          }
+        });
+        try {
+          observer.observe(document.body, { childList: true, subtree: true });
+          // Stop observing after a short window
+          setTimeout(() => observer.disconnect(), 2000);
+        } catch {
+          // Give up and clear highlight anyway
+          setTimeout(() => { this.selectedTrainingFromCalendar = null; }, 3000);
+        }
+      }
+    };
+    // Start attempts after a tick to allow view switch rendering
+    setTimeout(() => tryScroll(attempts), delayMs);
+  }
 
   // --- Training Enrollment ---
   enrollInTraining(training: TrainingDetail): void {
+    // Set the selected training for highlighting
+    this.selectedTrainingIdForEnrollment = training.id;
+    
     // This is a placeholder method. In a real app, you would make an API call here.
     this.toastService.success(`Enrolled in "${training.training_name}" successfully!`, 'Enrollment Successful');
+    
+    // Clear selection after a brief delay
+    setTimeout(() => {
+      this.selectedTrainingIdForEnrollment = null;
+    }, 2000);
   }
 
   // --- File Management Methods ---
@@ -4216,5 +4461,86 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   getTrainingName(trainingId: number): string {
     const training = this.myTrainings.find(t => t.id === trainingId);
     return training?.training_name || 'Training';
+  }
+
+  // =====================================================
+  // My Requests Methods (Reused from Engineer Dashboard)
+  // =====================================================
+
+  fetchTrainingRequests(): void {
+    const token = this.authService.getToken();
+    if (!token) {
+      console.warn('No token available for fetching training requests');
+      return;
+    }
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+    
+    this.http.get<TrainingRequest[]>(this.apiService.getUrl('/training-requests/my'), { headers }).subscribe({
+      next: (response) => {
+        this.trainingRequests = response || [];
+      },
+      error: (err) => {
+        console.error('Failed to fetch training requests:', err);
+        if (err.status === 401 || err.status === 403) {
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        }
+      }
+    });
+  }
+
+  getFilteredRequests(): TrainingRequest[] {
+    let filtered = this.trainingRequests;
+    
+    // Filter by status
+    if (this.requestStatusFilter && this.requestStatusFilter !== 'all') {
+      filtered = filtered.filter(request => request.status === this.requestStatusFilter);
+    }
+    
+    // Filter by search term
+    if (this.requestSearch.trim()) {
+      const searchTerm = this.requestSearch.trim().toLowerCase();
+      filtered = filtered.filter(request => 
+        request.training.training_name.toLowerCase().includes(searchTerm) ||
+        request.training.trainer_name.toLowerCase().includes(searchTerm) ||
+        (request.training.skill && request.training.skill.toLowerCase().includes(searchTerm)) ||
+        (request.training.skill_category && request.training.skill_category.toLowerCase().includes(searchTerm))
+      );
+    }
+    
+    return filtered;
+  }
+
+  // =====================================================
+  // My Badges Methods (Reused from Engineer Dashboard)
+  // =====================================================
+
+  getFilteredBadges(): any[] {
+    let filtered = this.badges;
+    
+    // Filter by search term
+    if (this.badgeSearch.trim()) {
+      const searchTerm = this.badgeSearch.trim().toLowerCase();
+      filtered = filtered.filter(badge => 
+        badge.skill.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    return filtered;
+  }
+
+  getFormattedDate(): string {
+    return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  /**
+   * Populate badges from completed skills
+   */
+  private populateBadges(): void {
+    if (this.manager?.skills) {
+      this.badges = this.manager.skills.filter(s => this.getTimelineStatus(s) === 'Completed');
+    } else {
+      this.badges = [];
+    }
   }
 }

@@ -106,5 +106,7 @@ export interface CalendarEvent {
   title: string;
   /** Name of the trainer */
   trainer: string;
+  /** ID of the training for linking to list view */
+  trainingId?: number;
 }
 

@@ -53,7 +53,12 @@
         [class.bg-sky-100]="isSelected(allOptionLabel)"
       >
         <div class="flex items-center gap-2">
-          <i class="fa-solid fa-check text-xs text-sky-600" *ngIf="isSelected(allOptionLabel)"></i>
+          <ng-container *ngIf="multiple; else singleAllIcon">
+            <input type="checkbox" [checked]="isSelected(allOptionLabel)" (click)="$event.stopPropagation()" class="accent-sky-600">
+          </ng-container>
+          <ng-template #singleAllIcon>
+            <i class="fa-solid fa-check text-xs text-sky-600" *ngIf="isSelected(allOptionLabel)"></i>
+          </ng-template>
           <span [class.font-semibold]="isSelected(allOptionLabel)">{{ allOptionLabel }}</span>
         </div>
       </div>
@@ -65,7 +70,12 @@
         [class.bg-sky-100]="isSelected(option)"
       >
         <div class="flex items-center gap-2">
-          <i class="fa-solid fa-check text-xs text-sky-600" *ngIf="isSelected(option)"></i>
+          <ng-container *ngIf="multiple; else singleOptionIcon">
+            <input type="checkbox" [checked]="isSelected(option)" (click)="$event.stopPropagation()" class="accent-sky-600">
+          </ng-container>
+          <ng-template #singleOptionIcon>
+            <i class="fa-solid fa-check text-xs text-sky-600" *ngIf="isSelected(option)"></i>
+          </ng-template>
           <span [class.font-semibold]="isSelected(option)">{{ option }}</span>
         </div>
       </div>
