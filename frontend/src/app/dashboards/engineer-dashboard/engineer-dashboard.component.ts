@@ -67,6 +67,7 @@ import { of } from 'rxjs';
 import { trigger, style, animate, transition, query, stagger } from '@angular/animations';
 import { ToastService, ToastMessage } from '../../services/toast.service';
 import { NotificationService } from '../../services/notification.service';
+import { ConfirmationDialogService } from '../../services/confirmation-dialog.service';
 import { Skill, ModalSkill } from '../../models/skill.model';
 import { TrainingDetail, TrainingRequest, CalendarEvent } from '../../models/training.model';
 import { Assignment, AssignmentQuestion, QuestionOption, UserAnswer, QuestionResult, AssignmentResult, FeedbackQuestion } from '../../models/assignment.model';
@@ -444,7 +445,8 @@ export class EngineerDashboardComponent implements OnInit {
     private apiService: ApiService,
     private cdr: ChangeDetectorRef,
     private toastService: ToastService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    public confirmationDialogService: ConfirmationDialogService
   ) {}
 
   ngOnInit(): void {
@@ -2717,6 +2719,62 @@ export class EngineerDashboardComponent implements OnInit {
         } else {
           this.toastService.error(`Failed to submit training request. Error: ${err.statusText || 'Unknown error'}`);
         }
+      }
+    });
+  }
+
+  /**
+   * Cancel a pending training request
+   */
+  async cancelEnrollment(training: TrainingDetail): Promise<void> {
+    const request = this.getRequestDetails(training.id);
+    if (!request) {
+      this.toastService.error('Request not found');
+      return;
+    }
+
+    if (request.status !== 'pending') {
+      this.toastService.error('Only pending requests can be cancelled');
+      return;
+    }
+
+    // Show custom confirmation dialog
+    const confirmed = await this.confirmationDialogService.show({
+      title: 'Popkind',
+      message: `Are you sure you want to cancel your enrollment request for "${training.training_name}"?`,
+      okText: 'Cancel Request',
+      cancelText: 'Keep Request'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const token = this.authService.getToken();
+    if (!token) {
+      this.toastService.error('Authentication error. Please log in again.');
+      return;
+    }
+
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.delete(
+      this.apiService.trainingRequestCancelUrl(request.id),
+      { headers }
+    ).subscribe({
+      next: () => {
+        // Remove the request from our list
+        this.trainingRequests = this.trainingRequests.filter(r => r.id !== request.id);
+        
+        this.toastService.success(
+          `Enrollment request cancelled for "${training.training_name}"`,
+          'Request Cancelled'
+        );
+      },
+      error: (err) => {
+        console.error('Failed to cancel training request:', err);
+        const errorMessage = err.error?.detail || 'Failed to cancel enrollment request';
+        this.toastService.error(errorMessage);
       }
     });
   }

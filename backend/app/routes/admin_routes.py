@@ -17,7 +17,7 @@ Features:
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func, or_, and_
+from sqlalchemy import func, or_, and_, delete
 from sqlalchemy.orm import selectinload
 from typing import Optional, List
 from datetime import datetime, date
@@ -27,7 +27,9 @@ from app.auth_utils import get_current_active_admin
 from app.models import (
     User, Admin, ManagerEmployee, EmployeeCompetency, AdditionalSkill,
     TrainingDetail, TrainingAssignment, TrainingRequest, TrainingAttendance,
-    Trainer, AssignmentSubmission, FeedbackSubmission, Notification
+    Trainer, AssignmentSubmission, FeedbackSubmission, Notification,
+    SharedAssignment, SharedFeedback, ManagerPerformanceFeedback,
+    TrainingQuestionFile, TrainingSolutionFile
 )
 from app.schemas import TrainingCreate, TrainingResponse
 from app.auth_utils import get_password_hash
@@ -368,7 +370,7 @@ async def update_user(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Update manager-employee relationship
-    manager_emp = await db.execute(
+    manager_emp_result = await db.execute(
         select(ManagerEmployee).where(
             or_(
                 ManagerEmployee.manager_empid == username,
@@ -376,7 +378,9 @@ async def update_user(
             )
         ).limit(1)
     )
-    manager_emp_obj = manager_emp.first()
+    manager_emp_row = manager_emp_result.first()
+    # `select(ManagerEmployee)` returns a row whose first element is the ORM instance
+    manager_emp_obj = manager_emp_row[0] if manager_emp_row else None
     
     if manager_emp_obj:
         if user_data.name:
@@ -411,7 +415,43 @@ async def delete_user(
     if not user_obj:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Delete will cascade due to foreign keys
+    # Manually cascade deletes for all related tables that reference users
+    await db.execute(delete(AdditionalSkill).where(AdditionalSkill.employee_empid == username))
+    await db.execute(delete(EmployeeCompetency).where(EmployeeCompetency.employee_empid == username))
+    await db.execute(delete(ManagerEmployee).where(or_(ManagerEmployee.manager_empid == username, ManagerEmployee.employee_empid == username)))
+    await db.execute(delete(TrainingAssignment).where(or_(TrainingAssignment.employee_empid == username, TrainingAssignment.manager_empid == username)))
+    await db.execute(delete(TrainingAttendance).where(TrainingAttendance.employee_empid == username))
+    await db.execute(delete(TrainingRequest).where(or_(TrainingRequest.employee_empid == username, TrainingRequest.manager_empid == username)))
+
+    # Delete submissions before shared resources to avoid FK violations
+    shared_assignment_ids = select(SharedAssignment.id).where(SharedAssignment.trainer_username == username)
+    await db.execute(
+        delete(AssignmentSubmission).where(
+            or_(
+                AssignmentSubmission.employee_empid == username,
+                AssignmentSubmission.shared_assignment_id.in_(shared_assignment_ids)
+            )
+        )
+    )
+    await db.execute(delete(SharedAssignment).where(SharedAssignment.trainer_username == username))
+
+    shared_feedback_ids = select(SharedFeedback.id).where(SharedFeedback.trainer_username == username)
+    await db.execute(
+        delete(FeedbackSubmission).where(
+            or_(
+                FeedbackSubmission.employee_empid == username,
+                FeedbackSubmission.shared_feedback_id.in_(shared_feedback_ids)
+            )
+        )
+    )
+    await db.execute(delete(SharedFeedback).where(SharedFeedback.trainer_username == username))
+
+    await db.execute(delete(ManagerPerformanceFeedback).where(or_(ManagerPerformanceFeedback.employee_empid == username, ManagerPerformanceFeedback.manager_empid == username)))
+    await db.execute(delete(TrainingQuestionFile).where(TrainingQuestionFile.trainer_username == username))
+    await db.execute(delete(TrainingSolutionFile).where(TrainingSolutionFile.employee_empid == username))
+    await db.execute(delete(Notification).where(Notification.user_empid == username))
+    await db.execute(delete(Admin).where(Admin.username == username))
+
     await db.delete(user_obj)
     await db.commit()
     

@@ -77,6 +77,11 @@ interface GapAnalysis {
   gap_percentage: number;
 }
 
+interface CoreSkill {
+  title: string;
+  iconClass: string;
+}
+
 @Component({
   selector: 'app-admin-dashboard',
   templateUrl: './admin-dashboard.component.html',
@@ -110,6 +115,38 @@ export class AdminDashboardComponent implements OnInit {
   activeTab: string = 'dashboard';
   adminName: string = 'Admin';
   adminId: string = '';
+
+  expandedMetric: 'users' | 'trainers' | 'skills' | 'trainings' | 'attendance' | 'report' | null = null;
+
+  showUsersPopup: boolean = false;
+  showTrainersPopup: boolean = false;
+  showTrainingsPopup: boolean = false;
+  showCoreSkillsPopup: boolean = false;
+  trainerUsers: User[] = [];
+  trainersPopupLoading: boolean = false;
+
+  coreSkills: CoreSkill[] = [
+    { title: 'EXAM', iconClass: 'fa-solid fa-microscope' },
+    { title: 'Softcar', iconClass: 'fa-solid fa-car' },
+    { title: 'Python', iconClass: 'fa-brands fa-python' },
+    { title: 'C++ (CPP)', iconClass: 'fa-solid fa-code' },
+    { title: 'Axivion', iconClass: 'fa-solid fa-search' },
+    { title: 'MATLAB', iconClass: 'fa-solid fa-chart-line' },
+    { title: 'DOORS', iconClass: 'fa-solid fa-door-open' },
+    { title: 'Azure DevOps', iconClass: 'fa-brands fa-microsoft' },
+    { title: 'Smart Git', iconClass: 'fa-brands fa-git-alt' },
+    { title: 'Integrity', iconClass: 'fa-solid fa-shield-halved' }
+  ];
+
+  openTrainingsPopup(): void {
+    this.showTrainingsPopup = true;
+    // Always refresh so the list matches the latest state
+    this.loadTrainings();
+  }
+
+  closeTrainingsPopup(): void {
+    this.showTrainingsPopup = false;
+  }
   
   // Dashboard metrics
   totalUsers: number = 0;
@@ -117,6 +154,8 @@ export class AdminDashboardComponent implements OnInit {
   totalEmployees: number = 0;
   totalTrainings: number = 0;
   totalAssignments: number = 0;
+  attendedAssignments: number = 0;
+  attendanceRate: number = 0;
   totalSkills: number = 0;
   pendingRequests: number = 0;
   activeTrainers: number = 0;
@@ -284,6 +323,8 @@ export class AdminDashboardComponent implements OnInit {
             this.totalEmployees = data.metrics.total_employees || 0;
             this.totalTrainings = data.metrics.total_trainings || 0;
             this.totalAssignments = data.metrics.total_assignments || 0;
+            this.attendedAssignments = data.metrics.attended_assignments ?? 0;
+            this.attendanceRate = data.metrics.attendance_rate ?? 0;
             this.totalSkills = data.metrics.total_skills || 0;
             this.pendingRequests = data.metrics.pending_requests || 0;
             this.activeTrainers = data.metrics.active_trainers || 0;
@@ -320,6 +361,64 @@ export class AdminDashboardComponent implements OnInit {
         return dateA.getTime() - dateB.getTime();
       })
       .slice(0, 5);
+  }
+
+  toggleMetric(metric: 'users' | 'trainers' | 'skills' | 'trainings' | 'attendance' | 'report'): void {
+    this.expandedMetric = this.expandedMetric === metric ? null : metric;
+  }
+
+  openUsersPopup(): void {
+    this.expandedMetric = null;
+    this.showUsersPopup = true;
+    // Load users for the popup (all roles) and allow scrolling in the UI.
+    this.loadUsers();
+  }
+
+  closeUsersPopup(): void {
+    this.showUsersPopup = false;
+  }
+
+  openTrainersPopup(): void {
+    this.expandedMetric = null;
+    this.showTrainersPopup = true;
+    this.loadTrainersForPopup();
+  }
+
+  closeTrainersPopup(): void {
+    this.showTrainersPopup = false;
+  }
+
+  openCoreSkillsPopup(): void {
+    this.expandedMetric = null;
+    this.showCoreSkillsPopup = true;
+  }
+
+  closeCoreSkillsPopup(): void {
+    this.showCoreSkillsPopup = false;
+  }
+
+  private loadTrainersForPopup(): void {
+    this.trainersPopupLoading = true;
+    this.http.get<any>(this.apiService.adminTrainersUrl, { headers: this.getHeaders() })
+      .subscribe({
+        next: (data) => {
+          // Map trainers payload into User-like structure used by the template
+          const trainers = (data.trainers || []) as Array<{ username: string; name: string; role: string }>;
+          this.trainerUsers = trainers.map(t => ({
+            username: t.username,
+            name: t.name,
+            role: t.role,
+            is_trainer: true
+          }));
+          this.trainersPopupLoading = false;
+        },
+        error: (err) => {
+          console.error('Error loading trainers:', err);
+          this.toastService.show('Failed to load trainers', 'error');
+          this.trainerUsers = [];
+          this.trainersPopupLoading = false;
+        }
+      });
   }
 
   // ==================== USER MANAGEMENT ====================
@@ -686,6 +785,23 @@ export class AdminDashboardComponent implements OnInit {
           this.trainingsLoading = false;
         }
       });
+  }
+
+  private isRecordedTraining(training: Training): boolean {
+    const rawType = (training.training_type || '').toLowerCase().trim();
+    return rawType.includes('record');
+  }
+
+  get recordedTrainingsCount(): number {
+    return (this.trainings || []).filter(t => this.isRecordedTraining(t)).length;
+  }
+
+  get classroomTrainingsCount(): number {
+    return (this.trainings || []).filter(t => !this.isRecordedTraining(t)).length;
+  }
+
+  getTrainingTypeLabel(training: Training): string {
+    return this.isRecordedTraining(training) ? 'Recorded' : 'Classroom';
   }
 
   openCreateTrainingModal(): void {

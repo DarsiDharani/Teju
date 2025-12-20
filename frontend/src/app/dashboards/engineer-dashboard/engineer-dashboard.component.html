@@ -44,7 +44,7 @@
                     <i class="fa-solid fa-user text-slate-400 text-3xl"></i>
                 </div>
                 <!-- Online Status Indicator: Green dot showing user is active -->
-                <div class="absolute top-0 right-0 w-6 h-6 bg-green-400 rounded-full border-4 border-slate-900"></div>
+                <div class="absolute top-0 right-0 w-6 h-6 bg-green-400 rounded-full border-4 border-indigo-200"></div>
             </div>
             <!-- Employee Name: Displayed from component property -->
             <h3 class="text-white text-xl font-semibold">{{ employeeName }}</h3>
@@ -297,7 +297,7 @@
                 <div class="relative">
                     <i class="fa-solid fa-filter absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 text-xs pointer-events-none"></i>
                     <i class="fa-solid fa-calendar-days absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 text-xs pointer-events-none"></i>
-                    <input type="date" [(ngModel)]="trainingDateFilter" class="w-auto min-w-[130px] pl-8 pr-8 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-xs">
+                    <input type="date" [(ngModel)]="trainingDateFilter" class="w-auto min-w-[130px] pl-8 pr-8 py-1 rounded-md border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-xs">
                 </div>
                 <button (click)="resetTrainingFilters()" title="Reset Filters" class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors flex-shrink-0">
                     <i class="fa-solid fa-rotate-right"></i>
@@ -342,7 +342,7 @@
                 <div class="relative">
                     <i class="fa-solid fa-filter absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-600 text-xs pointer-events-none"></i>
                     <i class="fa-solid fa-calendar-days absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-600 text-xs pointer-events-none"></i>
-                    <input type="date" [(ngModel)]="assignedDateFilter" class="w-full sm:w-auto pl-8 pr-8 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-sm">
+                    <input type="date" [(ngModel)]="assignedDateFilter" class="w-full sm:w-auto pl-8 pr-8 py-1 rounded-md border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-sm">
                 </div>
                 <button (click)="resetAssignedTrainingFilters()" title="Reset Filters" class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors">
                     <i class="fa-solid fa-rotate-right"></i>
@@ -375,7 +375,7 @@
             <div class="flex flex-wrap items-center gap-1.5">
                 <div class="relative">
                     <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" [(ngModel)]="requestSearch" placeholder="Search requests..." class="w-full sm:w-36 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-48 text-sm">
+                    <input type="text" [(ngModel)]="requestSearch" placeholder="Search requests..." class="w-full sm:w-36 pl-8 pr-3 py-1 rounded-md border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-48 text-sm">
                 </div>
                 <div class="text-xs text-blue-200 font-medium">
                     <i class="fa-solid fa-file-lines mr-1"></i>
@@ -395,7 +395,7 @@
             <div class="flex flex-wrap items-center gap-1.5">
                 <div class="relative">
                     <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                    <input type="text" [(ngModel)]="trainerZoneSearch" placeholder="Search trainings..." class="w-full sm:w-48 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-64 text-sm">
+                    <input type="text" [(ngModel)]="trainerZoneSearch" placeholder="Search trainings..." class="w-full sm:w-48 pl-8 pr-3 py-1 rounded-md border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-64 text-sm">
                 </div>
             </div>
         </div>
@@ -431,7 +431,7 @@
                 </div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 items-stretch">
-                    <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border-2 border-slate-900 p-2 flex flex-col h-full hover:shadow-xl hover:border-black transition-all">
+                    <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border-2 border-indigo-200 p-2 flex flex-col h-full hover:shadow-xl hover:border-black transition-all">
                         <div class="flex-shrink-0">
                             <h3 class="text-base font-bold text-slate-900 mb-2 cursor-pointer hover:text-sky-600 transition-colors" title="Skills required for your job role" (click)="openSkillsModal('all')"><b>Core Skills</b></h3>
                         </div>
@@ -445,7 +445,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="border-t border-slate-200/80 mt-2 flex-shrink-0"></div>
+                        <div class="border-t border-indigo-200 mt-2 flex-shrink-0"></div>
                         <div class="flex flex-col sm:flex-row items-center gap-4 flex-shrink-0 pt-2">
                             <div class="relative w-24 h-24 flex-shrink-0">
                                 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
@@ -463,7 +463,7 @@
                         </div>
                     </div>
 
-                    <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border-2 border-slate-900 p-2 flex flex-col h-full hover:shadow-xl hover:border-black transition-all">
+                    <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border-2 border-indigo-200 p-2 flex flex-col h-full hover:shadow-xl hover:border-black transition-all">
                         <div class="flex-shrink-0">
                             <h3 class="text-base font-bold text-slate-900 mb-2" title="Skills you have in addition to your job role."><b>Additional Skills</b></h3>
                         </div>
@@ -488,7 +488,7 @@
                     </div>
                     
                     <div class="flex flex-col h-full space-y-2">
-                        <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border-2 border-slate-900 p-2 flex-shrink-0 hover:shadow-xl hover:border-black transition-all">
+                        <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border-2 border-indigo-200 p-2 flex-shrink-0 hover:shadow-xl hover:border-black transition-all">
                             <h3 class="text-base font-bold text-slate-900 mb-3"><b>Training Overview</b></h3>
                             <div class="grid grid-cols-3 gap-3 text-center">
                                 <button (click)="selectTab('trainingCatalog')" class="p-2 rounded-lg hover:bg-slate-100 transition-colors duration-200 text-center">
@@ -508,13 +508,13 @@
                                 </button>
                             </div>
                         </div>
-                        <div id="upcoming-trainings-section" @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border-2 border-slate-900 p-2 flex flex-col flex-1 min-h-0 hover:shadow-xl hover:border-black transition-all">
+                        <div id="upcoming-trainings-section" @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border-2 border-indigo-200 p-2 flex flex-col flex-1 min-h-0 hover:shadow-xl hover:border-black transition-all">
                             <div class="flex-shrink-0">
                                 <h3 class="text-base font-bold text-slate-900 mb-2"><b>Upcoming Trainings</b></h3>
                             </div>
                             <div class="flex-1 overflow-y-auto pr-1 min-h-0">
                                 <div *ngIf="dashboardUpcomingTrainings.length > 0; else noAssignedTrainings" class="space-y-1.5">
-                                    <div *ngFor="let t of dashboardUpcomingTrainings | slice:0:4" class="flex items-center justify-between p-1.5 bg-slate-50/70 rounded-lg border border-slate-200/80 hover:bg-white transition-colors">
+                                    <div *ngFor="let t of dashboardUpcomingTrainings | slice:0:4" class="flex items-center justify-between p-1.5 bg-slate-50/70 rounded-lg border border-indigo-200 hover:bg-white transition-colors">
                                         <div class="flex items-center gap-2">
                                             <div class="w-8 h-8 bg-sky-100 text-sky-600 rounded-md flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-chalkboard-user"></i></div>
                                             <div>
@@ -540,7 +540,7 @@
                             <div *ngFor="let competency of getFilteredSkills() | skillFilter:skillSearch:''"
                                 class="bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-md border hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
                                 [ngClass]="{
-                                    'border-slate-300/80': getTimelineStatus(competency) === 'Not Started',
+                                    'border-indigo-200': getTimelineStatus(competency) === 'Not Started',
                                     'border-orange-300/80': getTimelineStatus(competency) === 'Behind',
                                     'border-green-300/80': getTimelineStatus(competency) === 'On Track' || getTimelineStatus(competency) === 'Completed'
                                 }">
@@ -582,7 +582,7 @@
                                                 <span class="text-[10px] font-semibold text-slate-600">Exp: {{ getExpectedProgress(competency) }}% • Act: {{ getSkillProgress(competency) }}%</span>
                                             </div>
                                             <!-- Single Progress Bar with Two Light Colors -->
-                                                        <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner relative border-2 border-slate-300 progress-track">
+                                                        <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner relative border-2 border-indigo-200 progress-track">
                                                            <!-- Expected Progress (thin marker line at expected %) -->
                                                            <div class="progress-expected"
                                                                [style.--expected-width.%]="getExpectedProgress(competency)">
@@ -613,39 +613,39 @@
                     </div>
 
                     <div *ngIf="mySkillsView === 'additional'" @fadeIn>
-                        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 overflow-hidden relative">
+                        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 overflow-hidden relative">
                             <div class="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-blue-400/50 rounded-tl-lg"></div>
                             <div class="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-blue-400/50 rounded-tr-lg"></div>
                             <div class="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-blue-400/50 rounded-bl-lg"></div>
                             <div class="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-blue-400/50 rounded-br-lg"></div>
                         
                             <div class="p-8">
-                                <div *ngIf="showAddSkillForm" @slideFadeIn class="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-6 mb-6">
+                                <div *ngIf="showAddSkillForm" @slideFadeIn class="bg-slate-50/70 border border-indigo-200 rounded-2xl p-6 mb-6">
                                     <h4 class="text-xl font-semibold text-slate-900 mb-4">{{ editingSkillId ? 'Edit Skill' : 'Add New Skill' }}</h4>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label class="block text-sm font-medium text-slate-700 mb-2">Skill Name *</label><input type="text"
                                                 [(ngModel)]="newSkill.name" placeholder="e.g., Python, Public Speaking"
-                                                class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none">
+                                                class="w-full px-3 py-2 rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none">
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-slate-700 mb-2">Skill Level</label><select
                                                 [(ngModel)]="newSkill.level"
-                                                class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none">
+                                                class="w-full px-3 py-2 rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none">
                                                 <option *ngFor="let level of skillLevels" [value]="level">{{ level }}</option>
                                             </select>
                                         </div>
                                         <div class="md:col-span-2">
                                             <label class="block text-sm font-medium text-slate-700 mb-2">Category</label><select
                                                 [(ngModel)]="newSkill.category"
-                                                class="w-full md:w-1/2 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none">
+                                                class="w-full md:w-1/2 px-3 py-2 rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none">
                                                 <option *ngFor="let category of skillCategories" [value]="category">{{ category }}</option>
                                             </select>
                                         </div>
                                         <div class="md:col-span-2">
                                             <label class="block text-sm font-medium text-slate-700 mb-2">Description (Optional)</label><input
                                                 type="text" [(ngModel)]="newSkill.description" placeholder="Brief description of your experience"
-                                                class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none">
+                                                class="w-full px-3 py-2 rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none">
                                         </div>
                                     </div>
                                     <div class="flex items-center justify-end space-x-3 mt-6">
@@ -657,7 +657,7 @@
                                 </div>
                                 <div *ngIf="additionalSkills.length > 0" class="space-y-3" [@listStagger]="additionalSkills.length">
                                     <div *ngFor="let skill of additionalSkills"
-                                        class="bg-white/70 border border-slate-200/80 rounded-xl p-4 hover:shadow-md hover:border-slate-300 transition-all duration-200 flex items-center justify-between">
+                                        class="bg-white/70 border border-indigo-200 rounded-xl p-4 hover:shadow-md hover:border-indigo-200 transition-all duration-200 flex items-center justify-between">
                                         <div class="flex-1 flex items-center space-x-4">
                                             <div class="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
                                                 <i class="fa-solid fa-star text-amber-500"></i>
@@ -686,7 +686,7 @@
                                     </div>
                                 </div>
                                 <div *ngIf="additionalSkills.length === 0 && !showAddSkillForm"
-                                    class="text-center py-12 bg-slate-50/70 rounded-2xl border-2 border-dashed border-slate-300">
+                                    class="text-center py-12 bg-slate-50/70 rounded-2xl border-2 border-dashed border-indigo-200">
                                     <div class="w-12 h-12 bg-slate-200 rounded-lg flex items-center justify-center mx-auto mb-4">
                                         <i class="fa-solid fa-plus text-slate-500 text-lg"></i>
                                     </div>
@@ -702,7 +702,7 @@
                     <!-- Live Trainings View -->
                     <div *ngIf="trainingCatalogType === 'live' && trainingCatalogView === 'list'">
                         <div *ngIf="filteredTrainings.length === 0" #animatedElement
-                            class="animate-on-scroll text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-slate-300">
+                            class="animate-on-scroll text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-indigo-200">
                             <div
                                 class="w-20 h-20 bg-gradient-to-br from-sky-100 to-sky-200 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <i class="fa-solid fa-folder-open text-sky-500 text-4xl"></i>
@@ -716,7 +716,7 @@
                             [@listStagger]="filteredTrainings.length">
                                                         <div *ngFor="let training of filteredTrainings"
                                                                 [attr.data-training-id]="training.id"
-                                                                class="group bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 overflow-hidden transform transition-all duration-300 ease-in-out flex flex-col relative"
+                                                                class="group bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-200 overflow-hidden transform transition-all duration-300 ease-in-out flex flex-col relative"
                                 [ngClass]="{
                                   'hover:-translate-y-1.5 hover:shadow-2xl': hoveredTrainingId !== training.id,
                                                                     'scale-105 -translate-y-2 shadow-2xl bg-gradient-to-br from-sky-50 to-blue-50 border-sky-300': hoveredTrainingId === training.id || selectedTrainingIdForEnrollment === training.id,
@@ -754,7 +754,7 @@
                                         <p><strong class="font-semibold text-slate-700">Topics:</strong> {{ training.training_topics || 'Not
                                             specified' }}</p>
                                     </div>
-                                    <div class="pt-2 mt-auto border-t border-slate-200/80 space-y-1.5 text-xs">
+                                    <div class="pt-2 mt-auto border-t border-indigo-200 space-y-1.5 text-xs">
                                         <div class="flex items-center justify-between text-slate-600">
                                             <div class="flex items-center gap-1.5">
                                                 <i class="fa-solid fa-calendar-days text-slate-400 w-4 text-center"></i>
@@ -767,17 +767,21 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="pt-2 mt-2 border-t border-slate-200/80">
+                                    <div class="pt-2 mt-2 border-t border-indigo-200">
                                         <button *ngIf="getRequestStatus(training.id) === 'none'" (click)="enrollInTraining(training)"
                                             class="w-full bg-sky-600 text-white font-semibold py-1 rounded-lg hover:bg-sky-700 transition-colors duration-200 text-xs">
                                             <i class="fa-solid fa-user-plus mr-2"></i>Enroll
                                         </button>
-                                        <div *ngIf="getRequestStatus(training.id) === 'pending'">
+                                        <div *ngIf="getRequestStatus(training.id) === 'pending'" class="space-y-1">
                                             <button disabled
                                                 class="w-full bg-gray-400 text-white font-semibold py-1 rounded-lg cursor-not-allowed text-xs mb-1">
                                                 <i class="fa-solid fa-clock mr-2"></i>Request Pending
                                             </button>
-                                            <div class="text-xs text-slate-500 text-center">
+                                            <button (click)="cancelEnrollment(training)"
+                                                class="w-full bg-red-500 text-white font-semibold py-1 rounded-lg hover:bg-red-600 transition-colors duration-200 text-xs">
+                                                <i class="fa-solid fa-times mr-2"></i>Cancel Request
+                                            </button>
+                                            <div class="text-xs text-slate-500 text-center pt-1">
                                                 <i class="fa-solid fa-calendar mr-1"></i>
                                                 Requested: {{ getRequestDetails(training.id)?.request_date | date:'short' }}
                                             </div>
@@ -798,7 +802,7 @@
 
                     <!-- Live Trainings Calendar View -->
                     <div *ngIf="trainingCatalogType === 'live' && trainingCatalogView === 'calendar'" @fadeIn>
-                        <div class="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-200/60">
+                        <div class="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg border border-indigo-200">
                             <!-- Calendar Header: Month navigation controls and current month/year display -->
                             <div class="flex justify-between items-center mb-6">
                                 <!-- Previous Month Button: Navigates to previous month -->
@@ -832,7 +836,7 @@
                                   - Training event display if training exists on that date
                                   - Conditional styling for today highlighting
                                 -->
-                                <div *ngFor="let day of calendarDays" class="relative h-20 font-semibold rounded-lg transition-colors border border-slate-200/60"
+                                <div *ngFor="let day of calendarDays" class="relative h-20 font-semibold rounded-lg transition-colors border border-indigo-200"
                                      [ngClass]="{
                                        'bg-sky-50': isToday(day),
                                        'bg-white': day && !isToday(day),
@@ -862,7 +866,7 @@
                     <!-- Recorded Trainings View -->
                     <div *ngIf="trainingCatalogType === 'recorded'">
                         <div *ngIf="filteredRecordedTrainings.length === 0" #animatedElement
-                            class="animate-on-scroll text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-slate-300">
+                            class="animate-on-scroll text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-indigo-200">
                             <div
                                 class="w-20 h-20 bg-gradient-to-br from-cyan-100 to-teal-200 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <i class="fa-solid fa-video text-cyan-600 text-4xl"></i>
@@ -875,7 +879,7 @@
                             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
                             [@listStagger]="filteredRecordedTrainings.length">
                             <div *ngFor="let training of filteredRecordedTrainings"
-                                class="group bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 overflow-hidden transform transition-all duration-300 ease-in-out flex flex-col relative"
+                                class="group bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-indigo-200 overflow-hidden transform transition-all duration-300 ease-in-out flex flex-col relative"
                                 [ngClass]="{
                                   'hover:-translate-y-1.5 hover:shadow-2xl': hoveredTrainingId !== training.id,
                                   'scale-105 -translate-y-2 shadow-2xl bg-gradient-to-br from-cyan-50 to-teal-50 border-cyan-300': hoveredTrainingId === training.id || selectedTrainingIdForEnrollment === training.id
@@ -915,7 +919,7 @@
                                         <p *ngIf="training.description" class="mt-1 text-[10px] text-slate-500">{{ training.description }}
                                         </p>
                                     </div>
-                                    <div class="pt-2 mt-auto border-t border-slate-200/80">
+                                    <div class="pt-2 mt-auto border-t border-indigo-200">
                                         <button (click)="openRecordedTraining(training.lecture_url)"
                                             class="w-full bg-cyan-600 text-white font-semibold py-1 rounded-lg hover:bg-cyan-700 transition-colors duration-200 text-xs flex items-center justify-center gap-2">
                                             <i class="fa-solid fa-play mr-1"></i>Watch Now
@@ -964,7 +968,7 @@
                             -->
                             <div *ngFor="let t of filteredAssignedTrainings; trackBy: trackByTrainingId"
                                 [attr.data-training-id]="t.id"
-                                class="bg-white/70 backdrop-blur-sm p-2.5 rounded-2xl shadow-lg border border-slate-200/60 transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl flex flex-col gap-2"
+                                class="bg-white/70 backdrop-blur-sm p-2.5 rounded-2xl shadow-lg border border-indigo-200 transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl flex flex-col gap-2"
                                 [ngClass]="{'ring-4 ring-amber-400 shadow-amber-300/50': selectedTrainingFromCalendar === t.id}">
                                 <!-- Card Header: Training icon, name, trainer, and status badge -->
                                 <div class="flex items-start justify-between">
@@ -987,7 +991,7 @@
                                     </span>
                                 </div>
                                 <!-- Divider: Visual separation between header and content -->
-                                <div class="border-t border-slate-200/80"></div>
+                                <div class="border-t border-indigo-200"></div>
                                 <!-- Date and Time Section: Displays training schedule information -->
                                 <div class="flex items-center justify-between text-xs">
                                     <!-- Training Date: Formatted date with fallback to "Date TBD" if not available -->
@@ -1024,7 +1028,7 @@
                                   - Give Feedback: Shown only if feedback not yet submitted (checked via isFeedbackSubmitted())
                                   - Trainer Feedback Submitted: Disabled button shown if trainer feedback already submitted
                                 -->
-                                 <div class="mt-auto pt-2 border-t border-slate-200/80 flex flex-col gap-2">
+                                 <div class="mt-auto pt-2 border-t border-indigo-200 flex flex-col gap-2">
                                     <!-- Attendance Status Message -->
                                     <div *ngIf="!isAttendanceMarked(t.id)" class="mb-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-[10px] text-amber-800 text-center">
                                         <i class="fa-solid fa-clock mr-1"></i>Waiting for trainer to mark attendance
@@ -1081,7 +1085,7 @@
                           Design: Centered layout with icon, heading, and descriptive text
                         -->
                         <ng-template #noAssigned>
-                            <div class="text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-slate-300">
+                            <div class="text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-indigo-200">
                                 <div class="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <i class="fa-solid fa-inbox text-slate-400 text-4xl"></i>
                                 </div>
@@ -1103,7 +1107,7 @@
                       - Hover effects on training events
                     -->
                     <div *ngIf="assignedTrainingsView === 'calendar'" @fadeIn>
-                        <div class="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg border border-slate-200/60">
+                        <div class="bg-white/80 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-lg border border-indigo-200">
                             <!-- Calendar Header: Month navigation controls and current month/year display -->
                             <div class="flex justify-between items-center mb-6">
                                 <!-- Previous Month Button: Navigates to previous month -->
@@ -1137,7 +1141,7 @@
                                   - Training event display if training exists on that date
                                   - Conditional styling for today highlighting
                                 -->
-                                <div *ngFor="let day of calendarDays" class="relative h-20 font-semibold rounded-lg transition-colors border border-slate-200/60"
+                                <div *ngFor="let day of calendarDays" class="relative h-20 font-semibold rounded-lg transition-colors border border-indigo-200"
                                      [ngClass]="{
                                        'bg-sky-50': isToday(day),
                                        'bg-white': day && !isToday(day),
@@ -1168,7 +1172,7 @@
                 <div *ngIf="activeTab === 'myRequests'" @slideFadeIn class="space-y-4">
                     <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4" [@listStagger]="getFilteredRequests().length">
                         <div *ngFor="let request of getFilteredRequests()"
-                            class="bg-white/70 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-slate-200/60 transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl flex flex-col gap-3">
+                            class="bg-white/70 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-indigo-200 transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl flex flex-col gap-3">
                             <div class="flex items-start justify-between">
                                 <div class="flex items-start gap-3">
                                     <div class="w-10 h-10 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -1192,7 +1196,7 @@
                                 </span>
                             </div>
                             
-                            <div class="border-t border-slate-200/80 pt-3">
+                            <div class="border-t border-indigo-200 pt-3">
                                 <div class="flex items-center justify-between text-xs text-slate-600 mb-2">
                                     <div class="flex items-center gap-1.5">
                                         <i class="fa-solid fa-calendar-days text-slate-400"></i>
@@ -1216,7 +1220,7 @@
                                     </span>
                                 </div>
 
-                                <div *ngIf="request.manager_notes" class="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-200">
+                                <div *ngIf="request.manager_notes" class="mt-2 p-2 bg-slate-50 rounded-lg border border-indigo-200">
                                     <p class="text-xs text-slate-600">
                                         <strong class="font-semibold text-slate-700">Manager Notes:</strong> {{ request.manager_notes }}
                                     </p>
@@ -1225,7 +1229,7 @@
                         </div>
                     </div>
 
-                    <div *ngIf="getFilteredRequests().length === 0" class="text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-slate-300">
+                    <div *ngIf="getFilteredRequests().length === 0" class="text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-indigo-200">
                         <div class="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-full flex items-center justify-center mx-auto mb-6">
                             <i class="fa-solid fa-inbox text-slate-400 text-4xl"></i>
                         </div>
@@ -1249,14 +1253,14 @@
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <div class="relative">
                                     <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                                    <input type="text" [(ngModel)]="badgeSearch" placeholder="Search badges..." class="w-full sm:w-48 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-64 text-sm">
+                                    <input type="text" [(ngModel)]="badgeSearch" placeholder="Search badges..." class="w-full sm:w-48 pl-8 pr-3 py-1 rounded-md border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-64 text-sm">
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div *ngIf="getFilteredBadges().length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8" [@listStagger]="getFilteredBadges().length">
                         <div *ngFor="let badge of getFilteredBadges()"
-                            class="group flex flex-col items-center text-center p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
+                            class="group flex flex-col items-center text-center p-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
                             <div class="relative w-36 h-36">
                                 <div
                                     class="absolute inset-0 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full transform group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -1276,7 +1280,7 @@
                         </div>
                     </div>
                     <div *ngIf="getFilteredBadges().length === 0"
-                        class="text-center py-12 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60">
+                        class="text-center py-12 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200">
                         <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <i class="fa-solid fa-award text-slate-400 text-3xl"></i>
                         </div>
@@ -1295,7 +1299,7 @@
                                 <div class="relative">
                                     <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                                     <input [(ngModel)]="levelsSearch" type="text" placeholder="Search levels, keywords..."
-                                        class="w-full sm:w-48 pl-8 pr-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-64 text-sm" />
+                                        class="w-full sm:w-48 pl-8 pr-3 py-1 rounded-md border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-64 text-sm" />
                                 </div>
                                 <app-searchable-dropdown
                                     [(ngModel)]="selectedSkills"
@@ -1311,19 +1315,19 @@
                         </div>
                     </div>
                 
-                    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 overflow-auto">
+                    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 overflow-auto">
                         <div class="grid min-w-[1200px] sticky top-0 z-20" style="grid-template-columns: minmax(220px, 16%) repeat(5, 1fr);">
-                            <div class="px-4 py-3 font-bold text-xs text-slate-700 uppercase bg-slate-200/70 border-b border-slate-300">Skill</div>
-                            <div *ngFor="let header of levelHeaders" class="px-4 py-3 font-bold text-xs text-slate-700 uppercase bg-slate-200/70 border-b border-l border-slate-300">
+                            <div class="px-4 py-3 font-bold text-xs text-slate-700 uppercase bg-slate-200/70 border-b border-indigo-200">Skill</div>
+                            <div *ngFor="let header of levelHeaders" class="px-4 py-3 font-bold text-xs text-slate-700 uppercase bg-slate-200/70 border-b border-l border-indigo-200">
                                 L{{ header.num }} - {{ header.title }}
                             </div>
                         </div>
                         
                         <div class="min-w-[1200px]">
                             <ng-container *ngIf="getFilteredSections().length > 0; else noLevelsFound">
-                                <div *ngFor="let section of getFilteredSections()" class="grid border-b border-slate-200 last:border-b-0" style="grid-template-columns: minmax(220px, 16%) repeat(5, 1fr);">
+                                <div *ngFor="let section of getFilteredSections()" class="grid border-b border-indigo-200 last:border-b-0" style="grid-template-columns: minmax(220px, 16%) repeat(5, 1fr);">
                                     
-                                    <div class="sticky left-0 z-10 px-4 py-3 font-bold text-slate-800 bg-slate-50/90 border-r border-slate-200 flex items-center">
+                                    <div class="sticky left-0 z-10 px-4 py-3 font-bold text-slate-800 bg-slate-50/90 border-r border-indigo-200 flex items-center">
                                         <div class="flex items-start gap-3">
                                             <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-sky-100 to-sky-50">
                                                 <i [ngClass]="getTrainingCardIcon(section.title)" class="text-sky-600"></i>
@@ -1335,7 +1339,7 @@
                                         </div>
                                     </div>
                     
-                                    <div *ngFor="let header of levelHeaders" class="text-sm px-4 py-3 align-top border-l border-slate-200 bg-white">
+                                    <div *ngFor="let header of levelHeaders" class="text-sm px-4 py-3 align-top border-l border-indigo-200 bg-white">
                                         <ng-container *ngIf="getLevelItems(section, header.num) as items">
                                             <ul *ngIf="items.length > 0" class="space-y-1.5 list-disc list-inside text-slate-700">
                                                 <li *ngFor="let item of items">{{ item }}</li>
@@ -1368,7 +1372,7 @@
                         <!-- Scheduled Training Sessions List -->
                         <div class="space-y-4">
                             <h3 class="text-xl font-bold text-slate-800 mb-4">My Scheduled Training Sessions</h3>
-                            <div *ngIf="getFilteredMyTrainings().length === 0" class="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-300">
+                            <div *ngIf="getFilteredMyTrainings().length === 0" class="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-indigo-200">
                                 <i class="fa-solid fa-calendar-xmark text-4xl text-slate-400 mb-3"></i>
                                 <p class="text-slate-600 font-medium" *ngIf="myTrainings.length === 0">No training sessions scheduled yet.</p>
                                 <p class="text-slate-600 font-medium" *ngIf="myTrainings.length > 0">No training sessions match your search.</p>
@@ -1377,7 +1381,7 @@
                             </div>
                             <div *ngIf="getFilteredMyTrainings().length > 0" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4" [@listStagger]="getFilteredMyTrainings().length">
                                 <div *ngFor="let training of getFilteredMyTrainings()"
-                                    class="bg-white/70 backdrop-blur-sm p-2.5 rounded-2xl shadow-lg border border-slate-200/60 transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl flex flex-col gap-2">
+                                    class="bg-white/70 backdrop-blur-sm p-2.5 rounded-2xl shadow-lg border border-indigo-200 transform hover:-translate-y-1 transition-all duration-300 hover:shadow-xl flex flex-col gap-2">
                                     <div class="flex items-start justify-between">
                                         <div class="flex items-start gap-2">
                                             <div class="w-9 h-9 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -1392,7 +1396,7 @@
                                             <i class="fa-solid fa-clock mr-1"></i> Upcoming
                                         </span>
                                     </div>
-                                    <div class="border-t border-slate-200/80"></div>
+                                    <div class="border-t border-indigo-200"></div>
                                     <div class="flex items-center justify-between text-xs">
                                         <div class="flex items-center gap-1.5 text-slate-600">
                                             <i class="fa-solid fa-calendar-days text-slate-400"></i>
@@ -1412,7 +1416,7 @@
                                         {{ training.training_topics }}
                                     </div>
                                     <!-- Candidates List -->
-                                    <div *ngIf="getTrainingCandidates(training.id).length > 0" class="pt-2 border-t border-slate-200/80">
+                                    <div *ngIf="getTrainingCandidates(training.id).length > 0" class="pt-2 border-t border-indigo-200">
                                         <div class="flex items-center justify-between mb-1.5">
                                             <span class="text-[10px] font-semibold text-slate-700">
                                                 <i class="fa-solid fa-users mr-1"></i>Candidates ({{ getTrainingCandidates(training.id).length }})
@@ -1425,7 +1429,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="mt-auto pt-2 border-t border-slate-200/80 flex flex-col gap-2">
+                                    <div class="mt-auto pt-2 border-t border-indigo-200 flex flex-col gap-2">
                                         <!-- Primary Actions Row: Mark Attendance and View Solutions side by side -->
                                         <div class="flex items-center gap-2">
                                             <!-- Only allow marking attendance when training has a valid ID -->
@@ -1460,19 +1464,19 @@
                         </div>
                     </div>
                 
-                    <div *ngIf="trainerZoneView === 'assignmentForm'" @fadeIn class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-8">
+                    <div *ngIf="trainerZoneView === 'assignmentForm'" @fadeIn class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 p-8">
                         <div class="flex items-center justify-between mb-6">
                             <h3 class="text-2xl font-bold text-slate-900">Create New Assignment</h3>
                             <button (click)="setTrainerZoneView('overview')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full px-4 py-2 transition-all duration-200 flex items-center gap-2 font-medium">
                                 <i class="fa-solid fa-arrow-left"></i><span>Back to Overview</span>
                             </button>
                         </div>
-                        <div class="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-6">
+                        <div class="bg-slate-50/70 border border-indigo-200 rounded-2xl p-6">
                             <div class="space-y-6">
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-2">Training Name *</label>
-                                        <select [(ngModel)]="newAssignment.trainingId" name="assignmentTraining" [disabled]="newAssignment.trainingId !== null" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition disabled:bg-slate-100 disabled:cursor-not-allowed">
+                                        <select [(ngModel)]="newAssignment.trainingId" name="assignmentTraining" [disabled]="newAssignment.trainingId !== null" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition disabled:bg-slate-100 disabled:cursor-not-allowed">
                                             <option [ngValue]="null">Select a Training</option>
                                             <option *ngFor="let t of myTrainings" [value]="t.id">{{ t.training_name }}</option>
                                         </select>
@@ -1482,27 +1486,27 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-slate-700 mb-2">Assignment Title *</label>
-                                        <input type="text" [(ngModel)]="newAssignment.title" name="assignmentTitle" required placeholder="e.g., Softcar Fundamentals Quiz" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                                        <input type="text" [(ngModel)]="newAssignment.title" name="assignmentTitle" required placeholder="e.g., Softcar Fundamentals Quiz" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                                     </div>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">General Instructions (Optional)</label>
-                                    <textarea [(ngModel)]="newAssignment.description" name="assignmentDescription" rows="2" placeholder="Provide overall instructions for the assignment..." class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"></textarea>
+                                    <textarea [(ngModel)]="newAssignment.description" name="assignmentDescription" rows="2" placeholder="Provide overall instructions for the assignment..." class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"></textarea>
                                 </div>
                         
-                                <div class="pt-4 border-t border-slate-300/80">
+                                <div class="pt-4 border-t border-indigo-200">
                                     <h5 class="text-lg font-semibold text-slate-800 mb-3">Assignment Questions</h5>
                                     <div class="space-y-5">
                                         <div *ngFor="let question of newAssignment.questions; let qIndex = index; trackBy: trackByFn" @slideFadeIn
-                                             class="bg-white border border-slate-300/90 rounded-xl p-4 space-y-3 relative shadow-sm">
+                                             class="bg-white border border-indigo-200 rounded-xl p-4 space-y-3 relative shadow-sm">
                                             
                                             <div class="flex items-start gap-3">
                                                 <span class="font-bold text-lg text-slate-500 pt-1.5">{{ qIndex + 1 }}.</span>
                                                 <div class="flex-grow space-y-2">
                                                      <label class="text-sm font-medium text-slate-700">Question Text *</label>
-                                                     <input type="text" [(ngModel)]="question.text" [name]="'q_text_' + qIndex" placeholder="e.g., What is the main goal of a Softcar simulation?" class="w-full px-3 py-2 text-md bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                                                     <input type="text" [(ngModel)]="question.text" [name]="'q_text_' + qIndex" placeholder="e.g., What is the main goal of a Softcar simulation?" class="w-full px-3 py-2 text-md bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                                                 </div>
-                                                <select [(ngModel)]="question.type" [name]="'q_type_' + qIndex" (change)="onQuestionTypeChange(question)" class="px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white">
+                                                <select [(ngModel)]="question.type" [name]="'q_type_' + qIndex" (change)="onQuestionTypeChange(question)" class="px-3 py-2 rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none bg-white">
                                                     <option value="single-choice">Single Choice</option>
                                                     <option value="multiple-choice">Multiple Choice</option>
                                                     <option value="text-input">Text Input</option>
@@ -1512,7 +1516,7 @@
                                             
                                             <div class="pl-8">
                                                  <label class="text-xs font-medium text-slate-500">Helper Text (Optional)</label>
-                                                 <input type="text" [(ngModel)]="question.helperText" [name]="'q_helper_' + qIndex" placeholder="e.g., Please select at most 2 options." class="w-full px-3 py-1.5 text-sm bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                                                 <input type="text" [(ngModel)]="question.helperText" [name]="'q_helper_' + qIndex" placeholder="e.g., Please select at most 2 options." class="w-full px-3 py-1.5 text-sm bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                                             </div>
                         
                                             <div *ngIf="question.type === 'single-choice' || question.type === 'multiple-choice'" @fadeIn class="pl-8 pt-2 space-y-2">
@@ -1521,7 +1525,7 @@
                                                     <input *ngIf="question.type === 'single-choice'" type="radio" [name]="'correct_opt_' + qIndex" [checked]="option.isCorrect" (click)="toggleCorrectOption(qIndex, oIndex)" class="h-5 w-5 text-sky-600 focus:ring-sky-500 cursor-pointer" title="Mark as correct answer">
                                                     <input *ngIf="question.type === 'multiple-choice'" type="checkbox" [(ngModel)]="option.isCorrect" [name]="'q' + qIndex + '_iscorrect' + oIndex" class="h-5 w-5 rounded text-sky-600 focus:ring-sky-500 cursor-pointer" title="Mark as a correct answer">
                         
-                                                    <input type="text" [(ngModel)]="option.text" [name]="'q' + qIndex + '_opt' + oIndex" placeholder="Option {{ oIndex + 1 }}" class="flex-grow px-3 py-1.5 text-sm bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                                                    <input type="text" [(ngModel)]="option.text" [name]="'q' + qIndex + '_opt' + oIndex" placeholder="Option {{ oIndex + 1 }}" class="flex-grow px-3 py-1.5 text-sm bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                                                     <button type="button" (click)="removeOptionFromQuestion(qIndex, oIndex)" class="w-8 h-8 flex-shrink-0 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 flex items-center justify-center" title="Remove Option">
                                                         <i class="fa-solid fa-trash-alt text-sm"></i>
                                                     </button>
@@ -1544,7 +1548,7 @@
                                                      </p>
                                                  </div>
                                                  <div class="flex items-center gap-3 text-xs" *ngIf="newAssignment.trainingId; else selectTrainingFirstEng">
-                                                     <label class="flex-1 px-4 py-2.5 bg-white rounded-lg border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors flex items-center gap-2">
+                                                     <label class="flex-1 px-4 py-2.5 bg-white rounded-lg border border-indigo-200 hover:bg-slate-50 cursor-pointer transition-colors flex items-center gap-2">
                                                          <i class="fa-solid fa-file-upload text-slate-600"></i>
                                                          <span class="text-slate-700" *ngIf="!assignmentFile">Choose file to upload for this question...</span>
                                                          <span class="text-slate-700" *ngIf="assignmentFile">{{ assignmentFile.name }}</span>
@@ -1569,7 +1573,7 @@
                                             </button>
                                         </div>
                         
-                                        <div *ngIf="newAssignment.questions.length === 0" class="text-center py-8 text-slate-500 border-2 border-dashed border-slate-300 rounded-lg">
+                                        <div *ngIf="newAssignment.questions.length === 0" class="text-center py-8 text-slate-500 border-2 border-dashed border-indigo-200 rounded-lg">
                                             <i class="fa-solid fa-file-circle-question text-3xl text-slate-400 mb-2"></i>
                                             <p>No questions yet. Click below to build your assignment.</p>
                                         </div>
@@ -1581,10 +1585,10 @@
                                 </div>
                             </div>
                         
-                            <div class="pt-4 border-t border-slate-300/80">
+                            <div class="pt-4 border-t border-indigo-200">
                                 <label class="block text-sm font-medium text-slate-700 mb-2">Upload Assignment File (Optional)</label>
                                 <div class="flex items-center gap-3">
-                                    <label class="flex-1 px-4 py-2.5 bg-white rounded-lg border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors flex items-center gap-2">
+                                    <label class="flex-1 px-4 py-2.5 bg-white rounded-lg border border-indigo-200 hover:bg-slate-50 cursor-pointer transition-colors flex items-center gap-2">
                                         <i class="fa-solid fa-file-upload text-slate-600"></i>
                                         <span class="text-slate-700" *ngIf="!assignmentFile">Choose file to upload...</span>
                                         <span class="text-slate-700" *ngIf="assignmentFile">{{ assignmentFile.name }}</span>
@@ -1598,7 +1602,7 @@
                                     <i class="fa-solid fa-info-circle mr-1"></i>Maximum file size: 10MB. All file types are accepted.
                                 </p>
                             </div>
-                            <div class="flex items-center justify-end space-x-3 mt-8 pt-4 border-t border-slate-300/80">
+                            <div class="flex items-center justify-end space-x-3 mt-8 pt-4 border-t border-indigo-200">
                                 <button type="button" (click)="setTrainerZoneView('overview')" class="px-5 py-2 text-slate-700 bg-slate-200 hover:bg-slate-300 font-semibold rounded-lg transition-colors duration-200">Cancel</button>
                                 <button type="button" (click)="submitAssignment()" class="px-5 py-2 bg-violet-600 text-white rounded-lg font-semibold hover:bg-violet-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all duration-200 shadow-md">
                                    <i class="fa-solid fa-paper-plane mr-2"></i> Create and Share Assignment
@@ -1607,18 +1611,18 @@
                         </div>
                     </div>
                 
-                    <div *ngIf="trainerZoneView === 'feedbackForm'" @fadeIn class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-8">
+                    <div *ngIf="trainerZoneView === 'feedbackForm'" @fadeIn class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-indigo-200 p-8">
                         <div class="flex items-center justify-between mb-6">
                             <h3 class="text-2xl font-bold text-slate-900">New Feedback Form</h3>
                             <button (click)="setTrainerZoneView('overview')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-full px-4 py-2 transition-all duration-200 flex items-center gap-2 font-medium">
                                 <i class="fa-solid fa-arrow-left"></i><span>Back to Overview</span>
                             </button>
                         </div>
-                        <div class="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-6">
+                        <div class="bg-slate-50/70 border border-indigo-200 rounded-2xl p-6">
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-medium text-slate-700 mb-2">Training Name *</label>
-                                    <select [(ngModel)]="newFeedback.trainingId" name="feedbackTraining" [disabled]="newFeedback.trainingId !== null" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition disabled:bg-slate-100 disabled:cursor-not-allowed">
+                                    <select [(ngModel)]="newFeedback.trainingId" name="feedbackTraining" [disabled]="newFeedback.trainingId !== null" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition disabled:bg-slate-100 disabled:cursor-not-allowed">
                                         <option [ngValue]="null">Select a Training</option>
                                         <option *ngFor="let t of myTrainings" [value]="t.id">{{ t.training_name }}</option>
                                     </select>
@@ -1628,23 +1632,23 @@
                                 </div>
 
                                 <div>
-                                    <h5 class="text-md font-semibold text-slate-800 pt-3 border-t border-slate-200/80">Default Questions</h5>
+                                    <h5 class="text-md font-semibold text-slate-800 pt-3 border-t border-indigo-200">Default Questions</h5>
                                     <div class="space-y-3 mt-2">
                                         <div *ngFor="let q of defaultFeedbackQuestions; let i = index" @fadeIn class="text-sm text-slate-700 bg-slate-200/70 p-3 rounded-lg">
                                             <p class="font-semibold">{{i+1}}. {{q.text}}</p>
                                             <div class="flex flex-wrap gap-x-4 gap-y-2 mt-2 pl-4">
-                                                <span *ngFor="let opt of q.options" class="px-2 py-0.5 text-xs bg-white border border-slate-300 rounded-full">{{opt}}</span>
+                                                <span *ngFor="let opt of q.options" class="px-2 py-0.5 text-xs bg-white border border-indigo-200 rounded-full">{{opt}}</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h5 class="text-md font-semibold text-slate-800 pt-3 border-t border-slate-200/80">Additional Custom Questions</h5>
+                                    <h5 class="text-md font-semibold text-slate-800 pt-3 border-t border-indigo-200">Additional Custom Questions</h5>
                                     <div class="space-y-4 mt-2">
-                                        <div *ngFor="let question of newFeedback.customQuestions; let qIndex = index; trackBy: trackByFn" @slideFadeIn class="bg-white/80 border border-slate-300/80 rounded-lg p-4 space-y-3">
+                                        <div *ngFor="let question of newFeedback.customQuestions; let qIndex = index; trackBy: trackByFn" @slideFadeIn class="bg-white/80 border border-indigo-200 rounded-lg p-4 space-y-3">
                                             <div class="flex items-center gap-2">
-                                                <input type="text" [(ngModel)]="question.text" [name]="'customQuestionText' + qIndex" placeholder="Enter your custom question" class="flex-grow px-3 py-2 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                                                <input type="text" [(ngModel)]="question.text" [name]="'customQuestionText' + qIndex" placeholder="Enter your custom question" class="flex-grow px-3 py-2 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                                                 <button type="button" (click)="removeCustomQuestion(qIndex)" class="w-9 h-9 flex-shrink-0 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 flex items-center justify-center">
                                                     <i class="fa-solid fa-trash text-sm"></i>
                                                 </button>
@@ -1652,7 +1656,7 @@
                                             <div class="pl-4 space-y-2">
                                                 <label class="text-xs font-semibold text-slate-500">Options</label>
                                                 <div *ngFor="let option of question.options; let oIndex = index; trackBy: trackByFn" @slideFadeIn class="flex items-center gap-2">
-                                                     <input type="text" [(ngModel)]="question.options[oIndex]" [name]="'customOption' + qIndex + '-' + oIndex" placeholder="Option {{oIndex + 1}}" class="flex-grow px-3 py-1.5 text-sm bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                                                     <input type="text" [(ngModel)]="question.options[oIndex]" [name]="'customOption' + qIndex + '-' + oIndex" placeholder="Option {{oIndex + 1}}" class="flex-grow px-3 py-1.5 text-sm bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                                                      <button type="button" (click)="removeOption(qIndex, oIndex)" class="w-7 h-7 flex-shrink-0 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 flex items-center justify-center">
                                                          <i class="fa-solid fa-times text-xs"></i>
                                                      </button>
@@ -1669,7 +1673,7 @@
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-end space-x-3 mt-6 pt-4 border-t border-slate-300/80">
+                            <div class="flex items-center justify-end space-x-3 mt-6 pt-4 border-t border-indigo-200">
                                 <button (click)="setTrainerZoneView('overview')" class="px-4 py-2 text-slate-700 bg-slate-200 hover:bg-slate-300 font-semibold rounded-lg transition-colors duration-200">Cancel</button>
                                 <button (click)="submitFeedback()" [disabled]="!newFeedback.trainingId" class="px-4 py-2 bg-rose-600 text-white rounded-lg font-medium hover:bg-rose-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-all duration-200">Share Feedback</button>
                             </div>
@@ -1685,7 +1689,7 @@
 <div *ngIf="showSkillsModal" @fadeIn
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
     <div @modalScale class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl m-4" (click)="$event.stopPropagation()">
-        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-t-2xl border-b border-slate-200">
+        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-t-2xl border-b border-indigo-200">
             <h3 class="text-xl font-bold text-slate-900">{{ modalTitle }} ({{ modalSkills.length }})</h3>
             <button (click)="closeSkillsModal()" class="w-9 h-9 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full flex items-center justify-center transition-colors">
                 <i class="fa-solid fa-times text-lg"></i>
@@ -1694,7 +1698,7 @@
         <div class="max-h-[70vh] overflow-y-auto p-8">
             <div *ngIf="modalSkills.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div *ngFor="let competency of modalSkills" @fadeIn
-                    class="relative overflow-hidden bg-white p-6 rounded-2xl shadow-lg border border-slate-200/60"
+                    class="relative overflow-hidden bg-white p-6 rounded-2xl shadow-lg border border-indigo-200"
                     [ngClass]="{
                            'border-t-4 border-green-500': competency.status === 'Met',
                            'border-t-4 border-orange-500': competency.status === 'Gap',
@@ -1753,7 +1757,7 @@
 <div *ngIf="showScheduleTrainingModal" @fadeIn
   class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
   <div @modalScale class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl m-4" (click)="$event.stopPropagation()">
-    <div class="flex items-center justify-between p-6 bg-slate-50 rounded-t-2xl border-b border-slate-200">
+    <div class="flex items-center justify-between p-6 bg-slate-50 rounded-t-2xl border-b border-indigo-200">
       <div class="flex items-center gap-4">
         <div class="w-12 h-12 bg-sky-100 text-sky-600 rounded-lg flex items-center justify-center">
             <i class="fa-solid fa-calendar-plus text-2xl"></i>
@@ -1770,94 +1774,94 @@
     <form (ngSubmit)="scheduleTraining()" #trainingForm="ngForm" class="max-h-[75vh] overflow-y-auto p-8">
         <div class="space-y-8">
             <fieldset>
-                <legend class="text-lg font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-4 w-full">Core Details</legend>
+                <legend class="text-lg font-semibold text-slate-800 border-b border-indigo-200 pb-2 mb-4 w-full">Core Details</legend>
                 <div class="space-y-5">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Training Name *</label>
                         <div class="relative">
                             <i class="fa-solid fa-laptop-code absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                             <input type="text" [(ngModel)]="newTraining.training_name" name="training_name" required placeholder="e.g., Advanced Python for Automation"
-                            class="w-full pl-11 pr-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                            class="w-full pl-11 pr-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Topics Covered</label>
                         <div class="relative">
                             <i class="fa-solid fa-list-check absolute left-4 top-5 -translate-y-1/2 text-slate-400"></i>
-                            <textarea [(ngModel)]="newTraining.training_topics" name="training_topics" rows="3" placeholder="List the main topics separated by commas..." class="w-full pl-11 pr-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"></textarea>
+                            <textarea [(ngModel)]="newTraining.training_topics" name="training_topics" rows="3" placeholder="List the main topics separated by commas..." class="w-full pl-11 pr-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"></textarea>
                         </div>
                     </div>
                 </div>
             </fieldset>
             <fieldset>
-                <legend class="text-lg font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-4 w-full">Classification</legend>
+                <legend class="text-lg font-semibold text-slate-800 border-b border-indigo-200 pb-2 mb-4 w-full">Classification</legend>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Division</label>
-                        <input type="text" [(ngModel)]="newTraining.division" name="division" placeholder="e.g., R&D" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <input type="text" [(ngModel)]="newTraining.division" name="division" placeholder="e.g., R&D" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Department</label>
-                        <input type="text" [(ngModel)]="newTraining.department" name="department" placeholder="e.g., Software" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <input type="text" [(ngModel)]="newTraining.department" name="department" placeholder="e.g., Software" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                     </div>
             <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Competency</label>
-                        <input type="text" [(ngModel)]="newTraining.competency" name="competency" placeholder="e.g., Python" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <input type="text" [(ngModel)]="newTraining.competency" name="competency" placeholder="e.g., Python" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
             </div>
                 <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Skill</label>
-                        <select [(ngModel)]="newTraining.skill" name="skill" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <select [(ngModel)]="newTraining.skill" name="skill" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                             <option value="">Select Skill</option>
                     <option *ngFor="let name of skillNames" [value]="name">{{ name }}</option>
                 </select>
                 </div>
                 <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Skill Category</label>
-                        <select [(ngModel)]="newTraining.skill_category" name="skill_category" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <select [(ngModel)]="newTraining.skill_category" name="skill_category" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                             <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
                         </select>
                     </div>
                 </div>
             </fieldset>
             <fieldset>
-                <legend class="text-lg font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-4 w-full">Trainer Information</legend>
+                <legend class="text-lg font-semibold text-slate-800 border-b border-indigo-200 pb-2 mb-4 w-full">Trainer Information</legend>
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Trainer Name *</label>
                         <div class="relative">
                             <i class="fa-solid fa-chalkboard-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                            <input type="text" [(ngModel)]="newTraining.trainer_name" name="trainer_name" required placeholder="Enter trainer's full name" class="w-full pl-11 pr-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                            <input type="text" [(ngModel)]="newTraining.trainer_name" name="trainer_name" required placeholder="Enter trainer's full name" class="w-full pl-11 pr-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                         </div>
                 </div>
                 <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Trainer Email</label>
                         <div class="relative">
                             <i class="fa-solid fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                            <input type="email" [(ngModel)]="newTraining.email" name="email" placeholder="Enter trainer's email" class="w-full pl-11 pr-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                            <input type="email" [(ngModel)]="newTraining.email" name="email" placeholder="Enter trainer's email" class="w-full pl-11 pr-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                         </div>
                 </div>
                       </div>
             </fieldset>
             <fieldset>
-                <legend class="text-lg font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-4 w-full">Logistics & Scheduling</legend>
+                <legend class="text-lg font-semibold text-slate-800 border-b border-indigo-200 pb-2 mb-4 w-full">Logistics & Scheduling</legend>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Date *</label>
-                        <input type="date" [(ngModel)]="newTraining.training_date" name="training_date" required class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <input type="date" [(ngModel)]="newTraining.training_date" name="training_date" required class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Time</label>
-                        <input type="time" [(ngModel)]="newTraining.time" name="time" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <input type="time" [(ngModel)]="newTraining.time" name="time" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                     </div>
                 <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Duration</label>
-                        <input type="text" [(ngModel)]="newTraining.duration" name="duration" placeholder="e.g., 2 hours" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <input type="text" [(ngModel)]="newTraining.duration" name="duration" placeholder="e.g., 2 hours" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Training Type</label>
-                        <select [(ngModel)]="newTraining.training_type" name="training_type" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <select [(ngModel)]="newTraining.training_type" name="training_type" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                             <option>Online</option>
                             <option>In-Person</option>
                             <option>Hybrid</option>
@@ -1865,25 +1869,25 @@
                     </div>
                 <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Available Seats</label>
-                        <input type="text" [(ngModel)]="newTraining.seats" name="seats" placeholder="e.g., 25" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <input type="text" [(ngModel)]="newTraining.seats" name="seats" placeholder="e.g., 25" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                     </div>
                 </div>
             </fieldset>
             <fieldset>
-                <legend class="text-lg font-semibold text-slate-800 border-b border-slate-200 pb-2 mb-4 w-full">Additional Information</legend>
+                <legend class="text-lg font-semibold text-slate-800 border-b border-indigo-200 pb-2 mb-4 w-full">Additional Information</legend>
                 <div class="space-y-5">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Prerequisites</label>
-                        <input type="text" [(ngModel)]="newTraining.prerequisites" name="prerequisites" placeholder="e.g., Basic Python knowledge" class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
+                        <input type="text" [(ngModel)]="newTraining.prerequisites" name="prerequisites" placeholder="e.g., Basic Python knowledge" class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition">
                     </div>
                 <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Assessment Details</label>
-                        <textarea [(ngModel)]="newTraining.assessment_details" name="assessment_details" rows="3" placeholder="Describe the assessment process, if any." class="w-full px-4 py-2.5 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"></textarea>
+                        <textarea [(ngModel)]="newTraining.assessment_details" name="assessment_details" rows="3" placeholder="Describe the assessment process, if any." class="w-full px-4 py-2.5 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none transition"></textarea>
                     </div>
                 </div>
             </fieldset>
             </div>
-        <div class="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200 mt-8">
+        <div class="flex items-center justify-end space-x-4 pt-6 border-t border-indigo-200 mt-8">
             <button type="button" (click)="closeScheduleTrainingModal()" class="px-6 py-2.5 font-semibold text-slate-600 hover:bg-slate-100 rounded-full transition-colors">Cancel</button>
             <button type="submit" [disabled]="trainingForm.invalid" class="px-7 py-2.5 bg-sky-600 text-white rounded-full font-semibold hover:bg-sky-700 disabled:bg-slate-400 disabled:cursor-not-allowed shadow-lg hover:shadow-sky-300 transition-all">
                 <i class="fa-solid fa-check mr-2"></i> Schedule Training
@@ -1917,7 +1921,7 @@
         <p class="text-sm text-slate-500">No candidates have been assigned to this training yet.</p>
       </div>
       <div *ngIf="attendanceCandidates.length > 0" class="space-y-3">
-        <div class="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+        <div class="mb-4 p-3 bg-slate-50 rounded-lg border border-indigo-200">
           <p class="text-sm text-slate-700">
             <i class="fa-solid fa-info-circle mr-2 text-sky-500"></i>
             Select all candidates who attended the training. Only selected candidates will receive assignments.
@@ -1928,7 +1932,7 @@
              class="flex items-center gap-3 p-4 bg-white rounded-lg border-2 cursor-pointer transition-all hover:shadow-md"
              [ngClass]="{
                'border-emerald-500 bg-emerald-50': candidate.attended,
-               'border-slate-200 hover:border-slate-300': !candidate.attended
+               'border-indigo-200 hover:border-indigo-200': !candidate.attended
              }">
           <div class="flex-shrink-0">
             <div class="w-10 h-10 rounded-full flex items-center justify-center"
@@ -1947,7 +1951,7 @@
             <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all"
                  [ngClass]="{
                    'border-emerald-500 bg-emerald-500': candidate.attended,
-                   'border-slate-300': !candidate.attended
+                   'border-indigo-200': !candidate.attended
                  }">
               <i *ngIf="candidate.attended" class="fa-solid fa-check text-white text-xs"></i>
             </div>
@@ -1962,7 +1966,7 @@
         </div>
       </div>
     </div>
-    <div class="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200 px-6 pb-6">
+    <div class="flex items-center justify-end space-x-4 pt-6 border-t border-indigo-200 px-6 pb-6">
       <button (click)="closeAttendanceModal()" 
               class="px-6 py-2.5 font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
         Cancel
@@ -2015,7 +2019,7 @@
       </div>
       
       <!-- Attended Candidates List -->
-      <div *ngIf="attendanceSuccessData.attendedNames" class="mt-4 pt-4 border-t border-slate-200">
+      <div *ngIf="attendanceSuccessData.attendedNames" class="mt-4 pt-4 border-t border-indigo-200">
         <p class="text-sm font-semibold text-slate-700 mb-2">
           <i class="fa-solid fa-users mr-2 text-green-600"></i>Attended Candidates:
         </p>
@@ -2039,7 +2043,7 @@
 <div *ngIf="showAssignmentModal" @fadeIn
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
     <div @modalScale class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl m-4" (click)="$event.stopPropagation()">
-        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-t-2xl border-b border-slate-200">
+        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-t-2xl border-b border-indigo-200">
             <h3 class="text-xl font-bold text-slate-900" *ngIf="viewedAssignment">{{ viewedAssignment.title }}</h3>
             <button (click)="closeAssignmentModal()" class="w-9 h-9 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full flex items-center justify-center transition-colors">
                 <i class="fa-solid fa-times text-lg"></i>
@@ -2050,7 +2054,7 @@
                 <p class="text-slate-600" *ngIf="viewedAssignment.description">{{ viewedAssignment.description }}</p>
             </div>
             <div class="space-y-6">
-                <div *ngFor="let question of viewedAssignment.questions; let i = index" class="bg-slate-50 rounded-lg p-6 border border-slate-200">
+                <div *ngFor="let question of viewedAssignment.questions; let i = index" class="bg-slate-50 rounded-lg p-6 border border-indigo-200">
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex-1">
                             <h4 class="font-semibold text-slate-900 mb-1">Question {{ i + 1 }}</h4>
@@ -2064,7 +2068,7 @@
                     <div *ngIf="question.type === 'single-choice' || question.type === 'multiple-choice'" class="space-y-2 mt-4">
                         <div *ngFor="let option of question.options; let j = index" 
                              class="flex items-center p-3 bg-white rounded-lg border" 
-                             [ngClass]="{'border-green-500 bg-green-50': option.isCorrect, 'border-slate-200': !option.isCorrect}">
+                             [ngClass]="{'border-green-500 bg-green-50': option.isCorrect, 'border-indigo-200': !option.isCorrect}">
                             <i class="fa-solid mr-3" 
                                [ngClass]="{'fa-check-circle text-green-600': option.isCorrect, 'fa-circle text-slate-400': !option.isCorrect}"></i>
                             <span [ngClass]="{'font-semibold text-green-700': option.isCorrect, 'text-slate-700': !option.isCorrect}">
@@ -2076,7 +2080,7 @@
                         </div>
                     </div>
                     <div *ngIf="question.type === 'text-input'" class="mt-4">
-                        <textarea class="w-full px-4 py-2 bg-white rounded-lg border border-slate-300" rows="3" placeholder="Your answer here..."></textarea>
+                        <textarea class="w-full px-4 py-2 bg-white rounded-lg border border-indigo-200" rows="3" placeholder="Your answer here..."></textarea>
                     </div>
                 </div>
             </div>
@@ -2088,7 +2092,7 @@
 <div *ngIf="showExamModal" @fadeIn
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
     <div @modalScale class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl m-4" (click)="$event.stopPropagation()">
-        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-t-2xl border-b border-slate-200">
+        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-t-2xl border-b border-indigo-200">
             <div>
                 <h3 class="text-xl font-bold text-slate-900" *ngIf="currentExamAssignment">{{ currentExamAssignment.title }}</h3>
                 <p class="text-sm text-slate-500 mt-1">Please answer all questions</p>
@@ -2102,7 +2106,7 @@
                 <p class="text-slate-600" *ngIf="currentExamAssignment.description">{{ currentExamAssignment.description }}</p>
             </div>
             <div class="space-y-6">
-                <div *ngFor="let question of currentExamAssignment.questions; let i = index" class="bg-slate-50 rounded-lg p-6 border border-slate-200">
+                <div *ngFor="let question of currentExamAssignment.questions; let i = index" class="bg-slate-50 rounded-lg p-6 border border-indigo-200">
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex-1">
                             <h4 class="font-semibold text-slate-900 mb-1">Question {{ i + 1 }}</h4>
@@ -2140,7 +2144,7 @@
                     <div *ngIf="question.type === 'single-choice'" class="space-y-2 mt-4">
                         <div *ngFor="let option of question.options; let j = index" 
                              (click)="onAnswerSelect(i, j, false)"
-                             class="flex items-center p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
+                             class="flex items-center p-3 bg-white rounded-lg border border-indigo-200 cursor-pointer hover:bg-slate-50 transition-colors"
                              [ngClass]="{'border-violet-500 bg-violet-50': isOptionSelected(i, j)}">
                             <input type="radio" [checked]="isOptionSelected(i, j)" (click)="$event.stopPropagation()" class="mr-3 h-5 w-5 text-violet-600 focus:ring-violet-500 cursor-pointer">
                             <span class="text-slate-700">{{ option.text }}</span>
@@ -2149,7 +2153,7 @@
                     <div *ngIf="question.type === 'multiple-choice'" class="space-y-2 mt-4">
                         <div *ngFor="let option of question.options; let j = index" 
                              (click)="onAnswerSelect(i, j, true)"
-                             class="flex items-center p-3 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors"
+                             class="flex items-center p-3 bg-white rounded-lg border border-indigo-200 cursor-pointer hover:bg-slate-50 transition-colors"
                              [ngClass]="{'border-violet-500 bg-violet-50': isOptionSelected(i, j)}">
                             <input type="checkbox" [checked]="isOptionSelected(i, j)" (click)="$event.stopPropagation()" class="mr-3 h-5 w-5 rounded text-violet-600 focus:ring-violet-500 cursor-pointer">
                             <span class="text-slate-700">{{ option.text }}</span>
@@ -2159,13 +2163,13 @@
                         <textarea 
                             [(ngModel)]="userAnswers[i].textAnswer"
                             (ngModelChange)="onTextAnswerChange(i, $event)"
-                            class="w-full px-4 py-2 bg-white rounded-lg border border-slate-300 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition" 
+                            class="w-full px-4 py-2 bg-white rounded-lg border border-indigo-200 focus:ring-2 focus:ring-violet-500 focus:border-violet-500 outline-none transition" 
                             rows="3" 
                             placeholder="Type your answer here..."></textarea>
                     </div>
                 </div>
             </div>
-            <div class="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-3">
+            <div class="mt-8 pt-6 border-t border-indigo-200 flex justify-end gap-3">
                 <button (click)="closeExamModal()" class="px-6 py-2.5 font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
                     Cancel
                 </button>
@@ -2183,7 +2187,7 @@
 <div *ngIf="showResultModal" @fadeIn
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
     <div @modalScale class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl m-4" (click)="$event.stopPropagation()">
-        <div class="flex items-center justify-between p-6 bg-gradient-to-r from-violet-50 to-purple-50 rounded-t-2xl border-b border-slate-200">
+        <div class="flex items-center justify-between p-6 bg-gradient-to-r from-violet-50 to-purple-50 rounded-t-2xl border-b border-indigo-200">
             <div>
                 <h3 class="text-xl font-bold text-slate-900" *ngIf="currentExamAssignment">{{ currentExamAssignment.title }} - Results</h3>
                 <p class="text-sm text-slate-500 mt-1" *ngIf="assignmentResult">Submitted on {{ assignmentResult.submitted_at | date:'medium' }}</p>
@@ -2254,7 +2258,7 @@
                              [ngClass]="{
                                  'bg-green-100 border-green-500': option.isCorrect && getQuestionResult(i)?.isCorrect,
                                  'bg-red-100 border-red-500': !option.isCorrect && getQuestionResult(i)?.userAnswers?.includes(j),
-                                 'bg-white border-slate-200': (!option.isCorrect && getQuestionResult(i) && !getQuestionResult(i)!.userAnswers.includes(j)) || (option.isCorrect && getQuestionResult(i) && !getQuestionResult(i)!.isCorrect)
+                                 'bg-white border-indigo-200': (!option.isCorrect && getQuestionResult(i) && !getQuestionResult(i)!.userAnswers.includes(j)) || (option.isCorrect && getQuestionResult(i) && !getQuestionResult(i)!.isCorrect)
                              }">
                             <i class="fa-solid mr-3" 
                                [ngClass]="{
@@ -2278,14 +2282,14 @@
                         </div>
                     </div>
                     <div *ngIf="question.type === 'text-input'" class="mt-4">
-                        <div class="p-3 bg-white rounded-lg border border-slate-300">
+                        <div class="p-3 bg-white rounded-lg border border-indigo-200">
                             <p class="text-sm font-medium text-slate-700 mb-1">Your Answer:</p>
                             <p class="text-slate-900">{{ getQuestionResult(i)?.userTextAnswer || 'No answer provided' }}</p>
                             <p class="text-xs text-slate-500 mt-2">Note: Text answers require manual evaluation</p>
                         </div>
                     </div>
                     <div *ngIf="question.type === 'file-upload'" class="mt-4">
-                        <div class="p-3 bg-white rounded-lg border border-slate-300">
+                        <div class="p-3 bg-white rounded-lg border border-indigo-200">
                             <p class="text-sm font-medium text-slate-700 mb-1">File Upload Question</p>
                             <p class="text-slate-900 text-sm">
                                 This question was answered using an uploaded file. Evaluation for this question may be done manually
@@ -2295,7 +2299,7 @@
                     </div>
                 </div>
             </div>
-            <div class="mt-8 pt-6 border-t border-slate-200 flex justify-end">
+            <div class="mt-8 pt-6 border-t border-indigo-200 flex justify-end">
                 <button (click)="closeResultModal()" class="px-7 py-2.5 bg-violet-600 text-white rounded-lg font-semibold hover:bg-violet-700 shadow-lg hover:shadow-violet-300 transition-all">
                     Close
                 </button>
@@ -2308,7 +2312,7 @@
 <div *ngIf="showFeedbackModal" @fadeIn
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
     <div @modalScale class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl m-4" (click)="$event.stopPropagation()">
-        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-t-2xl border-b border-slate-200">
+        <div class="flex items-center justify-between p-6 bg-slate-50 rounded-t-2xl border-b border-indigo-200">
             <h3 class="text-xl font-bold text-slate-900">Training Feedback Form</h3>
             <button (click)="closeFeedbackModal()" class="w-9 h-9 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full flex items-center justify-center transition-colors">
                 <i class="fa-solid fa-times text-lg"></i>
@@ -2318,10 +2322,10 @@
             <div class="space-y-6">
                 <div *ngIf="viewedFeedback.defaultQuestions && viewedFeedback.defaultQuestions.length > 0">
                     <h4 class="font-semibold text-slate-900 mb-4 text-lg">Default Questions</h4>
-                    <div *ngFor="let question of viewedFeedback.defaultQuestions; let i = index" class="bg-slate-50 rounded-lg p-6 border border-slate-200 mb-4">
+                    <div *ngFor="let question of viewedFeedback.defaultQuestions; let i = index" class="bg-slate-50 rounded-lg p-6 border border-indigo-200 mb-4">
                         <p class="font-medium text-slate-900 mb-3">{{ question.text }}</p>
                         <div class="space-y-2">
-                            <label *ngFor="let option of question.options" class="flex items-center p-2 bg-white rounded border border-slate-200 hover:bg-slate-50 cursor-pointer"
+                            <label *ngFor="let option of question.options" class="flex items-center p-2 bg-white rounded border border-indigo-200 hover:bg-slate-50 cursor-pointer"
                                    [ngClass]="{'bg-blue-50 border-blue-300': getFeedbackResponse(i) === option}">
                                 <input type="radio" [name]="'default-' + i" class="mr-3" [value]="option" 
                                        [checked]="getFeedbackResponse(i) === option"
@@ -2336,7 +2340,7 @@
                     <div *ngFor="let question of viewedFeedback.customQuestions; let i = index" class="bg-amber-50 rounded-lg p-6 border border-amber-200 mb-4">
                         <p class="font-medium text-slate-900 mb-3">{{ question.text }}</p>
                         <div class="space-y-2">
-                            <label *ngFor="let option of question.options" class="flex items-center p-2 bg-white rounded border border-slate-200 hover:bg-slate-50 cursor-pointer"
+                            <label *ngFor="let option of question.options" class="flex items-center p-2 bg-white rounded border border-indigo-200 hover:bg-slate-50 cursor-pointer"
                                    [ngClass]="{'bg-amber-100 border-amber-300': getFeedbackResponse(i + getDefaultQuestionsLength()) === option}">
                                 <input type="radio" [name]="'custom-' + i" class="mr-3" [value]="option"
                                        [checked]="getFeedbackResponse(i + getDefaultQuestionsLength()) === option"
@@ -2347,7 +2351,7 @@
                     </div>
                 </div>
             </div>
-            <div class="mt-6 pt-6 border-t border-slate-200 flex justify-end">
+            <div class="mt-6 pt-6 border-t border-indigo-200 flex justify-end">
                 <button (click)="submitEngineerFeedback()" class="px-6 py-2.5 bg-amber-600 text-white rounded-full font-semibold hover:bg-amber-700 shadow-lg transition-all">
                     <i class="fa-solid fa-paper-plane mr-2"></i> Submit Feedback
                 </button>
@@ -2677,14 +2681,14 @@
         <p class="text-sm text-slate-500">No engineers have submitted solution files for this training yet.</p>
       </div>
       <div *ngIf="!isLoadingSolutions && solutionsList.length > 0" class="space-y-3">
-        <div class="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+        <div class="mb-4 p-3 bg-slate-50 rounded-lg border border-indigo-200">
           <p class="text-sm text-slate-700">
             <i class="fa-solid fa-info-circle mr-2 text-sky-500"></i>
             <strong>{{ solutionsList.length }}</strong> solution file(s) submitted by engineers.
           </p>
         </div>
         <div *ngFor="let solution of solutionsList" 
-             class="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-slate-200 hover:border-teal-300 hover:shadow-md transition-all">
+             class="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-indigo-200 hover:border-teal-300 hover:shadow-md transition-all">
           <div class="flex items-center gap-4 flex-grow">
             <div class="w-12 h-12 bg-teal-100 text-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <i class="fa-solid fa-file-pdf text-xl"></i>
@@ -2712,7 +2716,7 @@
         </div>
       </div>
     </div>
-    <div class="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200 px-6 pb-6">
+    <div class="flex items-center justify-end space-x-4 pt-6 border-t border-indigo-200 px-6 pb-6">
       <button (click)="closeSolutionsModal()" 
               class="px-6 py-2.5 font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
         Close
@@ -2747,7 +2751,7 @@
       </div>
       <div *ngIf="dashboardCompletedTrainings.length > 0" class="space-y-3 pr-2">
         <div *ngFor="let training of dashboardCompletedTrainings" 
-             class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 hover:bg-white hover:shadow-md transition-all duration-200">
+             class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl border border-indigo-200 hover:bg-white hover:shadow-md transition-all duration-200">
           <div class="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
             <i class="fa-solid fa-check-circle text-xl"></i>
           </div>
@@ -2772,10 +2776,36 @@
         </div>
       </div>
     </div>
-    <div class="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200 px-6 pb-6">
+    <div class="flex items-center justify-end space-x-4 pt-6 border-t border-indigo-200 px-6 pb-6">
       <button (click)="closeCompletedTrainingsModal()" 
               class="px-6 py-2.5 font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
         <i class="fa-solid fa-times mr-2"></i>Close
+      </button>
+    </div>
+  </div>
+</div>
+<!-- Confirmation Dialog Modal -->
+<div *ngIf="(confirmationDialogService.confirmation$ | async) as confirmation" @fadeIn
+  class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
+  <div @modalScale class="bg-white rounded-2xl shadow-2xl w-full max-w-md m-4" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-slate-50 rounded-t-2xl border-b border-slate-200">
+      <h3 class="text-lg font-bold text-slate-900">{{ confirmation.title }}</h3>
+      <button (click)="confirmationDialogService.cancel()"
+        class="w-8 h-8 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full flex items-center justify-center transition-colors">
+        <i class="fa-solid fa-times text-lg"></i>
+      </button>
+    </div>
+    <div class="p-6">
+      <p class="text-slate-700 text-base mb-6">{{ confirmation.message }}</p>
+    </div>
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 px-6 pb-6">
+      <button (click)="confirmationDialogService.cancel()"
+        class="px-5 py-2.5 font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+        {{ confirmation.cancelText }}
+      </button>
+      <button (click)="confirmationDialogService.confirm()"
+        class="px-5 py-2.5 font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-md hover:shadow-lg">
+        {{ confirmation.okText }}
       </button>
     </div>
   </div>

@@ -19,7 +19,7 @@
                     <i class="fa-solid fa-user-shield text-slate-400 text-3xl"></i>
                 </div>
                 <!-- Online Status Indicator -->
-                <div class="absolute top-0 right-0 w-6 h-6 bg-green-400 rounded-full border-4 border-slate-900"></div>
+                <div class="absolute top-0 right-0 w-6 h-6 bg-green-400 rounded-full border-4 border-indigo-200"></div>
             </div>
             <!-- Admin Name -->
             <h3 class="text-white text-xl font-semibold">{{ adminName }}</h3>
@@ -145,83 +145,104 @@
                     </div>
                 </div>
                 
-                <!-- Metrics Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-                    <!-- Total Users Card -->
-                    <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-3 hover:shadow-xl transition-all duration-300">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-users text-blue-600"></i>
-                            </div>
-                            <div class="text-xs text-slate-500 font-medium">{{ totalManagers }}M / {{ totalEmployees }}E</div>
-                        </div>
-                        <div class="font-bold text-2xl text-slate-900 mb-1">{{ totalUsers }}</div>
-                        <div class="text-xs text-slate-600 font-medium">Total Users</div>
-                    </div>
+                <!-- Dashboard Metrics (Single Row) -->
+                <div @slideFadeIn class="bg-white/40 backdrop-blur-sm rounded-lg border border-indigo-200 p-2">
+                    <div class="overflow-x-auto">
+                        <div class="flex flex-nowrap gap-2 min-w-max">
+                            <!-- Users -->
+                            <button (click)="openUsersPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[170px] text-left">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-users text-blue-600"></i>
+                                    </div>
+                                    <div class="text-xs text-slate-500 font-medium">{{ totalManagers }}M / {{ totalEmployees }}E</div>
+                                </div>
+                                <div class="font-bold text-2xl text-slate-900 mb-1">{{ totalUsers }}</div>
+                                <div class="text-xs text-slate-600 font-medium">Users</div>
+                            </button>
 
-                    <!-- Total Trainings Card -->
-                    <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-3 hover:shadow-xl transition-all duration-300">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-book-open text-emerald-600"></i>
-                            </div>
-                            <div class="text-xs text-slate-500 font-medium">Active</div>
-                        </div>
-                        <div class="font-bold text-2xl text-slate-900 mb-1">{{ totalTrainings }}</div>
-                        <div class="text-xs text-slate-600 font-medium">Total Trainings</div>
-                    </div>
+                            <!-- Trainers -->
+                            <button (click)="openTrainersPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[170px] text-left">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-chalkboard-teacher text-indigo-600"></i>
+                                    </div>
+                                    <div class="text-xs text-slate-500 font-medium">Active</div>
+                                </div>
+                                <div class="font-bold text-2xl text-slate-900 mb-1">{{ activeTrainers }}</div>
+                                <div class="text-xs text-slate-600 font-medium">Trainers</div>
+                            </button>
 
-                    <!-- Total Assignments Card -->
-                    <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-3 hover:shadow-xl transition-all duration-300">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-clipboard-check text-amber-600"></i>
-                            </div>
-                            <div class="text-xs text-slate-500 font-medium">Assigned</div>
-                        </div>
-                        <div class="font-bold text-2xl text-slate-900 mb-1">{{ totalAssignments }}</div>
-                        <div class="text-xs text-slate-600 font-medium">Total Assignments</div>
-                    </div>
+                            <!-- Skills -->
+                            <button (click)="openCoreSkillsPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[170px] text-left">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-graduation-cap text-purple-600"></i>
+                                    </div>
+                                    <div class="text-xs text-slate-500 font-medium">Total</div>
+                                </div>
+                                <div class="font-bold text-2xl text-slate-900 mb-1">{{ coreSkills.length }}</div>
+                                <div class="text-xs text-slate-600 font-medium">Skills</div>
+                            </button>
 
-                    <!-- Total Skills Card -->
-                    <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-3 hover:shadow-xl transition-all duration-300">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-graduation-cap text-purple-600"></i>
-                            </div>
-                            <div class="text-xs text-slate-500 font-medium">Skills</div>
-                        </div>
-                        <div class="font-bold text-2xl text-slate-900 mb-1">{{ totalSkills }}</div>
-                        <div class="text-xs text-slate-600 font-medium">Total Skills</div>
-                    </div>
+                            <!-- Trainings -->
+                            <button (click)="openTrainingsPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[170px] text-left">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-book-open text-emerald-600"></i>
+                                    </div>
+                                    <div class="text-xs text-slate-500 font-medium">Total</div>
+                                </div>
+                                <div class="font-bold text-2xl text-slate-900 mb-1">{{ totalTrainings }}</div>
+                                <div class="text-xs text-slate-600 font-medium">Total Trainings</div>
+                            </button>
 
-                    <!-- Pending Requests Card -->
-                    <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-3 hover:shadow-xl transition-all duration-300">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-hourglass-half text-red-600"></i>
-                            </div>
-                            <div class="text-xs text-red-600 font-medium animate-pulse">Pending</div>
-                        </div>
-                        <div class="font-bold text-2xl text-slate-900 mb-1">{{ pendingRequests }}</div>
-                        <div class="text-xs text-slate-600 font-medium">Pending Requests</div>
-                    </div>
+                            <!-- Attendance Rate -->
+                            <button class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[190px] text-left">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-percent text-amber-600"></i>
+                                    </div>
+                                    <div class="text-xs text-slate-500 font-medium">Overall</div>
+                                </div>
+                                <div class="font-bold text-2xl text-slate-900 mb-1">{{ attendanceRate | number:'1.0-2' }}%</div>
+                                <div class="text-xs text-slate-600 font-medium">Attendance Rate</div>
 
-                    <!-- Active Trainers Card -->
-                    <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-3 hover:shadow-xl transition-all duration-300">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-chalkboard-teacher text-indigo-600"></i>
-                            </div>
-                            <div class="text-xs text-slate-500 font-medium">Active</div>
+                                <div class="mt-2 pt-2 border-t border-slate-200/60 text-xs text-slate-600 space-y-1">
+                                    <div class="flex items-center justify-between">
+                                        <span>Attended</span>
+                                        <span class="font-semibold text-slate-900">{{ attendedAssignments }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span>Assigned</span>
+                                        <span class="font-semibold text-slate-900">{{ totalAssignments }}</span>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <!-- Report Generation Icon -->
+                            <button (click)="selectTab('analytics')" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[170px] text-left" title="Reports">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
+                                        <i class="fa-solid fa-file-arrow-down text-rose-600"></i>
+                                    </div>
+                                    <div class="text-xs text-slate-500 font-medium">Reports</div>
+                                </div>
+                                <div class="font-bold text-lg text-slate-900 mb-1">Generate</div>
+                                <div class="text-xs text-slate-600 font-medium">Report</div>
+
+                                <div class="mt-2 pt-2 border-t border-slate-200/60">
+                                    <div class="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white px-3 py-1.5 rounded-lg shadow-sm font-semibold text-sm flex items-center justify-center">
+                                        <i class="fa-solid fa-chart-line mr-2"></i>Open Reports
+                                    </div>
+                                </div>
+                            </button>
                         </div>
-                        <div class="font-bold text-2xl text-slate-900 mb-1">{{ activeTrainers }}</div>
-                        <div class="text-xs text-slate-600 font-medium">Active Trainers</div>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
-                <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-3">
+                <div @slideFadeIn class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3">
                     <h3 class="text-base font-bold text-slate-900 mb-3"><b>Quick Actions</b></h3>
                     <div class="grid grid-cols-3 gap-3 text-center">
                         <button (click)="selectTab('users'); openCreateUserModal()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors duration-200 text-center">
@@ -242,6 +263,185 @@
                             </div>
                             <div class="text-xs text-slate-600 font-medium">Import Data</div>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Users Popup (from Dashboard Users card) -->
+                <div *ngIf="showUsersPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" (click)="closeUsersPopup()"></div>
+
+                    <div class="relative w-full max-w-2xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-indigo-200 overflow-hidden">
+                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200/60">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                                    <i class="fa-solid fa-users text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-slate-900">All Users</div>
+                                    <div class="text-xs text-slate-500">Showing {{ users.length }} user(s)</div>
+                                </div>
+                            </div>
+                            <button (click)="closeUsersPopup()" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600" title="Close">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="px-5 py-4">
+                            <div *ngIf="usersLoading" class="py-10 text-center text-slate-600">
+                                <div class="inline-block relative">
+                                    <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-200 border-t-blue-600"></div>
+                                </div>
+                                <div class="mt-3 text-sm font-medium">Loading users...</div>
+                            </div>
+
+                            <div *ngIf="!usersLoading" class="max-h-[60vh] overflow-y-auto pr-1">
+                                <div *ngIf="users.length === 0" class="py-10 text-center text-slate-500">
+                                    No users found.
+                                </div>
+
+                                <div *ngFor="let user of users" class="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-blue-50/40 border border-slate-200/40 mb-2">
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-slate-900 truncate">{{ user.name || user.username }}</div>
+                                        <div class="text-xs text-slate-500 truncate">{{ user.username }} · {{ user.role }}<span *ngIf="user.is_trainer"> · Trainer</span></div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-1 text-[11px] rounded-full bg-slate-100 text-slate-600 font-semibold">{{ user.role }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trainers Popup (from Dashboard Trainers card) -->
+                <div *ngIf="showTrainersPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" (click)="closeTrainersPopup()"></div>
+
+                    <div class="relative w-full max-w-2xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-indigo-200 overflow-hidden">
+                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200/60">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                                    <i class="fa-solid fa-chalkboard-teacher text-indigo-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-lg font-bold text-slate-900">All Trainers</div>
+                                    <div class="text-xs text-slate-500">Showing {{ trainerUsers.length }} trainer(s)</div>
+                                </div>
+                            </div>
+                            <button (click)="closeTrainersPopup()" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600" title="Close">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="px-5 py-4">
+                            <div *ngIf="trainersPopupLoading" class="py-10 text-center text-slate-600">
+                                <div class="inline-block relative">
+                                    <div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-200 border-t-indigo-600"></div>
+                                </div>
+                                <div class="mt-3 text-sm font-medium">Loading trainers...</div>
+                            </div>
+
+                            <div *ngIf="!trainersPopupLoading" class="max-h-[60vh] overflow-y-auto pr-1">
+                                <div *ngIf="trainerUsers.length === 0" class="py-10 text-center text-slate-500">
+                                    No trainers found.
+                                </div>
+
+                                <div *ngFor="let user of trainerUsers" class="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-indigo-50/40 border border-slate-200/40 mb-2">
+                                    <div class="min-w-0">
+                                        <div class="font-semibold text-slate-900 truncate">{{ user.name || user.username }}</div>
+                                        <div class="text-xs text-slate-500 truncate">{{ user.username }} · {{ user.role }}</div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-1 text-[11px] rounded-full bg-indigo-100 text-indigo-700 font-semibold">Trainer</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trainings Popup (from Dashboard Trainings card) -->
+                <div *ngIf="showTrainingsPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" (click)="closeTrainingsPopup()"></div>
+
+                    <div class="relative w-full max-w-4xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-indigo-200 overflow-hidden">
+                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200/60">
+                            <div>
+                                <div class="text-lg font-bold text-slate-900">Trainings</div>
+                                <div class="text-xs text-slate-500">{{ classroomTrainingsCount }} classroom • {{ recordedTrainingsCount }} recorded • {{ totalTrainings }} total • Assigned {{ totalAssignments }} • Attended {{ attendedAssignments }}</div>
+                            </div>
+                            <button (click)="closeTrainingsPopup()" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600" title="Close">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="px-5 py-5">
+                            <div *ngIf="trainingsLoading" class="flex items-center gap-2 text-slate-600">
+                                <svg class="animate-spin h-5 w-5 text-sky-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span class="text-sm">Loading trainings...</span>
+                            </div>
+
+                            <div *ngIf="!trainingsLoading" class="max-h-[60vh] overflow-y-auto">
+                                <div *ngIf="trainings.length === 0" class="text-sm text-slate-600">No trainings found.</div>
+
+                                <div *ngFor="let t of trainings" class="flex items-center justify-between gap-3 py-3 border-b border-slate-200/60 last:border-b-0">
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-2 min-w-0">
+                                            <div class="font-semibold text-slate-900 truncate">{{ t.training_name }}</div>
+                                            <span class="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                                [ngClass]="getTrainingTypeLabel(t) === 'Recorded' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'">
+                                                {{ getTrainingTypeLabel(t) }}
+                                            </span>
+                                        </div>
+                                        <div class="text-xs text-slate-600 truncate">Trainer: {{ t.trainer_name || 'Not Assigned' }}<span *ngIf="t.training_date"> • {{ t.training_date }}</span></div>
+                                    </div>
+
+                                    <div class="flex items-center gap-4 text-xs text-slate-600 shrink-0">
+                                        <div class="text-right">
+                                            <div class="text-slate-500">Assigned</div>
+                                            <div class="font-semibold text-slate-900">{{ t.assigned_count || 0 }}</div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-slate-500">Attended</div>
+                                            <div class="font-semibold text-slate-900">{{ t.attended_count || 0 }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Core Skills Popup (from Dashboard Skills card) -->
+                <div *ngIf="showCoreSkillsPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" (click)="closeCoreSkillsPopup()"></div>
+
+                    <div class="relative w-full max-w-3xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-indigo-200 overflow-hidden">
+                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200/60">
+                            <div>
+                                <div class="text-lg font-bold text-slate-900">Core Skills</div>
+                                <div class="text-xs text-slate-500">{{ coreSkills.length }} skill(s)</div>
+                            </div>
+                            <button (click)="closeCoreSkillsPopup()" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600" title="Close">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div class="px-5 py-5">
+                            <div class="max-h-[60vh] overflow-y-auto">
+                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                                    <div *ngFor="let skill of coreSkills" class="text-center">
+                                        <div class="w-14 h-14 mx-auto rounded-2xl bg-sky-100 flex items-center justify-center">
+                                            <i [class]="skill.iconClass + ' text-sky-700'" aria-hidden="true"></i>
+                                        </div>
+                                        <div class="mt-2 text-sm font-semibold text-slate-700">{{ skill.title }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -290,7 +490,7 @@
             </div>
 
             <!-- Users Table -->
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-slate-200/60">
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-indigo-200">
                 <div *ngIf="usersLoading" class="p-12 text-center">
                     <div class="inline-block relative">
                         <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
@@ -309,7 +509,7 @@
                                         <input type="checkbox" 
                                                [checked]="isSelectAll" 
                                                (change)="toggleSelectAll()"
-                                               class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                               class="w-5 h-5 rounded border-indigo-200 text-blue-600 focus:ring-blue-500 cursor-pointer">
                                     </th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Username</th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Name</th>
@@ -326,7 +526,7 @@
                                         <input type="checkbox" 
                                                [checked]="isUserSelected(user.username)" 
                                                (change)="toggleUserSelection(user)"
-                                               class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                               class="w-5 h-5 rounded border-indigo-200 text-blue-600 focus:ring-blue-500 cursor-pointer">
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-2">
@@ -435,7 +635,7 @@
             </div>
 
             <!-- Trainings Table -->
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-slate-200/60">
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-indigo-200">
                 <div *ngIf="trainingsLoading" class="p-12 text-center">
                     <div class="inline-block relative">
                         <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
@@ -454,7 +654,7 @@
                                         <input type="checkbox" 
                                                [checked]="isSelectAllTrainings" 
                                                (change)="toggleSelectAllTrainings()"
-                                               class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                               class="w-5 h-5 rounded border-indigo-200 text-blue-600 focus:ring-blue-500 cursor-pointer">
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Training Name</th>
                                     <th class="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider">Trainer</th>
@@ -483,7 +683,7 @@
                                         <input type="checkbox" 
                                                [checked]="isTrainingSelected(training.id)" 
                                                (change)="toggleTrainingSelection(training)"
-                                               class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                               class="w-5 h-5 rounded border-indigo-200 text-blue-600 focus:ring-blue-500 cursor-pointer">
                                     </td>
                                     <td class="px-4 py-3">
                                         <div class="flex items-center gap-2">
@@ -599,7 +799,7 @@
             </div>
 
             <!-- Competencies Table -->
-            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-slate-200/60">
+            <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-indigo-200">
                 <div *ngIf="competenciesLoading" class="p-12 text-center">
                     <div class="inline-block relative">
                         <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600"></div>
@@ -849,21 +1049,21 @@
         </div>
         <div class="space-y-4">
             <input type="text" [(ngModel)]="newUser.username" placeholder="Username *" 
-                   class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                   class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
             <input type="password" [(ngModel)]="newUser.password" placeholder="Password *" 
-                   class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                   class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
             <input type="text" [(ngModel)]="newUser.name" placeholder="Name *" 
-                   class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                   class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
             <select [(ngModel)]="newUser.role" 
-                    class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                 <option value="employee">Employee</option>
                 <option value="manager">Manager</option>
                 <option value="admin">Admin</option>
             </select>
             <input *ngIf="newUser.role === 'employee'" type="text" [(ngModel)]="newUser.manager_empid" placeholder="Manager ID" 
-                   class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                   class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
             <label class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
-                <input type="checkbox" [(ngModel)]="newUser.is_trainer" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                <input type="checkbox" [(ngModel)]="newUser.is_trainer" class="w-5 h-5 rounded border-indigo-200 text-blue-600 focus:ring-blue-500">
                 <span class="font-medium text-slate-700">Is Trainer</span>
             </label>
         </div>
@@ -891,15 +1091,15 @@
         </div>
         <div class="space-y-4">
             <input type="text" [(ngModel)]="selectedUser.name" placeholder="Name" 
-                   class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                   class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
             <select [(ngModel)]="selectedUser.role" 
-                    class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                    class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                 <option value="employee">Employee</option>
                 <option value="manager">Manager</option>
                 <option value="admin">Admin</option>
             </select>
             <label class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors">
-                <input type="checkbox" [(ngModel)]="selectedUser.is_trainer" class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                <input type="checkbox" [(ngModel)]="selectedUser.is_trainer" class="w-5 h-5 rounded border-indigo-200 text-blue-600 focus:ring-blue-500">
                 <span class="font-medium text-slate-700">Is Trainer</span>
             </label>
         </div>
@@ -927,30 +1127,30 @@
         </div>
         <div class="space-y-6">
             <!-- Core Details -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Core Details</legend>
                 <div class="space-y-4 mt-2">
                     <input type="text" [(ngModel)]="newTraining.training_name" placeholder="Training Name *" 
-                           class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <textarea [(ngModel)]="newTraining.training_topics" placeholder="Training Topics" rows="3" 
-                              class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                              class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
                 </div>
             </fieldset>
 
             <!-- Classification -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Classification</legend>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <input type="text" [(ngModel)]="newTraining.division" placeholder="Division" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="text" [(ngModel)]="newTraining.department" placeholder="Department" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="text" [(ngModel)]="newTraining.competency" placeholder="Competency" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="text" [(ngModel)]="newTraining.skill" placeholder="Skill" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <select [(ngModel)]="newTraining.skill_category" 
-                            class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                            class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
                         <option value="">Select Skill Category</option>
                         <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
                     </select>
@@ -958,46 +1158,46 @@
             </fieldset>
 
             <!-- Trainer Information -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Trainer Information</legend>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <input type="text" [(ngModel)]="newTraining.trainer_name" placeholder="Trainer Name *" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="email" [(ngModel)]="newTraining.email" placeholder="Trainer Email" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                 </div>
             </fieldset>
 
             <!-- Logistics & Scheduling -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Logistics & Scheduling</legend>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <input type="date" [(ngModel)]="newTraining.training_date" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="time" [(ngModel)]="newTraining.time" placeholder="Time" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="text" [(ngModel)]="newTraining.duration" placeholder="Duration (e.g., 2 hours)" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <select [(ngModel)]="newTraining.training_type" 
-                            class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                            class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
                         <option value="">Select Training Type</option>
                         <option>Online</option>
                         <option>In-Person</option>
                         <option>Hybrid</option>
                     </select>
                     <input type="text" [(ngModel)]="newTraining.seats" placeholder="Available Seats" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                 </div>
             </fieldset>
 
             <!-- Additional Information -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Additional Information</legend>
                 <div class="space-y-4 mt-2">
                     <input type="text" [(ngModel)]="newTraining.prerequisites" placeholder="Prerequisites" 
-                           class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <textarea [(ngModel)]="newTraining.assessment_details" placeholder="Assessment Details" rows="3" 
-                              class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                              class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
                 </div>
             </fieldset>
         </div>
@@ -1025,30 +1225,30 @@
         </div>
         <div class="space-y-6">
             <!-- Core Details -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Core Details</legend>
                 <div class="space-y-4 mt-2">
                     <input type="text" [(ngModel)]="selectedTraining.training_name" placeholder="Training Name *" 
-                           class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <textarea [(ngModel)]="selectedTraining.training_topics" placeholder="Training Topics" rows="3" 
-                              class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                              class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
                 </div>
             </fieldset>
 
             <!-- Classification -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Classification</legend>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <input type="text" [(ngModel)]="selectedTraining.division" placeholder="Division" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="text" [(ngModel)]="selectedTraining.department" placeholder="Department" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="text" [(ngModel)]="selectedTraining.competency" placeholder="Competency" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="text" [(ngModel)]="selectedTraining.skill" placeholder="Skill" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <select [(ngModel)]="selectedTraining.skill_category" 
-                            class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                            class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
                         <option value="">Select Skill Category</option>
                         <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
                     </select>
@@ -1056,46 +1256,46 @@
             </fieldset>
 
             <!-- Trainer Information -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Trainer Information</legend>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <input type="text" [(ngModel)]="selectedTraining.trainer_name" placeholder="Trainer Name *" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="email" [(ngModel)]="selectedTraining.email" placeholder="Trainer Email" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                 </div>
             </fieldset>
 
             <!-- Logistics & Scheduling -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Logistics & Scheduling</legend>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <input type="date" [(ngModel)]="selectedTraining.training_date" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="time" [(ngModel)]="selectedTraining.time" placeholder="Time" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <input type="text" [(ngModel)]="selectedTraining.duration" placeholder="Duration (e.g., 2 hours)" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <select [(ngModel)]="selectedTraining.training_type" 
-                            class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                            class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
                         <option value="">Select Training Type</option>
                         <option>Online</option>
                         <option>In-Person</option>
                         <option>Hybrid</option>
                     </select>
                     <input type="text" [(ngModel)]="selectedTraining.seats" placeholder="Available Seats" 
-                           class="px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                 </div>
             </fieldset>
 
             <!-- Additional Information -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Additional Information</legend>
                 <div class="space-y-4 mt-2">
                     <input type="text" [(ngModel)]="selectedTraining.prerequisites" placeholder="Prerequisites" 
-                           class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                           class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     <textarea [(ngModel)]="selectedTraining.assessment_details" placeholder="Assessment Details" rows="3" 
-                              class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                              class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
                 </div>
             </fieldset>
         </div>
@@ -1236,7 +1436,7 @@
             </div>
 
             <!-- Statistics -->
-            <div class="bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl p-6 border border-slate-200">
+            <div class="bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl p-6 border border-indigo-200">
                 <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-chart-bar text-slate-600"></i>
                     Statistics
@@ -1288,12 +1488,12 @@
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Current Expertise</label>
                 <input type="text" [(ngModel)]="skillUpdate.current_expertise" placeholder="e.g., L3" 
-                       class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                       class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Target Expertise</label>
                 <input type="text" [(ngModel)]="skillUpdate.target_expertise" placeholder="e.g., L4" 
-                       class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                       class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
             </div>
         </div>
         <div class="mt-8 flex gap-4">
@@ -1320,14 +1520,14 @@
         </div>
         <div class="space-y-6">
             <!-- Employee Selection -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Employee Information *</legend>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Select Employee</label>
                         <select [(ngModel)]="newCompetency.employee_empid" 
                                 (change)="onEmployeeSelected(newCompetency.employee_empid)"
-                                class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                                class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
                             <option value="">-- Select Employee --</option>
                             <option *ngFor="let emp of allEmployees" [value]="emp.username">
                                 {{ emp.name }} ({{ emp.username }})
@@ -1337,36 +1537,36 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Employee Name *</label>
                         <input type="text" [(ngModel)]="newCompetency.employee_name" placeholder="Employee Name" 
-                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                               class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     </div>
                 </div>
             </fieldset>
 
             <!-- Skill Information -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Skill Information *</legend>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Skill Name *</label>
                         <input type="text" [(ngModel)]="newCompetency.skill" placeholder="e.g., Python Programming" 
-                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                               class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Competency Area</label>
                         <input type="text" [(ngModel)]="newCompetency.competency" placeholder="e.g., Technical Skills" 
-                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                               class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     </div>
                 </div>
             </fieldset>
 
             <!-- Expertise Levels -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Expertise Levels *</legend>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Current Expertise *</label>
                         <select [(ngModel)]="newCompetency.current_expertise" 
-                                class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                                class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
                             <option value="">-- Select Level --</option>
                             <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
                         </select>
@@ -1374,7 +1574,7 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Target Expertise *</label>
                         <select [(ngModel)]="newCompetency.target_expertise" 
-                                class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
+                                class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white">
                             <option value="">-- Select Level --</option>
                             <option *ngFor="let level of skillCategoryLevels" [value]="level">{{ level }}</option>
                         </select>
@@ -1383,44 +1583,44 @@
             </fieldset>
 
             <!-- Additional Information -->
-            <fieldset class="border-2 border-slate-200 rounded-xl p-4">
+            <fieldset class="border-2 border-indigo-200 rounded-xl p-4">
                 <legend class="px-2 text-sm font-semibold text-slate-700">Additional Information (Optional)</legend>
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Department</label>
                         <input type="text" [(ngModel)]="newCompetency.department" placeholder="Department" 
-                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                               class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Division</label>
                         <input type="text" [(ngModel)]="newCompetency.division" placeholder="Division" 
-                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                               class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Project</label>
                         <input type="text" [(ngModel)]="newCompetency.project" placeholder="Project" 
-                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                               class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Target Date</label>
                         <input type="date" [(ngModel)]="newCompetency.target_date" 
-                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                               class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Role-Specific Competency</label>
                         <input type="text" [(ngModel)]="newCompetency.role_specific_comp" placeholder="Role-specific competency" 
-                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                               class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-2">Destination</label>
                         <input type="text" [(ngModel)]="newCompetency.destination" placeholder="Destination" 
-                               class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
+                               class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all">
                     </div>
                 </div>
                 <div class="mt-4">
                     <label class="block text-sm font-medium text-slate-700 mb-2">Comments</label>
                     <textarea [(ngModel)]="newCompetency.comments" placeholder="Additional comments..." rows="3" 
-                              class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
+                              class="w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none"></textarea>
                 </div>
             </fieldset>
         </div>
@@ -1436,3 +1636,4 @@
         </div>
     </div>
 </div>
+

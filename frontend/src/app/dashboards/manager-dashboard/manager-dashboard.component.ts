@@ -62,6 +62,7 @@ import { ApiService } from '../../services/api.service';
 import { trigger, style, animate, transition, query, stagger } from '@angular/animations';
 import { ToastService, ToastMessage } from '../../services/toast.service';
 import { NotificationService } from '../../services/notification.service';
+import { ConfirmationDialogService } from '../../services/confirmation-dialog.service';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { TrainingDetail, TrainingRequest, CalendarEvent } from '../../models/training.model';
@@ -632,7 +633,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     private authService: AuthService,
     private toastService: ToastService,
     private apiService: ApiService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    public confirmationDialogService: ConfirmationDialogService
   ) { }
 
   ngOnInit(): void {
@@ -803,10 +805,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     if (!this.manager) return [];
     const skillGapCount: { [key: string]: number } = {};
     this.manager.team.forEach(member => {
-      const evaluation = this.evaluateCoreSkillStatuses(member.skills);
-      evaluation.statusBySkill.forEach((status, skillName) => {
-        if (status === 'Behind') {
-          skillGapCount[skillName] = (skillGapCount[skillName] || 0) + 1;
+      member.skills.forEach(skill => {
+        if (this.getTimelineStatus(skill, member.skills) === 'Behind') {
+          skillGapCount[skill.skill] = (skillGapCount[skill.skill] || 0) + 1;
         }
       });
     });
@@ -817,7 +818,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   getTeamMembersWithGaps(): TeamMember[] {
     if (!this.manager) return [];
-    return this.manager.team.filter(member => this.evaluateCoreSkillStatuses(member.skills).behind > 0);
+    return this.manager.team.filter(member =>
+      member.skills.some(skill => this.getTimelineStatus(skill, member.skills) === 'Behind')
+    );
   }
 
   getTeamProgressByMember(): { member: TeamMember; progress: number }[] {
@@ -2202,13 +2205,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const skillGapCount: { [key: string]: number } = {};
 
     this.manager.team.forEach(member => {
-      const evaluation = this.evaluateCoreSkillStatuses(member.skills);
-      completedCount += evaluation.completed;
-      behindCount += evaluation.behind;
-
-      evaluation.statusBySkill.forEach((status, skillName) => {
-        if (status === 'Behind') {
-          skillGapCount[skillName] = (skillGapCount[skillName] || 0) + 1;
+      member.skills.forEach((skill: Competency) => {
+        const status = this.getTimelineStatus(skill, member.skills);
+        if (status === 'Completed') {
+          completedCount++;
+        } else if (status === 'Behind') {
+          behindCount++;
+          skillGapCount[skill.skill] = (skillGapCount[skill.skill] || 0) + 1;
         }
       });
     });
@@ -2578,8 +2581,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   calculateProgress(skills: Competency[]): number {
-    const evaluation = this.evaluateCoreSkillStatuses(skills);
-    return evaluation.total > 0 ? Math.round((evaluation.completed / evaluation.total) * 100) : 0;
+    const total = skills.length;
+    const completed = skills.filter(s => this.getTimelineStatus(s, skills) === 'Completed').length;
+    return total > 0 ? (completed / total) * 100 : 0;
   }
 
   getTeamProgressPercentage(): number {
@@ -2589,9 +2593,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     let completedSkills = 0;
 
     this.manager.team.forEach(member => {
-      const evaluation = this.evaluateCoreSkillStatuses(member.skills);
-      totalSkills += evaluation.total;
-      completedSkills += evaluation.completed;
+      member.skills.forEach(skill => {
+        totalSkills++;
+        if (this.getTimelineStatus(skill, member.skills) === 'Completed') {
+          completedSkills++;
+        }
+      });
     });
 
     return totalSkills > 0 ? Math.round((completedSkills / totalSkills) * 100) : 0;
@@ -2609,9 +2616,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
     let onTrackCount = 0;
     this.manager.team.forEach(member => {
-      const evaluation = this.evaluateCoreSkillStatuses(member.skills);
-      evaluation.statusBySkill.forEach(status => {
-        if (status === 'On Track') {
+      member.skills.forEach(skill => {
+        if (this.getTimelineStatus(skill, member.skills) === 'On Track') {
           onTrackCount++;
         }
       });
@@ -2626,13 +2632,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const onTrackProgress: number[] = [];
 
     this.manager.team.forEach(member => {
-      const evaluation = this.evaluateCoreSkillStatuses(member.skills);
-      evaluation.statusBySkill.forEach((status, skillName) => {
-        if (status === 'On Track') {
-          const skill = member.skills.find(s => s.skill === skillName);
-          if (skill) {
-            onTrackProgress.push(this.getSkillProgress(skill) || 0);
-          }
+      member.skills.forEach(skill => {
+        if (this.getTimelineStatus(skill, member.skills) === 'On Track') {
+          onTrackProgress.push(this.getSkillProgress(skill) || 0);
         }
       });
     });
@@ -2734,46 +2736,6 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     }
 
     return [skill];
-  }
-
-  private evaluateCoreSkillStatuses(skillCollection: Competency[]): {
-    completed: number;
-    behind: number;
-    total: number;
-    statusBySkill: Map<string, 'Not Started' | 'Behind' | 'On Track' | 'Completed'>;
-  } {
-    const coreSkills = new Set(this.sections.map(s => s.title));
-    const statusBySkill = new Map<string, 'Not Started' | 'Behind' | 'On Track' | 'Completed'>();
-
-    for (const skill of skillCollection) {
-      if (!coreSkills.has(skill.skill)) continue;
-      const status = this.getTimelineStatus(skill, skillCollection);
-      const existing = statusBySkill.get(skill.skill);
-
-      if (status === 'Completed') {
-        statusBySkill.set(skill.skill, 'Completed');
-        continue;
-      }
-
-      if (existing === 'Completed') {
-        continue;
-      }
-
-      if (status === 'Behind') {
-        statusBySkill.set(skill.skill, 'Behind');
-        continue;
-      }
-
-      if (!existing) {
-        statusBySkill.set(skill.skill, status);
-      }
-    }
-
-    const completed = Array.from(statusBySkill.values()).filter(v => v === 'Completed').length;
-    const behind = Array.from(statusBySkill.values()).filter(v => v === 'Behind').length;
-    const total = coreSkills.size;
-
-    return { completed, behind, total, statusBySkill };
   }
 
   /**
@@ -2921,16 +2883,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     return filtered;
   }
 
-  get coreSkillsTotal(): number {
-    return this.sections.length;
-  }
-
   getTeamSkillsMetCount(member: TeamMember): number {
-    return this.evaluateCoreSkillStatuses(member.skills).completed;
+    return member.skills.filter(s => this.getTimelineStatus(s, member.skills) === 'Completed').length;
   }
 
   getTeamSkillsGapCount(member: TeamMember): number {
-    return this.evaluateCoreSkillStatuses(member.skills).behind;
+    return member.skills.filter(s => this.getTimelineStatus(s, member.skills) === 'Behind').length;
   }
 
   getMemberProgressPercentage(member: TeamMember): number {
@@ -4510,6 +4468,78 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     
     return filtered;
   }
+
+  /**
+   * Get the status of a training request for a specific training (for Manager's My Requests view)
+   */
+  getRequestStatus(trainingId: number): 'none' | 'pending' | 'approved' | 'rejected' {
+    const request = this.trainingRequests.find(r => r.training_id === trainingId);
+    return request ? (request.status as 'pending' | 'approved' | 'rejected') : 'none';
+  }
+
+  /**
+   * Get full request details for a training
+   */
+  getRequestDetails(trainingId: number): TrainingRequest | undefined {
+    return this.trainingRequests.find(r => r.training_id === trainingId);
+  }
+
+  /**
+   * Cancel a pending training request (for Manager's My Requests tab)
+   */
+  async cancelEnrollment(training: TrainingDetail): Promise<void> {
+    const request = this.getRequestDetails(training.id);
+    if (!request) {
+      this.toastService.error('Request not found');
+      return;
+    }
+
+    if (request.status !== 'pending') {
+      this.toastService.error('Only pending requests can be cancelled');
+      return;
+    }
+
+    // Show custom confirmation dialog
+    const confirmed = await this.confirmationDialogService.show({
+      title: 'Popkind',
+      message: `Are you sure you want to cancel your enrollment request for "${training.training_name}"?`,
+      okText: 'Cancel Request',
+      cancelText: 'Keep Request'
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const token = this.authService.getToken();
+    if (!token) {
+      this.toastService.error('Authentication error. Please log in again.');
+      return;
+    }
+
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    this.http.delete(
+      this.apiService.trainingRequestCancelUrl(request.id),
+      { headers }
+    ).subscribe({
+      next: () => {
+        // Remove the request from our list
+        this.trainingRequests = this.trainingRequests.filter(r => r.id !== request.id);
+        
+        this.toastService.success(
+          `Enrollment request cancelled for "${training.training_name}"`,
+          'Request Cancelled'
+        );
+      },
+      error: (err) => {
+        console.error('Failed to cancel training request:', err);
+        const errorMessage = err.error?.detail || 'Failed to cancel enrollment request';
+        this.toastService.error(errorMessage);
+      }
+    });
+  }
+
 
   // =====================================================
   // My Badges Methods (Reused from Engineer Dashboard)

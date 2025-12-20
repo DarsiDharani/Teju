@@ -125,6 +125,7 @@ async def load_all_from_excel(excel_file_source: Any, db: AsyncSession):
         await db.execute(text("DELETE FROM training_solution_files"))  # References training_details
         await db.execute(text("DELETE FROM training_requests"))  # References training_details
         await db.execute(text("DELETE FROM training_assignments"))  # References training_details
+        await db.execute(text("DELETE FROM training_recordings"))  # References training_details
         # 4. Now safe to delete training_details
         await db.execute(text("DELETE FROM training_details"))
         # 5. Delete employee_competency (no dependencies on training_details)

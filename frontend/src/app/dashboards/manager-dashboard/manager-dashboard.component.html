@@ -420,7 +420,7 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div @slideFadeIn
-              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-3 space-y-3 section-card">
+              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-3 space-y-3">
               <div class="flex-shrink-0">
                 <h3 class="text-base font-bold text-slate-900 mb-2 cursor-pointer hover:text-sky-600 transition-colors"
                   title="Skills required for your job role" (click)="openSkillsModal('all')"><b>Core Skills</b></h3>
@@ -466,7 +466,7 @@
             </div>
 
             <div @slideFadeIn
-              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-2 flex flex-col h-full section-card">
+              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-2 flex flex-col h-full">
               <div class="flex-shrink-0">
                 <h3 class="text-base font-bold text-slate-900 mb-2"
                   title="Skills you have in addition to your job role."><b>Additional Skills</b></h3>
@@ -496,7 +496,7 @@
 
             <div class="flex flex-col h-full space-y-2">
               <div @slideFadeIn
-                class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-2 flex-shrink-0 section-card">
+                class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-2 flex-shrink-0">
                 <h3 class="text-base font-bold text-slate-900 mb-3"><b>Training Overview</b></h3>
                 <div class="grid grid-cols-3 gap-3 text-center">
                   <button (click)="selectTab('trainingCatalog')"
@@ -524,7 +524,7 @@
               </div>
 
               <div @slideFadeIn
-                class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-2 flex flex-col flex-1 min-h-0 section-card">
+                class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-slate-200/60 p-2 flex flex-col flex-1 min-h-0">
                 <div class="flex-shrink-0">
                   <h3 class="text-base font-bold text-slate-900 mb-2"><b>Upcoming Trainings</b></h3>
                 </div>
@@ -557,7 +557,7 @@
         </div>
 
         <div *ngIf="dashboardView === 'team'" class="space-y-4">
-          <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 section-card">
+          <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4">
             <h3 class="text-lg font-bold text-slate-900 mb-2">Team Skills Matrix</h3>
             <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
               <table class="w-full">
@@ -604,7 +604,7 @@
                     </td>
                     <td class="py-1.5 px-2 text-center">
                       <span class="text-xs font-medium text-slate-600">
-                        {{ coreSkillsTotal }}
+                        {{ member.skills.length }}
                       </span>
                     </td>
                     <td class="py-1.5 px-2 text-center">
@@ -661,7 +661,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             <!-- Team Submissions Section -->
             <div
-              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 flex flex-col max-h-[500px] section-card">
+              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 flex flex-col max-h-[500px]">
               <div class="flex items-center justify-between mb-4 flex-shrink-0">
                 <div class="flex items-center gap-3">
                   <button (click)="fetchTeamSubmissions()"
@@ -786,7 +786,7 @@
               </div>
             </div>
             <div
-              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 flex flex-col max-h-[500px] section-card">
+              class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 p-4 flex flex-col max-h-[500px]">
               <div class="flex items-center justify-between mb-4 flex-shrink-0">
                 <div class="flex items-center gap-3">
                   <button (click)="fetchPendingRequests()"
@@ -1557,13 +1557,13 @@
                 <div class="relative mb-3">
                   <img src="https://ui-avatars.com/api/?name={{member.name}}&background=random&color=fff&size=60"
                     alt="avatar" class="rounded-full h-16 w-16 ring-3 ring-indigo-500 ring-opacity-50">
-                  <span *ngIf="getTeamSkillsMetCount(member) === coreSkillsTotal"
+                  <span *ngIf="getTeamSkillsMetCount(member) === member.skills.length"
                     class="absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4 bg-green-500 text-white rounded-full p-2 text-xs"><i
                       class="fa-solid fa-check"></i></span>
                 </div>
                 <h3 class="font-bold text-xl text-slate-900">{{ member.name }}</h3>
                 <p class="text-sm text-slate-500 mt-1"><span class="font-semibold">{{ getTeamSkillsMetCount(member)
-                  }}</span> out of <span class="font-semibold">{{ coreSkillsTotal }}</span> core skills completed</p>
+                  }}</span> out of <span class="font-semibold">{{ member.skills.length }}</span> skills completed</p>
                 <div class="relative w-24 h-24 my-3 flex items-center justify-center">
                   <svg class="w-full h-full transform -rotate-90">
                     <circle class="text-slate-200" stroke-width="12" stroke="currentColor" fill="transparent" r="42"
@@ -3438,6 +3438,30 @@
                   <strong class="font-semibold text-slate-700">Manager Notes:</strong> {{ request.manager_notes }}
                 </p>
               </div>
+
+              <!-- Cancel Request Button for Pending Requests -->
+              <div *ngIf="request.status === 'pending'" class="mt-3 pt-3 border-t border-slate-200/80 space-y-1">
+                <button disabled class="w-full bg-yellow-100 text-yellow-800 px-3 py-1.5 rounded-lg font-semibold text-xs hover:bg-yellow-100 transition-colors disabled:cursor-not-allowed">
+                  <i class="fa-solid fa-clock mr-1"></i>Request Pending
+                </button>
+                <button (click)="cancelEnrollment(request.training)" class="w-full bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors shadow-md hover:shadow-lg">
+                  <i class="fa-solid fa-trash mr-1"></i>Cancel Request
+                </button>
+              </div>
+
+              <!-- Approved Status -->
+              <div *ngIf="request.status === 'approved'" class="mt-3 pt-3 border-t border-slate-200/80">
+                <button disabled class="w-full bg-green-100 text-green-800 px-3 py-1.5 rounded-lg font-semibold text-xs hover:bg-green-100 transition-colors disabled:cursor-not-allowed">
+                  <i class="fa-solid fa-check mr-1"></i>Approved
+                </button>
+              </div>
+
+              <!-- Rejected Status -->
+              <div *ngIf="request.status === 'rejected'" class="mt-3 pt-3 border-t border-slate-200/80">
+                <button disabled class="w-full bg-red-100 text-red-800 px-3 py-1.5 rounded-lg font-semibold text-xs hover:bg-red-100 transition-colors disabled:cursor-not-allowed mb-1">
+                  <i class="fa-solid fa-times mr-1"></i>Rejected
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -4267,6 +4291,33 @@
       <button (click)="closeCompletedTrainingsModal()"
         class="px-6 py-2.5 font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
         <i class="fa-solid fa-times mr-2"></i>Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Dialog Modal -->
+<div *ngIf="(confirmationDialogService.confirmation$ | async) as confirmation" @fadeIn
+  class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
+  <div @modalScale class="bg-white rounded-2xl shadow-2xl w-full max-w-md m-4" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-slate-50 rounded-t-2xl border-b border-slate-200">
+      <h3 class="text-lg font-bold text-slate-900">{{ confirmation.title }}</h3>
+      <button (click)="confirmationDialogService.cancel()"
+        class="w-8 h-8 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full flex items-center justify-center transition-colors">
+        <i class="fa-solid fa-times text-lg"></i>
+      </button>
+    </div>
+    <div class="p-6">
+      <p class="text-slate-700 text-base mb-6">{{ confirmation.message }}</p>
+    </div>
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 px-6 pb-6">
+      <button (click)="confirmationDialogService.cancel()"
+        class="px-5 py-2.5 font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+        {{ confirmation.cancelText }}
+      </button>
+      <button (click)="confirmationDialogService.confirm()"
+        class="px-5 py-2.5 font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-md hover:shadow-lg">
+        {{ confirmation.okText }}
       </button>
     </div>
   </div>

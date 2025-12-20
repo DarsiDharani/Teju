@@ -241,8 +241,6 @@
 
 /* Prominent section borders for dashboard cards */
 .section-card {
-  border-width: 2px !important;
-  border-style: solid !important;
-  border-color: #0ea5e9 !important; /* Tailwind sky-500 */
+  border: 2px solid rgba(2, 132, 199, 0.35); /* sky-600 at ~35% */
   border-radius: 12px;
 }

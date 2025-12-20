@@ -97,6 +97,10 @@ export class ApiService {
     return this.getUrl(`/training-requests/${id}/respond`);
   }
 
+  trainingRequestCancelUrl(id: number): string {
+    return this.getUrl(`/training-requests/${id}`);
+  }
+
   // Additional skills endpoints
   get additionalSkillsUrl(): string {
     return this.getUrl('/additional-skills/');
@@ -225,6 +229,10 @@ export class ApiService {
   // Admin endpoints
   get adminDashboardUrl(): string {
     return this.getUrl('/data/admin/dashboard');
+  }
+
+  get adminTrainersUrl(): string {
+    return this.getUrl('/data/admin/trainers');
   }
 
   get adminUsersUrl(): string {

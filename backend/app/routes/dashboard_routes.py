@@ -36,6 +36,56 @@ from pydantic import BaseModel
 # Create a single router for both endpoints with a common prefix
 router = APIRouter(prefix="/data", tags=["Dashboard"])
 
+
+@router.get("/admin/trainers")
+async def get_admin_trainers(
+    current_user: dict = Depends(get_current_active_admin),
+    db: AsyncSession = Depends(get_db_async)
+):
+    """Return unique list of trainers (manager or employee flagged as trainer)."""
+    manager_trainers_result = await db.execute(
+        select(func.distinct(ManagerEmployee.manager_empid), ManagerEmployee.manager_name)
+        .where(ManagerEmployee.manager_is_trainer == True)
+    )
+    employee_trainers_result = await db.execute(
+        select(func.distinct(ManagerEmployee.employee_empid), ManagerEmployee.employee_name)
+        .where(ManagerEmployee.employee_is_trainer == True)
+    )
+
+    manager_rows = manager_trainers_result.all()
+    employee_rows = employee_trainers_result.all()
+
+    # Determine which usernames are managers in the mapping table
+    manager_usernames_result = await db.execute(select(func.distinct(ManagerEmployee.manager_empid)))
+    manager_usernames = set(manager_usernames_result.scalars().all())
+
+    trainers_by_username: dict[str, dict] = {}
+    for username, name in manager_rows:
+        if not username:
+            continue
+        trainers_by_username[username] = {
+            "username": username,
+            "name": name or username,
+            "role": "manager" if username in manager_usernames else "employee",
+        }
+
+    for username, name in employee_rows:
+        if not username:
+            continue
+        if username in trainers_by_username:
+            # Prefer a non-empty name if we already have the user from manager list
+            if name and trainers_by_username[username].get("name") in (None, "", username):
+                trainers_by_username[username]["name"] = name
+            continue
+        trainers_by_username[username] = {
+            "username": username,
+            "name": name or username,
+            "role": "manager" if username in manager_usernames else "employee",
+        }
+
+    trainers = sorted(trainers_by_username.values(), key=lambda x: (x["name"] or "", x["username"]))
+    return {"trainers": trainers, "total": len(trainers)}
+
 # Pydantic models for API requests
 class SkillUpdateRequest(BaseModel):
     """Request schema for updating team member skill levels"""
@@ -723,6 +773,14 @@ async def get_admin_dashboard_data(
     
     total_assignments = await db.execute(select(func.count(TrainingAssignment.id)))
     total_assignments_count = total_assignments.scalar() or 0
+
+    # Attendance rate (overall): attended assignments / total assignments
+    # Note: attendance rows may not exist for every assignment until marked.
+    attended_assignments = await db.execute(
+        select(func.count(TrainingAttendance.id)).where(TrainingAttendance.attended == True)
+    )
+    attended_assignments_count = attended_assignments.scalar() or 0
+    attendance_rate = round((attended_assignments_count / total_assignments_count) * 100, 2) if total_assignments_count else 0
     
     total_skills = await db.execute(select(func.count(EmployeeCompetency.id)))
     total_skills_count = total_skills.scalar() or 0
@@ -742,19 +800,15 @@ async def get_admin_dashboard_data(
     )
     employees = employees_count.scalar() or 0
     
-    trainers_result = await db.execute(
-        select(func.count(func.distinct(ManagerEmployee.manager_empid))).where(
-            ManagerEmployee.manager_is_trainer == True
-        )
+    # Active trainers: unique usernames that are flagged as trainer either as manager or employee
+    manager_trainer_usernames_result = await db.execute(
+        select(func.distinct(ManagerEmployee.manager_empid)).where(ManagerEmployee.manager_is_trainer == True)
     )
-    trainers = trainers_result.scalar() or 0
-    
-    emp_trainers_result = await db.execute(
-        select(func.count(func.distinct(ManagerEmployee.employee_empid))).where(
-            ManagerEmployee.employee_is_trainer == True
-        )
+    employee_trainer_usernames_result = await db.execute(
+        select(func.distinct(ManagerEmployee.employee_empid)).where(ManagerEmployee.employee_is_trainer == True)
     )
-    trainers += emp_trainers_result.scalar() or 0
+    trainer_usernames = set(manager_trainer_usernames_result.scalars().all()) | set(employee_trainer_usernames_result.scalars().all())
+    trainers = len({u for u in trainer_usernames if u})
     
     return {
         "admin_name": admin_name,
@@ -765,6 +819,8 @@ async def get_admin_dashboard_data(
             "total_employees": employees,
             "total_trainings": total_trainings_count,
             "total_assignments": total_assignments_count,
+            "attended_assignments": attended_assignments_count,
+            "attendance_rate": attendance_rate,
             "total_skills": total_skills_count,
             "pending_requests": pending_requests_count,
             "active_trainers": trainers

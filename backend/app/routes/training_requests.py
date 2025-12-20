@@ -350,6 +350,58 @@ async def get_pending_requests(
     
     return requests
 
+@router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def cancel_training_request(
+    request_id: int,
+    db: AsyncSession = Depends(get_db_async),
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Endpoint for employees to cancel pending training requests before manager approval.
+    Only pending requests can be cancelled. Approved or rejected requests cannot be cancelled.
+    """
+    current_username = current_user.get("username")
+    if not current_username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
+
+    # Get the request
+    stmt = select(TrainingRequest).where(TrainingRequest.id == request_id)
+    result = await db.execute(stmt)
+    request = result.scalar_one_or_none()
+    
+    if not request:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Training request not found"
+        )
+
+    # Verify the current user is the employee who made this request
+    if request.employee_empid != current_username:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to cancel this request"
+        )
+
+    # Check if request is still pending
+    if request.status != 'pending':
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot cancel a request that is {request.status}. Only pending requests can be cancelled."
+        )
+
+    # Delete the request
+    await db.delete(request)
+    await db.commit()
+
+    logger.info(f"Training request {request_id} cancelled by {current_username}")
+
+    # No response body for DELETE (204 No Content)
+    return None
+
+
 @router.put("/{request_id}/respond", response_model=TrainingRequestResponse)
 async def respond_to_request(
     request_id: int,
