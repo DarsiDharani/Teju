@@ -278,6 +278,10 @@ export class EngineerDashboardComponent implements OnInit {
   
   // Calendar view - Track selected training from calendar to highlight in list view
   selectedTrainingFromCalendar: number | null = null;
+
+  // Calendar -> List focus mode (show only the clicked training in list view)
+  focusedCatalogTrainingId: number | null = null;
+  focusedAssignedTrainingId: number | null = null;
   
   // Attendance success popup
   showAttendanceSuccessPopup: boolean = false;
@@ -918,10 +922,23 @@ export class EngineerDashboardComponent implements OnInit {
    * Handle clicking on a training event in the calendar view
    * Switches to list view and highlights the corresponding training
    */
-  onCalendarEventClick(event: CalendarEvent): void {
+  onCalendarEventClick(event: CalendarEvent): void;
+  onCalendarEventClick(domEvent: MouseEvent, event: CalendarEvent): void;
+  onCalendarEventClick(arg1: MouseEvent | CalendarEvent, arg2?: CalendarEvent): void {
+    const domEvent = (arg1 instanceof MouseEvent ? arg1 : undefined);
+    const event = (arg1 instanceof MouseEvent ? arg2 : arg1);
+    if (!event) return;
+    try {
+      domEvent?.preventDefault();
+      domEvent?.stopPropagation();
+    } catch {}
+
     if (event.trainingId) {
       // Store the selected training ID
       this.selectedTrainingFromCalendar = event.trainingId;
+
+      // Focus list view on this one item
+      this.focusedAssignedTrainingId = event.trainingId;
       
       // Ensure filters don't hide the selected training
       this.assignedSearch = '';
@@ -933,7 +950,7 @@ export class EngineerDashboardComponent implements OnInit {
       this.setAssignedTrainingsView('list');
 
       // Attempt smooth scroll with retries until the card renders
-      this.scrollToTrainingCard(event.trainingId);
+      this.scrollToTrainingCard(event.trainingId, 120, 100);
     }
   }
 
@@ -941,9 +958,22 @@ export class EngineerDashboardComponent implements OnInit {
    * Handle clicking on a training event in the Training Catalog calendar
    * Switches to catalog list view and highlights the corresponding training
    */
-  onCatalogCalendarEventClick(event: CalendarEvent): void {
+  onCatalogCalendarEventClick(event: CalendarEvent): void;
+  onCatalogCalendarEventClick(domEvent: MouseEvent, event: CalendarEvent): void;
+  onCatalogCalendarEventClick(arg1: MouseEvent | CalendarEvent, arg2?: CalendarEvent): void {
+    const domEvent = (arg1 instanceof MouseEvent ? arg1 : undefined);
+    const event = (arg1 instanceof MouseEvent ? arg2 : arg1);
+    if (!event) return;
+    try {
+      domEvent?.preventDefault();
+      domEvent?.stopPropagation();
+    } catch {}
+
     if (event.trainingId) {
       this.selectedTrainingFromCalendar = event.trainingId;
+
+      // Focus list view on this one item
+      this.focusedCatalogTrainingId = event.trainingId;
       // Clear catalog filters so the selected training is visible
       this.trainingSearch = '';
       this.trainingSkillFilter = [];
@@ -951,7 +981,7 @@ export class EngineerDashboardComponent implements OnInit {
       this.trainingDateFilter = '';
 
       this.setTrainingCatalogView('list');
-      this.scrollToTrainingCard(event.trainingId);
+      this.scrollToTrainingCard(event.trainingId, 120, 100);
     }
   }
 
@@ -1770,6 +1800,12 @@ export class EngineerDashboardComponent implements OnInit {
 
   get filteredTrainings(): TrainingDetail[] {
     let list = [...(this.allTrainings || [])];
+
+    // If a training was selected from the calendar, show ONLY that training in list view.
+    if (this.focusedCatalogTrainingId !== null) {
+      return list.filter(t => t.id === this.focusedCatalogTrainingId);
+    }
+
     if (this.trainingSearch && this.trainingSearch.trim()) {
       const q = this.trainingSearch.trim().toLowerCase();
       list = list.filter(t =>
@@ -1945,6 +1981,12 @@ export class EngineerDashboardComponent implements OnInit {
 
   get filteredAssignedTrainings(): TrainingDetail[] {
       let list = [...(this.assignedTrainings || [])];
+
+      // If a training was selected from the calendar, show ONLY that training in list view.
+      if (this.focusedAssignedTrainingId !== null) {
+        return list.filter(t => t.id === this.focusedAssignedTrainingId);
+      }
+
       if (this.assignedSearch && this.assignedSearch.trim()) {
         const q = this.assignedSearch.trim().toLowerCase();
         list = list.filter(t =>
@@ -2575,6 +2617,7 @@ export class EngineerDashboardComponent implements OnInit {
     this.trainingSkillFilter = [];
     this.trainingLevelFilter = [];
     this.trainingDateFilter = '';
+    this.focusedCatalogTrainingId = null;
   }
 
   resetAssignedTrainingFilters(): void {
@@ -2582,12 +2625,14 @@ export class EngineerDashboardComponent implements OnInit {
     this.assignedSkillFilter = [];
     this.assignedLevelFilter = [];
     this.assignedDateFilter = '';
+    this.focusedAssignedTrainingId = null;
   }
   
   // --- View Toggle Logic ---
   setTrainingCatalogView(view: 'list' | 'calendar'): void {
     this.trainingCatalogView = view;
     if (view === 'calendar') {
+        this.focusedCatalogTrainingId = null;
         this.generateCalendar();
     }
   }
@@ -2595,6 +2640,7 @@ export class EngineerDashboardComponent implements OnInit {
   setAssignedTrainingsView(view: 'list' | 'calendar'): void {
     this.assignedTrainingsView = view;
     if (view === 'calendar') {
+        this.focusedAssignedTrainingId = null;
         this.generateCalendar();
     }
   }
@@ -3416,7 +3462,7 @@ export class EngineerDashboardComponent implements OnInit {
     /**
      * Returns weighted actual progress calculated by backend.
      * 
-     * Formula: Weighted Actual Progress = (Training × 30%) + (Assignment × 40%) + (Feedback × 30%)
+     * Formula: Weighted Actual Progress = (Training × 10%) + (Assignment × 10%) + (Feedback × 80%)
      * 
      * Where:
      * - Training: 100% if attended, 0% if not

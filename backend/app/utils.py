@@ -134,12 +134,12 @@ def calculate_weighted_actual_progress(
 ) -> int:
     """
     Calculate weighted actual progress based on three components:
-    - Training Completion (30%): Attendance status
-    - Assignment Score (40%): Quiz/assignment performance
-    - Manager Feedback (30%): Average of manager performance ratings
+    - Training Completion (10%): Attendance status
+    - Assignment Score (10%): Quiz/assignment performance
+    - Manager Feedback (80%): Average of manager performance ratings
     
     Weighted Formula:
-    Actual Progress = (Training × 30%) + (Assignment × 40%) + (Feedback × 30%)
+    Actual Progress = (Training × 10%) + (Assignment × 10%) + (Feedback × 80%)
     
     Args:
         training_attended: Boolean indicating if training was attended
@@ -152,26 +152,26 @@ def calculate_weighted_actual_progress(
     Examples:
         # Full completion
         >>> calculate_weighted_actual_progress(True, 95, [5, 5, 4, 5])
-        96  # (100*0.3) + (95*0.4) + ((5+5+4+5)/4*20*0.3) = 30 + 38 + 28 = 96
+        96  # (100*0.10) + (95*0.10) + ((5+5+4+5)/4/5*100*0.80) = 10 + 10 + 76 = 96
         
         # Partial completion
         >>> calculate_weighted_actual_progress(True, 70, [3, 3, 2])
-        65  # (100*0.3) + (70*0.4) + ((3+3+2)/3*20*0.3) = 30 + 28 + 7 = 65
+        55  # (100*0.10) + (70*0.10) + ((3+3+2)/3/5*100*0.80) = 10 + 7 + 38 = 55
         
         # No assignment
         >>> calculate_weighted_actual_progress(True, None, [4, 4, 4])
-        80  # (100*0.3) + (0*0.4) + ((4+4+4)/3*20*0.3) = 30 + 0 + 50 = 80
+        74  # (100*0.10) + (0*0.10) + ((4+4+4)/3/5*100*0.80) = 10 + 0 + 64 = 74
     """
-    # Component 1: Training Completion (30% weightage)
+    # Component 1: Training Completion (10% weightage)
     # 100% if attended, 0% if not
     training_score = 100 if training_attended else 0
-    training_contribution = training_score * 0.30
+    training_contribution = training_score * 0.10
     
-    # Component 2: Assignment Score (40% weightage)
+    # Component 2: Assignment Score (10% weightage)
     # Use provided score (0-100) or 0 if not submitted
-    assignment_contribution = (assignment_score if assignment_score is not None else 0) * 0.40
+    assignment_contribution = (assignment_score if assignment_score is not None else 0) * 0.10
     
-    # Component 3: Manager Feedback (30% weightage)
+    # Component 3: Manager Feedback (80% weightage)
     # Average feedback ratings converted from 1-5 scale to 0-100 scale
     # Formula: (rating / 5) * 100 to convert single rating to percentage
     feedback_contribution = 0
@@ -179,7 +179,7 @@ def calculate_weighted_actual_progress(
         avg_feedback_rating = sum(manager_feedback_ratings) / len(manager_feedback_ratings)
         # Convert from 1-5 scale to 0-100 scale: (rating / 5) * 100
         feedback_percentage = (avg_feedback_rating / 5) * 100
-        feedback_contribution = feedback_percentage * 0.30
+        feedback_contribution = feedback_percentage * 0.80
     
     # Calculate final weighted actual progress
     final_progress = training_contribution + assignment_contribution + feedback_contribution

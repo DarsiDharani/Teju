@@ -453,14 +453,14 @@
                   <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
                     <circle cx="60" cy="60" r="54" stroke-width="10" fill="none" class="stroke-slate-200/70" />
                     <circle cx="60" cy="60" r="54" stroke-width="10" fill="none"
-                      [attr.stroke]="getAvgProgressOnTrack() >= 100 ? '#10b981' : '#0ea5e9'"
+                      [attr.stroke]="getPersonalAvgProgressOnTrack() >= 100 ? '#10b981' : '#0ea5e9'"
                       [attr.stroke-dasharray]="339.29"
-                      [attr.stroke-dashoffset]="339.29 - (339.29 * getAvgProgressOnTrack() / 100)"
+                      [attr.stroke-dashoffset]="339.29 - (339.29 * getPersonalAvgProgressOnTrack() / 100)"
                       class="transition-all duration-1000 ease-out" stroke-linecap="round"></circle>
                   </svg>
                   <div class="absolute inset-0 flex items-center justify-center">
                     <div class="text-center">
-                      <div class="text-xl font-extrabold text-slate-900">{{ getAvgProgressOnTrack() }}%</div>
+                      <div class="text-xl font-extrabold text-slate-900">{{ getPersonalAvgProgressOnTrack() }}%</div>
                       <p class="text-[10px] text-slate-500 font-medium">On Track</p>
                     </div>
                   </div>
@@ -469,8 +469,8 @@
                   <h3 class="text-base font-bold text-slate-900 mb-1 text-center sm:text-left"><b>Skills On Track</b>
                   </h3>
                   <p class="text-sm text-slate-600 text-center sm:text-left"><span
-                      class="font-bold text-slate-800">{{ getTeamSkillsOnTrack() }}</span> skills on track with <span
-                      class="font-bold text-slate-800">{{ getAvgProgressOnTrack() }}%</span> average progress</p>
+                      class="font-bold text-slate-800">{{ getPersonalSkillsOnTrack() }}</span> skills on track with <span
+                      class="font-bold text-slate-800">{{ getPersonalAvgProgressOnTrack() }}%</span> average progress</p>
                 </div>
               </div>
             </div>
@@ -591,7 +591,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let member of manager?.team || []"
+                  <tr *ngFor="let member of (manager && manager.team ? manager.team : [])"
                     class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                     <td class="py-1.5 px-2">
                       <div class="flex items-center gap-1.5">
@@ -630,7 +630,7 @@
                       </div>
                     </td>
                   </tr>
-                  <tr *ngIf="!manager?.team || manager.team.length === 0" class="border-b border-slate-100">
+                  <tr *ngIf="!manager || !manager.team || manager.team.length === 0" class="border-b border-slate-100">
                     <td colspan="5" class="py-6 text-center text-slate-500">
                       <i class="fa-solid fa-users text-xl mb-2 block"></i>
                       <p class="text-xs">No team members found</p>
@@ -1598,11 +1598,11 @@
                       cx="48" cy="48" />
                     <circle class="text-cyan-500" stroke-width="12" stroke-linecap="round" stroke="currentColor"
                       fill="transparent" r="42" cx="48" cy="48" [style.stroke-dasharray]="2 * 3.14 * 42"
-                      [style.stroke-dashoffset]="(2 * 3.14 * 42) - (2 * 3.14 * 42 * (calculateProgress(member.skills) / 100))"
+                      [style.stroke-dashoffset]="(2 * 3.14 * 42) - (2 * 3.14 * 42 * (getMemberProgressPercentage(member) / 100))"
                       style="transition: stroke-dashoffset 0.5s ease-in-out;">
                     </circle>
                   </svg>
-                  <span class="absolute text-2xl font-bold text-slate-800">{{ calculateProgress(member.skills) |
+                  <span class="absolute text-2xl font-bold text-slate-800">{{ getMemberProgressPercentage(member) |
                     number:'1.0-0' }}%</span>
                 </div>
               </div>
@@ -1636,6 +1636,10 @@
                         Competency</th>
                       <th scope="col"
                         class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                        Progress
+                      </th>
+                      <th scope="col"
+                        class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                         Current
                         Level</th>
                       <th scope="col"
@@ -1657,6 +1661,21 @@
                           <div class="text-sm font-semibold text-slate-900">{{ skill.skill }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{{ skill.competency }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                          <div class="min-w-[180px]">
+                            <div class="flex items-center justify-between mb-1">
+                              <span class="text-[10px] font-semibold text-slate-600">Exp: {{ getExpectedProgress(skill, selectedTeamMember.skills) }}% • Act: {{ getSkillProgress(skill) }}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner relative border border-slate-300 progress-track">
+                              <div class="progress-expected"
+                                [style.--expected-width.%]="getExpectedProgress(skill, selectedTeamMember.skills)">
+                              </div>
+                              <div class="progress-actual"
+                                [style.width.%]="getSkillProgress(skill)">
+                              </div>
+                            </div>
+                          </div>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                           <span *ngIf="!isEditingSkill(selectedTeamMember.id, i)">{{ skill.current_expertise }}</span>
                           <select *ngIf="isEditingSkill(selectedTeamMember.id, i)"
@@ -1877,7 +1896,7 @@
                   <div *ngFor="let event of getEventForDate(day, allTrainingsCalendarEvents)"
                       class="absolute top-9 left-1 right-1 p-1 text-[10px] bg-blue-100 text-blue-900 rounded cursor-pointer leading-tight shadow-sm hover:bg-blue-200 hover:ring-2 hover:ring-blue-400 z-10 transition-all duration-200"
                       [title]="event.title + ' - by ' + event.trainer"
-                      (click)="onCatalogCalendarEventClick(event)">
+                      (click)="onCatalogCalendarEventClick($event, event)">
                       <p class="font-bold truncate"><i class="fa-solid fa-circle text-blue-500 text-[6px] mr-1 align-middle"></i>{{ event.title }}</p>
                   </div>
               </div>
@@ -3409,7 +3428,7 @@
                   *ngFor="let event of getEventForDate(day, assignedTrainingsCalendarEvents); trackBy: trackByEventId"
                   class="absolute top-9 left-1 right-1 p-1 text-xs bg-rose-100 text-rose-900 rounded cursor-pointer leading-tight shadow-sm hover:bg-rose-200 hover:ring-2 hover:ring-rose-400 z-10 transition-all duration-200"
                   [title]="event.title + ' - by ' + event.trainer"
-                  (click)="onCalendarEventClick(event)">
+                  (click)="onCalendarEventClick($event, event)">
                   <p class="font-bold truncate">
                     <i class="fa-solid fa-circle text-rose-500 text-xs mr-1 align-middle"></i>{{ event.title }}
                   </p>

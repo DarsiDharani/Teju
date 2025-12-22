@@ -33,6 +33,7 @@ from app.models import (
 )
 from app.schemas import TrainingCreate, TrainingResponse
 from app.auth_utils import get_password_hash
+from app.routes.dashboard_routes import get_weighted_actual_progress_for_skill
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -642,7 +643,7 @@ async def get_all_competencies(
     current_user: dict = Depends(get_current_active_admin),
     db: AsyncSession = Depends(get_db_async)
 ):
-    """Get all competencies (system-wide)"""
+    """Get all competencies (system-wide) with enriched timeline status data"""
     query = select(EmployeeCompetency)
     
     if employee_empid:
@@ -653,19 +654,58 @@ async def get_all_competencies(
     competencies_result = await db.execute(query)
     competencies = competencies_result.scalars().all()
     
+    def to_iso(val):
+        """Convert date/datetime to ISO string"""
+        if val is None:
+            return None
+        if isinstance(val, str):
+            try:
+                return datetime.fromisoformat(val).date().isoformat()
+            except Exception:
+                return val
+        if isinstance(val, datetime):
+            return val.date().isoformat()
+        if isinstance(val, date):
+            return val.isoformat()
+        return None
+    
     competencies_list = []
     for comp in competencies:
-        # Determine status
-        current = comp.current_expertise or ""
-        target = comp.target_expertise or ""
-        status_val = "Error"
-        if current and target:
-            try:
-                current_num = int(current.replace("L", "")) if current.startswith("L") else 0
-                target_num = int(target.replace("L", "")) if target.startswith("L") else 0
-                status_val = "Met" if current_num >= target_num else "Gap"
-            except:
-                status_val = "Error"
+        # Get assignment timeline data for this employee-skill combo
+        assignment_map = {}
+        assignments_result = await db.execute(
+            select(
+                TrainingAssignment.id,
+                TrainingAssignment.training_id,
+                TrainingAssignment.assignment_date,
+                TrainingAssignment.target_date,
+                TrainingDetail.skill,
+                TrainingDetail.competency
+            ).join(
+                TrainingDetail,
+                TrainingDetail.id == TrainingAssignment.training_id
+            ).where(
+                TrainingAssignment.employee_empid == comp.employee_empid,
+                TrainingDetail.skill == comp.skill
+            )
+        )
+        assignments_data = assignments_result.all()
+        
+        # Use earliest assignment date and latest target date
+        if assignments_data:
+            assignment_dates = [a[2] for a in assignments_data if a[2]]
+            target_dates = [a[3] for a in assignments_data if a[3]]
+            assignment_map = {
+                "assignment_start_date": to_iso(min(assignment_dates)) if assignment_dates else None,
+                "target_completion_date": to_iso(max(target_dates)) if target_dates else None
+            }
+        
+        # Calculate weighted actual progress (same as engineer endpoint)
+        weighted_progress = await get_weighted_actual_progress_for_skill(
+            comp.employee_empid,
+            comp.skill,
+            db
+        )
         
         competencies_list.append({
             "id": comp.id,
@@ -675,14 +715,18 @@ async def get_all_competencies(
             "competency": comp.competency,
             "current_expertise": comp.current_expertise,
             "target_expertise": comp.target_expertise,
-            "status": status_val,
+            "status": "legacy",  # No longer used; kept for backward compatibility
             "department": comp.department,
             "division": comp.division,
             "project": comp.project,
             "role_specific_comp": comp.role_specific_comp,
             "destination": comp.destination,
             "comments": comp.comments,
-            "target_date": comp.target_date.isoformat() if comp.target_date else None
+            "target_date": to_iso(comp.target_date),
+            # Timeline-based fields for admin to calculate timeline status (same as engineer)
+            "weighted_actual_progress": weighted_progress,
+            "assignment_start_date": assignment_map.get("assignment_start_date"),
+            "target_completion_date": assignment_map.get("target_completion_date")
         })
     
     return {"competencies": competencies_list, "total": len(competencies_list)}

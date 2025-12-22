@@ -390,6 +390,10 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   
   // Calendar view - Track selected training from calendar to highlight in list view
   selectedTrainingFromCalendar: number | null = null;
+
+  // Calendar -> List focus mode (show only the clicked training in list view)
+  focusedCatalogTrainingId: number | null = null;
+  focusedAssignedTrainingId: number | null = null;
   
   private _myTrainingsCache: TrainingDetail[] = [];
   private _myTrainingsCacheKey: string = '';
@@ -857,6 +861,23 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     const totalSkills = this.manager.skills.length;
     const metSkills = this.getMySkillsMetCount();
     return totalSkills > 0 ? Math.round((metSkills / totalSkills) * 100) : 0;
+  }
+
+  getPersonalSkillsOnTrack(): number {
+    const skills = this.manager?.skills || [];
+    if (skills.length === 0) return 0;
+    return skills.filter(skill => this.getTimelineStatus(skill, skills) === 'On Track').length;
+  }
+
+  getPersonalAvgProgressOnTrack(): number {
+    const skills = this.manager?.skills || [];
+    if (skills.length === 0) return 0;
+
+    const onTrackSkills = skills.filter(skill => this.getTimelineStatus(skill, skills) === 'On Track');
+    if (onTrackSkills.length === 0) return 0;
+
+    const totalProgress = onTrackSkills.reduce((sum, skill) => sum + (this.getSkillProgress(skill) || 0), 0);
+    return Math.round(totalProgress / onTrackSkills.length);
   }
 
   getUpcomingPersonalTrainings(): TrainingDetail[] {
@@ -1967,7 +1988,20 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
     this.http.get<TrainingDetail[]>(this.apiService.trainingsUrl, { headers }).subscribe({
       next: (response) => {
-        this.allTrainings = response;
+        // Keep IDs consistent between:
+        // - calendar events (allTrainingsCalendarEvents)
+        // - list view cards (filteredCatalog uses trainingCatalog)
+        // by grouping duplicates and excluding recorded trainings the same way.
+        const groupedDataRaw = this.groupDuplicateTrainings(response || []);
+        const groupedData = (groupedDataRaw || []).filter(t => {
+          const tt = (t.training_type || '').toString().toLowerCase();
+          const hasLecture = !!(t.lecture_url && t.lecture_url.toString().trim().length > 0);
+          return tt !== 'recorded' && !hasLecture;
+        });
+
+        this.allTrainings = groupedData;
+        // Keep catalog list and calendar in sync even if this method runs after fetchTrainingCatalog()
+        this.trainingCatalog = groupedData;
         // Clear cache when trainings are updated
         this._myTrainingsCache = [];
         this._myTrainingsCacheKey = '';
@@ -2035,6 +2069,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   get filteredCatalog(): TrainingDetail[] {
     let list = [...(this.trainingCatalog || [])];
+
+    // Calendar focus mode: show only the selected training
+    if (this.focusedCatalogTrainingId !== null) {
+      return list.filter(t => t.id === this.focusedCatalogTrainingId);
+    }
+
     if (this.catalogSearch && this.catalogSearch.trim()) {
       const q = this.catalogSearch.trim().toLowerCase();
       list = list.filter(t =>
@@ -2581,27 +2621,59 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   calculateProgress(skills: Competency[]): number {
-    const total = skills.length;
-    const completed = skills.filter(s => this.getTimelineStatus(s, skills) === 'Completed').length;
-    return total > 0 ? (completed / total) * 100 : 0;
+    // Team Skills overview should reflect the same Actual% each user sees in My Skills.
+    // To avoid overweighting skills that have multiple levels, aggregate by skill name first.
+    if (!skills || skills.length === 0) return 0;
+
+    const groups = new Map<string, Competency[]>();
+    for (const skill of skills) {
+      const key = (skill?.skill || '').trim();
+      if (!key) continue;
+      const existing = groups.get(key);
+      if (existing) {
+        existing.push(skill);
+      } else {
+        groups.set(key, [skill]);
+      }
+    }
+
+    const perSkillAverages: number[] = [];
+    for (const groupedSkills of groups.values()) {
+      const values = groupedSkills
+        .map(s => this.getSkillProgress(s))
+        .filter(v => Number.isFinite(v));
+
+      if (values.length === 0) continue;
+      const sum = values.reduce((acc, v) => acc + v, 0);
+      perSkillAverages.push(sum / values.length);
+    }
+
+    if (perSkillAverages.length === 0) return 0;
+    const total = perSkillAverages.reduce((acc, v) => acc + v, 0);
+    return Math.round(total / perSkillAverages.length);
   }
 
   getTeamProgressPercentage(): number {
     if (!this.manager?.team || this.manager.team.length === 0) return 0;
 
-    let totalSkills = 0;
-    let completedSkills = 0;
+    // Match Engineer dashboard ring: average progress across "On Track" skills.
+    const memberProgress = this.manager.team
+      .map(member => this.getMemberAvgProgressOnTrack(member))
+      .filter(v => Number.isFinite(v));
 
-    this.manager.team.forEach(member => {
-      member.skills.forEach(skill => {
-        totalSkills++;
-        if (this.getTimelineStatus(skill, member.skills) === 'Completed') {
-          completedSkills++;
-        }
-      });
-    });
+    if (memberProgress.length === 0) return 0;
+    const total = memberProgress.reduce((acc, v) => acc + v, 0);
+    return Math.round(total / memberProgress.length);
+  }
 
-    return totalSkills > 0 ? Math.round((completedSkills / totalSkills) * 100) : 0;
+  getMemberAvgProgressOnTrack(member: TeamMember): number {
+    if (!member?.skills || member.skills.length === 0) return 0;
+
+    const onTrackSkills = member.skills.filter(skill => this.getTimelineStatus(skill, member.skills) === 'On Track');
+    if (onTrackSkills.length === 0) return 0;
+
+    const totalProgress = onTrackSkills.reduce((sum, skill) => sum + (this.getSkillProgress(skill) || 0), 0);
+    return Math.round(totalProgress / onTrackSkills.length);
   }
 
   getMySkillsMetCount(): number {
@@ -2711,7 +2783,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     /**
      * Returns weighted actual progress calculated by backend.
      * 
-     * Formula: Weighted Actual Progress = (Training × 30%) + (Assignment × 40%) + (Feedback × 30%)
+     * Formula: Weighted Actual Progress = (Training × 10%) + (Assignment × 10%) + (Feedback × 80%)
      * 
      * Where:
      * - Training: 100% if attended, 0% if not
@@ -2747,8 +2819,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
    */
   getExpectedProgress(skill: Competency, skillCollection?: Competency[]): number {
     // Get all levels of this skill for the same owner
+    const skillKey = (skill?.skill || '').trim().toLowerCase();
     const skillsWithSameName = this.resolveSkillCollection(skill, skillCollection)
-      .filter((s: Competency) => s.skill === skill.skill);
+      .filter((s: Competency) => (s?.skill || '').trim().toLowerCase() === skillKey);
 
     // Calculate expected progress for each level
     const progressValues: number[] = [];
@@ -2892,7 +2965,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   getMemberProgressPercentage(member: TeamMember): number {
-    return this.calculateProgress(member.skills);
+    return this.getMemberAvgProgressOnTrack(member);
   }
 
   getTotalTeamSkillsCount(): number {
@@ -3087,6 +3160,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   get filteredAssignedTrainings(): TrainingDetail[] {
     let list = [...(this.assignedTrainings || [])];
+
+    // Calendar focus mode: show only the selected training
+    if (this.focusedAssignedTrainingId !== null) {
+      return list.filter(t => t.id === this.focusedAssignedTrainingId);
+    }
+
     if (this.assignedSearch && this.assignedSearch.trim()) {
       const q = this.assignedSearch.trim().toLowerCase();
       list = list.filter(t =>
@@ -3376,6 +3455,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.catalogTypeFilter = [];
     this.catalogCategoryFilter = [];
     this.catalogDateFilter = '';
+    this.focusedCatalogTrainingId = null;
   }
 
   resetAssignedTrainingFilters(): void {
@@ -3383,12 +3463,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.assignedSkillFilter = [];
     this.assignedLevelFilter = [];
     this.assignedDateFilter = '';
+    this.focusedAssignedTrainingId = null;
   }
 
   // --- View Toggle Logic ---
   setTrainingCatalogView(view: 'list' | 'calendar'): void {
     this.trainingCatalogView = view;
     if (view === 'calendar') {
+      this.focusedCatalogTrainingId = null;
       this.generateCalendar();
     }
   }
@@ -3396,6 +3478,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   setAssignedTrainingsView(view: 'list' | 'calendar'): void {
     this.assignedTrainingsView = view;
     if (view === 'calendar') {
+      this.focusedAssignedTrainingId = null;
       this.generateCalendar();
     }
   }
@@ -4146,10 +4229,23 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
    * Handle clicking on a training event in the calendar view
    * Switches to list view and highlights the corresponding training
    */
-  onCalendarEventClick(event: CalendarEvent): void {
+  onCalendarEventClick(event: CalendarEvent): void;
+  onCalendarEventClick(domEvent: MouseEvent, event: CalendarEvent): void;
+  onCalendarEventClick(arg1: MouseEvent | CalendarEvent, arg2?: CalendarEvent): void {
+    const domEvent = (arg1 instanceof MouseEvent ? arg1 : undefined);
+    const event = (arg1 instanceof MouseEvent ? arg2 : arg1);
+    if (!event) return;
+    try {
+      domEvent?.preventDefault();
+      domEvent?.stopPropagation();
+    } catch {}
+
     if (event.trainingId) {
       // Store the selected training ID
       this.selectedTrainingFromCalendar = event.trainingId;
+
+      // Focus list view on this one item
+      this.focusedAssignedTrainingId = event.trainingId;
       
       // Ensure filters don't hide the selected training
       this.assignedSearch = '';
@@ -4161,7 +4257,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       this.setAssignedTrainingsView('list');
 
       // Attempt smooth scroll with retries until the card renders
-      this.scrollToTrainingCard(event.trainingId);
+      this.scrollToTrainingCard(event.trainingId, 120, 100);
     }
   }
 
@@ -4169,9 +4265,22 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
    * Handle clicking on a training event in the Training Catalog calendar
    * Switches to catalog list view and highlights the corresponding training
    */
-  onCatalogCalendarEventClick(event: CalendarEvent): void {
+  onCatalogCalendarEventClick(event: CalendarEvent): void;
+  onCatalogCalendarEventClick(domEvent: MouseEvent, event: CalendarEvent): void;
+  onCatalogCalendarEventClick(arg1: MouseEvent | CalendarEvent, arg2?: CalendarEvent): void {
+    const domEvent = (arg1 instanceof MouseEvent ? arg1 : undefined);
+    const event = (arg1 instanceof MouseEvent ? arg2 : arg1);
+    if (!event) return;
+    try {
+      domEvent?.preventDefault();
+      domEvent?.stopPropagation();
+    } catch {}
+
     if (event.trainingId) {
       this.selectedTrainingFromCalendar = event.trainingId;
+
+      // Focus list view on this one item
+      this.focusedCatalogTrainingId = event.trainingId;
       // Clear catalog filters so the selected training is visible
       this.catalogSearch = '';
       this.catalogTypeFilter = [];
@@ -4179,7 +4288,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       this.catalogDateFilter = '';
 
       this.setTrainingCatalogView('list');
-      this.scrollToTrainingCard(event.trainingId);
+      this.scrollToTrainingCard(event.trainingId, 120, 100);
     }
   }
 

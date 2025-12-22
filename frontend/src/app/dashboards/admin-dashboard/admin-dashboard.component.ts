@@ -200,6 +200,7 @@ export class AdminDashboardComponent implements OnInit {
   trainingsLoading: boolean = false;
   trainingSearch: string = '';
   trainingSkillFilter: string = '';
+  trainingTypeView: 'all' | 'recorded' | 'classroom' = 'all';
   showCreateTrainingModal: boolean = false;
   showEditTrainingModal: boolean = false;
   showTrainingDetailModal: boolean = false;
@@ -425,6 +426,91 @@ export class AdminDashboardComponent implements OnInit {
 
   asAny(val: any): any {
     return val;
+  }
+
+  // --- Timeline-based status helpers (mirrors engineer dashboard My Skills) ---
+  // Backend now provides: weighted_actual_progress, assignment_start_date, target_completion_date
+  
+  private toDate(val?: string | Date | null): Date | null {
+    if (!val) return null;
+    try {
+      if (val instanceof Date) return val;
+      return new Date(val);
+    } catch {
+      return null;
+    }
+  }
+
+  private getActualProgress(comp: any): number {
+    // Use weighted_actual_progress from backend
+    if (typeof comp.weighted_actual_progress === 'number') {
+      return Math.max(0, Math.min(100, comp.weighted_actual_progress));
+    }
+    return 0;
+  }
+
+  private getExpectedProgress(comp: any): number {
+    const now = new Date();
+    const start = this.toDate(comp.assignment_start_date);
+    const target = this.toDate(comp.target_completion_date || comp.target_date);
+
+    if (!start || !target || isNaN(start.getTime()) || isNaN(target.getTime()) || target <= start) {
+      return 0;
+    }
+
+    const totalMs = target.getTime() - start.getTime();
+    const elapsedMs = Math.min(Math.max(now.getTime() - start.getTime(), 0), totalMs);
+    const expected = Math.round((elapsedMs / totalMs) * 100);
+    return Math.max(0, Math.min(100, expected));
+  }
+
+  getTimelineStatus(comp: any): 'Not Started' | 'Behind' | 'On Track' | 'Completed' {
+    const actual = this.getActualProgress(comp);
+    const now = new Date();
+    const assignmentStart = this.toDate(comp.assignment_start_date);
+    const target = this.toDate(comp.target_completion_date || comp.target_date);
+
+    // Not Started: no progress and assignment hasn't started yet
+    if (actual <= 0 && assignmentStart && now <= assignmentStart) {
+      return 'Not Started';
+    }
+
+    // Completed: 100% progress
+    if (actual >= 100) {
+      return 'Completed';
+    }
+
+    // No timeline data: fallback
+    if (!assignmentStart || !target || isNaN(assignmentStart.getTime()) || isNaN(target.getTime())) {
+      return actual <= 0 ? 'Not Started' : 'On Track';
+    }
+
+    // Behind: past target date and not completed
+    if (now > target && actual < 100) {
+      return 'Behind';
+    }
+
+    // Behind: actual progress less than expected progress
+    const expected = this.getExpectedProgress(comp);
+    if (expected > 0 && actual < expected) {
+      return 'Behind';
+    }
+
+    return 'On Track';
+  }
+
+  getStatusChipClass(status: 'Not Started' | 'Behind' | 'On Track' | 'Completed'): string {
+    switch (status) {
+      case 'Completed':
+        return 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300';
+      case 'Behind':
+        return 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300';
+      case 'On Track':
+        return 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300';
+      case 'Not Started':
+      default:
+        return 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300';
+    }
   }
 
 
@@ -888,6 +974,21 @@ export class AdminDashboardComponent implements OnInit {
     return this.isRecordedTraining(training) ? 'Recorded' : 'Classroom';
   }
 
+  get filteredTrainings(): Training[] {
+    if (this.trainingTypeView === 'recorded') {
+      return this.trainings.filter(t => this.isRecordedTraining(t));
+    }
+    if (this.trainingTypeView === 'classroom') {
+      return this.trainings.filter(t => !this.isRecordedTraining(t));
+    }
+    return this.trainings;
+  }
+
+  setTrainingTypeView(view: 'all' | 'recorded' | 'classroom'): void {
+    this.trainingTypeView = view;
+    this.updateSelectAllTrainingsState();
+  }
+
   openCreateTrainingModal(): void {
     this.newTraining = {
       training_name: '',
@@ -1042,18 +1143,20 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   toggleSelectAllTrainings(): void {
+    const visibleTrainings = this.filteredTrainings;
+
     if (this.isSelectAllTrainings) {
-      this.selectedTrainings.clear();
+      visibleTrainings.forEach(training => this.selectedTrainings.delete(training.id));
     } else {
-      this.trainings.forEach(training => {
-        this.selectedTrainings.add(training.id);
-      });
+      visibleTrainings.forEach(training => this.selectedTrainings.add(training.id));
     }
-    this.isSelectAllTrainings = !this.isSelectAllTrainings;
+
+    this.updateSelectAllTrainingsState();
   }
 
   updateSelectAllTrainingsState(): void {
-    this.isSelectAllTrainings = this.trainings.length > 0 && this.selectedTrainings.size === this.trainings.length;
+    const visibleTrainings = this.filteredTrainings;
+    this.isSelectAllTrainings = visibleTrainings.length > 0 && visibleTrainings.every(t => this.selectedTrainings.has(t.id));
   }
 
   isTrainingSelected(trainingId: number): boolean {

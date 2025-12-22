@@ -152,9 +152,9 @@ async def get_weighted_actual_progress_for_skill(
 ) -> int:
     """
     Calculate weighted actual progress for a skill based on:
-    1. Training Completion (30%): Attendance status
-    2. Assignment Score (40%): Quiz/assignment performance  
-    3. Manager Feedback (30%): Average of manager performance ratings
+    1. Training Completion (10%): Attendance status
+    2. Assignment Score (10%): Quiz/assignment performance  
+    3. Manager Feedback (80%): Average of manager performance ratings
     
     Args:
         employee_username: Employee ID
@@ -164,6 +164,10 @@ async def get_weighted_actual_progress_for_skill(
     Returns:
         int: Weighted actual progress (0-100)
     """
+    skill_norm = (skill_name or "").strip().lower()
+    if not skill_norm:
+        return 0
+
     # Fetch all training assignments for this skill
     assignments_result = await db.execute(
         select(
@@ -175,7 +179,7 @@ async def get_weighted_actual_progress_for_skill(
             TrainingDetail.id == TrainingAssignment.training_id
         ).where(
             TrainingAssignment.employee_empid == employee_username,
-            TrainingDetail.skill == skill_name
+            func.lower(func.trim(TrainingDetail.skill)) == skill_norm
         )
     )
     assignments = assignments_result.all()
@@ -288,15 +292,26 @@ async def get_manager_data(
     )
     manager_assignments_data = manager_assignments_result.all()
 
-    # Build a map: (skill, competency) -> (assignment_start_date, target_completion_date)
-    manager_assignment_map = {}
+    def norm_text(val: str | None) -> str:
+        return (val or "").strip().lower()
+
+    # Build maps to attach timelines onto competencies.
+    # Primary: (skill, competency) exact, but normalized to avoid whitespace/case mismatches.
+    # Fallback: skill-only, when competency name doesn't line up between sources.
+    manager_assignment_map: dict[tuple[str, str], dict[str, object]] = {}
+    manager_assignment_skill_map: dict[str, dict[str, object]] = {}
     for assignment in manager_assignments_data:
         skill = assignment[4]
         competency = assignment[5]
         assignment_date = assignment[2]
         target_date = assignment[3]
-        
-        key = (skill, competency)
+
+        skill_key = norm_text(skill)
+        comp_key = norm_text(competency)
+        if not skill_key:
+            continue
+
+        key = (skill_key, comp_key)
         if key not in manager_assignment_map:
             manager_assignment_map[key] = {
                 "assignment_start_date": assignment_date,
@@ -311,6 +326,20 @@ async def get_manager_data(
             if target_date and (not manager_assignment_map[key]["target_completion_date"] or 
                                target_date > manager_assignment_map[key]["target_completion_date"]):
                 manager_assignment_map[key]["target_completion_date"] = target_date
+
+        # Skill-only fallback aggregation
+        if skill_key not in manager_assignment_skill_map:
+            manager_assignment_skill_map[skill_key] = {
+                "assignment_start_date": assignment_date,
+                "target_completion_date": target_date,
+            }
+        else:
+            if assignment_date and (not manager_assignment_skill_map[skill_key]["assignment_start_date"] or 
+                                   assignment_date < manager_assignment_skill_map[skill_key]["assignment_start_date"]):
+                manager_assignment_skill_map[skill_key]["assignment_start_date"] = assignment_date
+            if target_date and (not manager_assignment_skill_map[skill_key]["target_completion_date"] or 
+                               target_date > manager_assignment_skill_map[skill_key]["target_completion_date"]):
+                manager_assignment_skill_map[skill_key]["target_completion_date"] = target_date
 
     def to_iso(val):
         """Convert date/datetime to ISO string format"""
@@ -328,6 +357,20 @@ async def get_manager_data(
         return None
 
     manager_skills_list = []
+    # Cache weighted progress per (employee, skill) to avoid duplicate DB queries
+    weighted_progress_cache = {}
+
+    async def get_cached_weighted_progress(employee_empid: str, skill_name: str) -> int:
+        key = (employee_empid, skill_name)
+        if key in weighted_progress_cache:
+            return weighted_progress_cache[key]
+        weighted_progress_cache[key] = await get_weighted_actual_progress_for_skill(
+            employee_empid,
+            skill_name,
+            db
+        )
+        return weighted_progress_cache[key]
+
     for comp in manager_skills_orm:
         skill_obj = {
             "skill": comp.skill,
@@ -337,12 +380,22 @@ async def get_manager_data(
             "status": get_status_from_levels(comp.current_expertise, comp.target_expertise)
         }
         
-        # Add assignment dates if available
-        key = (comp.skill, comp.competency)
-        if key in manager_assignment_map:
-            assignment_info = manager_assignment_map[key]
-            skill_obj["assignment_start_date"] = to_iso(assignment_info["assignment_start_date"])
-            skill_obj["target_completion_date"] = to_iso(assignment_info["target_completion_date"])
+        # Add assignment dates if available (normalized match + skill-only fallback)
+        skill_key = norm_text(comp.skill)
+        comp_key = norm_text(comp.competency)
+        key = (skill_key, comp_key)
+        assignment_info = manager_assignment_map.get(key)
+        if assignment_info is None:
+            assignment_info = manager_assignment_skill_map.get(skill_key)
+        if assignment_info:
+            skill_obj["assignment_start_date"] = to_iso(assignment_info.get("assignment_start_date"))
+            skill_obj["target_completion_date"] = to_iso(assignment_info.get("target_completion_date"))
+
+        # Add weighted actual progress (used by frontend for Actual% and timeline status)
+        skill_obj["weighted_actual_progress"] = await get_cached_weighted_progress(
+            manager_username,
+            comp.skill
+        )
         
         manager_skills_list.append(skill_obj)
 
@@ -404,18 +457,26 @@ async def get_manager_data(
     team_assignments_data = team_assignments_result.all()
 
     # Build a nested map: employee_empid -> (skill, competency) -> (assignment_start_date, target_completion_date)
-    team_assignment_map = {}
+    team_assignment_map: dict[str, dict[tuple[str, str], dict[str, object]]] = {}
+    team_assignment_skill_map: dict[str, dict[str, dict[str, object]]] = {}
     for assignment in team_assignments_data:
         employee_empid = assignment[4]
         skill = assignment[5]
         competency = assignment[6]
         assignment_date = assignment[2]
         target_date = assignment[3]
-        
+
+        skill_key = norm_text(skill)
+        comp_key = norm_text(competency)
+        if not employee_empid or not skill_key:
+            continue
+
         if employee_empid not in team_assignment_map:
             team_assignment_map[employee_empid] = {}
-        
-        key = (skill, competency)
+        if employee_empid not in team_assignment_skill_map:
+            team_assignment_skill_map[employee_empid] = {}
+
+        key = (skill_key, comp_key)
         if key not in team_assignment_map[employee_empid]:
             team_assignment_map[employee_empid][key] = {
                 "assignment_start_date": assignment_date,
@@ -430,6 +491,20 @@ async def get_manager_data(
             if target_date and (not team_assignment_map[employee_empid][key]["target_completion_date"] or 
                                target_date > team_assignment_map[employee_empid][key]["target_completion_date"]):
                 team_assignment_map[employee_empid][key]["target_completion_date"] = target_date
+
+        # Skill-only fallback per employee
+        if skill_key not in team_assignment_skill_map[employee_empid]:
+            team_assignment_skill_map[employee_empid][skill_key] = {
+                "assignment_start_date": assignment_date,
+                "target_completion_date": target_date,
+            }
+        else:
+            if assignment_date and (not team_assignment_skill_map[employee_empid][skill_key]["assignment_start_date"] or 
+                                   assignment_date < team_assignment_skill_map[employee_empid][skill_key]["assignment_start_date"]):
+                team_assignment_skill_map[employee_empid][skill_key]["assignment_start_date"] = assignment_date
+            if target_date and (not team_assignment_skill_map[employee_empid][skill_key]["target_completion_date"] or 
+                               target_date > team_assignment_skill_map[employee_empid][skill_key]["target_completion_date"]):
+                team_assignment_skill_map[employee_empid][skill_key]["target_completion_date"] = target_date
     
     # Step 4: Populate the CORE skills for each team member
     for competency in competencies_data:
@@ -446,11 +521,23 @@ async def get_manager_data(
             }
             
             # Add assignment dates if available from manager's assignments
-            key = (competency.skill, competency.competency)
-            if username in team_assignment_map and key in team_assignment_map[username]:
-                assignment_info = team_assignment_map[username][key]
-                skill_obj["assignment_start_date"] = to_iso(assignment_info["assignment_start_date"])
-                skill_obj["target_completion_date"] = to_iso(assignment_info["target_completion_date"])
+            skill_key = norm_text(competency.skill)
+            comp_key = norm_text(competency.competency)
+            key = (skill_key, comp_key)
+            assignment_info = None
+            if username in team_assignment_map:
+                assignment_info = team_assignment_map[username].get(key)
+            if assignment_info is None and username in team_assignment_skill_map:
+                assignment_info = team_assignment_skill_map[username].get(skill_key)
+            if assignment_info:
+                skill_obj["assignment_start_date"] = to_iso(assignment_info.get("assignment_start_date"))
+                skill_obj["target_completion_date"] = to_iso(assignment_info.get("target_completion_date"))
+
+            # Add weighted actual progress for the team member skill
+            skill_obj["weighted_actual_progress"] = await get_cached_weighted_progress(
+                username,
+                competency.skill
+            )
             
             team_members_data[username]["skills"].append(skill_obj)
     
@@ -587,6 +674,8 @@ async def get_engineer_skills_with_assignments(
     # Build a map: (skill, competency) -> (assignment_start_date, target_completion_date)
     # Use the earliest assignment date and the latest target date for each skill
     assignment_map = {}
+    # Fallback map: skill -> (assignment_start_date, target_completion_date)
+    assignment_skill_map = {}
     for assignment in assignments_data:
         skill = assignment[4]
         competency = assignment[5]
@@ -608,6 +697,22 @@ async def get_engineer_skills_with_assignments(
             if target_date and (not assignment_map[key]["target_completion_date"] or 
                                target_date > assignment_map[key]["target_completion_date"]):
                 assignment_map[key]["target_completion_date"] = target_date
+
+        # Maintain fallback map by skill name (helps if EmployeeCompetency.competency doesn't match TrainingDetail.competency)
+        skill_only_key = (skill or "").strip().lower()
+        if skill_only_key:
+            if skill_only_key not in assignment_skill_map:
+                assignment_skill_map[skill_only_key] = {
+                    "assignment_start_date": assignment_date,
+                    "target_completion_date": target_date,
+                }
+            else:
+                if assignment_date and (not assignment_skill_map[skill_only_key]["assignment_start_date"] or
+                                       assignment_date < assignment_skill_map[skill_only_key]["assignment_start_date"]):
+                    assignment_skill_map[skill_only_key]["assignment_start_date"] = assignment_date
+                if target_date and (not assignment_skill_map[skill_only_key]["target_completion_date"] or
+                                   target_date > assignment_skill_map[skill_only_key]["target_completion_date"]):
+                    assignment_skill_map[skill_only_key]["target_completion_date"] = target_date
 
     def to_iso(val):
         """Convert date/datetime to ISO string format"""
@@ -640,6 +745,13 @@ async def get_engineer_skills_with_assignments(
             assignment_info = assignment_map[key]
             skill_obj["assignment_start_date"] = to_iso(assignment_info["assignment_start_date"])
             skill_obj["target_completion_date"] = to_iso(assignment_info["target_completion_date"])
+        else:
+            # Fallback by skill name only
+            skill_only_key = (comp.skill or "").strip().lower()
+            if skill_only_key in assignment_skill_map:
+                assignment_info = assignment_skill_map[skill_only_key]
+                skill_obj["assignment_start_date"] = to_iso(assignment_info["assignment_start_date"])
+                skill_obj["target_completion_date"] = to_iso(assignment_info["target_completion_date"])
         
         # Calculate and add weighted actual progress for the skill
         weighted_progress = await get_weighted_actual_progress_for_skill(

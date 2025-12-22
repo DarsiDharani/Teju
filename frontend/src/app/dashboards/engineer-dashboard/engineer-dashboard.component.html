@@ -872,7 +872,7 @@
                                     <div *ngFor="let event of getEventForDate(day, allTrainingsCalendarEvents)"
                                         class="absolute top-9 left-1 right-1 p-1 text-[10px] bg-blue-100 text-blue-900 rounded cursor-pointer leading-tight shadow-sm hover:bg-blue-200 hover:ring-2 hover:ring-blue-400 z-10 transition-all duration-200"
                                         [title]="event.title + ' - by ' + event.trainer"
-                                        (click)="onCatalogCalendarEventClick(event)">
+                                        (click)="onCatalogCalendarEventClick($event, event)">
                                         <p class="font-bold truncate"><i class="fa-solid fa-circle text-blue-500 text-[6px] mr-1 align-middle"></i>{{ event.title }}</p>
                                     </div>
                                 </div>
@@ -1177,7 +1177,7 @@
                                     <div *ngFor="let event of getEventForDate(day, assignedTrainingsCalendarEvents)"
                                         class="absolute top-9 left-1 right-1 p-1 text-[10px] bg-rose-100 text-rose-900 rounded cursor-pointer leading-tight shadow-sm hover:bg-rose-200 hover:ring-2 hover:ring-rose-400 z-10 transition-all duration-200"
                                         [title]="event.title + ' - by ' + event.trainer"
-                                        (click)="onCalendarEventClick(event)">
+                                        (click)="onCalendarEventClick($event, event)">
                                         <p class="font-bold truncate"><i class="fa-solid fa-circle text-rose-500 text-[6px] mr-1 align-middle"></i>{{ event.title }}</p>
                                     </div>
                                 </div>
@@ -2133,7 +2133,7 @@
                         </span>
                     </div>
                     <!-- File upload question controls -->
-                    <div *ngIf="question.type === 'file-upload' && currentExamAssignment?.trainingId" class="mt-4 mb-4 p-3 bg-indigo-50 border border-dashed border-indigo-300 rounded-lg space-y-2">
+                    <div *ngIf="question.type === 'file-upload' && currentExamAssignment.trainingId" class="mt-4 mb-4 p-3 bg-indigo-50 border border-dashed border-indigo-300 rounded-lg space-y-2">
                         <p class="text-xs text-slate-700">
                             This question requires you to work with a file. Use the buttons below to download the trainer's file
                             and upload your completed solution.
