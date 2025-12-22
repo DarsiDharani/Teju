@@ -124,6 +124,12 @@ export class AdminDashboardComponent implements OnInit {
   showCoreSkillsPopup: boolean = false;
   trainerUsers: User[] = [];
   trainersPopupLoading: boolean = false;
+  
+  // Popup filters
+  usersPopupSearch: string = '';
+  trainersPopupSearch: string = '';
+  trainingsPopupSearch: string = '';
+  skillsPopupSearch: string = '';
 
   coreSkills: CoreSkill[] = [
     { title: 'EXAM', iconClass: 'fa-solid fa-microscope' },
@@ -146,6 +152,7 @@ export class AdminDashboardComponent implements OnInit {
 
   closeTrainingsPopup(): void {
     this.showTrainingsPopup = false;
+    this.trainingsPopupSearch = '';
   }
   
   // Dashboard metrics
@@ -376,6 +383,7 @@ export class AdminDashboardComponent implements OnInit {
 
   closeUsersPopup(): void {
     this.showUsersPopup = false;
+    this.usersPopupSearch = '';
   }
 
   openTrainersPopup(): void {
@@ -386,6 +394,7 @@ export class AdminDashboardComponent implements OnInit {
 
   closeTrainersPopup(): void {
     this.showTrainersPopup = false;
+    this.trainersPopupSearch = '';
   }
 
   openCoreSkillsPopup(): void {
@@ -395,6 +404,7 @@ export class AdminDashboardComponent implements OnInit {
 
   closeCoreSkillsPopup(): void {
     this.showCoreSkillsPopup = false;
+    this.skillsPopupSearch = '';
   }
 
   private loadTrainersForPopup(): void {

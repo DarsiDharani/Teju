@@ -34,6 +34,7 @@ import { EngineerDashboardComponent } from './dashboards/engineer-dashboard/engi
 import { ManagerDashboardComponent } from './dashboards/manager-dashboard/manager-dashboard.component';
 import { AdminDashboardComponent } from './dashboards/admin-dashboard/admin-dashboard.component';
 import { SkillFilterPipe } from './pipes/skill-filter.pipe';
+import { GenericFilterPipe } from './pipes/generic-filter.pipe';
 import { ToastComponent } from './components/toast/toast.component';
 import { NotificationsComponent } from './components/notifications/notifications.component';
 import { SearchableDropdownComponent } from './components/searchable-dropdown/searchable-dropdown.component';
@@ -50,6 +51,7 @@ import { SearchableDropdownComponent } from './components/searchable-dropdown/se
     ManagerDashboardComponent,
     AdminDashboardComponent,
     SkillFilterPipe,
+    GenericFilterPipe,
     ToastComponent,
     NotificationsComponent,
     SearchableDropdownComponent,

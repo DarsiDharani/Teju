@@ -147,22 +147,20 @@
                 
                 <!-- Dashboard Metrics (Single Row) -->
                 <div @slideFadeIn class="bg-white/40 backdrop-blur-sm rounded-lg border border-indigo-200 p-2">
-                    <div class="overflow-x-auto">
-                        <div class="flex flex-nowrap gap-2 min-w-max">
-                            <!-- Users -->
-                            <button (click)="openUsersPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[170px] text-left">
+                    <div class="grid grid-cols-6 gap-2">
+                        <!-- Users -->
+                        <button (click)="openUsersPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 text-left">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                                         <i class="fa-solid fa-users text-blue-600"></i>
                                     </div>
-                                    <div class="text-xs text-slate-500 font-medium">{{ totalManagers }}M / {{ totalEmployees }}E</div>
                                 </div>
                                 <div class="font-bold text-2xl text-slate-900 mb-1">{{ totalUsers }}</div>
                                 <div class="text-xs text-slate-600 font-medium">Users</div>
                             </button>
 
                             <!-- Trainers -->
-                            <button (click)="openTrainersPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[170px] text-left">
+                            <button (click)="openTrainersPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 text-left">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                                         <i class="fa-solid fa-chalkboard-teacher text-indigo-600"></i>
@@ -174,7 +172,7 @@
                             </button>
 
                             <!-- Skills -->
-                            <button (click)="openCoreSkillsPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[170px] text-left">
+                            <button (click)="openCoreSkillsPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 text-left">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                                         <i class="fa-solid fa-graduation-cap text-purple-600"></i>
@@ -186,7 +184,7 @@
                             </button>
 
                             <!-- Trainings -->
-                            <button (click)="openTrainingsPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[170px] text-left">
+                            <button (click)="openTrainingsPopup()" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 text-left">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
                                         <i class="fa-solid fa-book-open text-emerald-600"></i>
@@ -198,7 +196,7 @@
                             </button>
 
                             <!-- Attendance Rate -->
-                            <button class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[190px] text-left">
+                            <button class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 text-left">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                                         <i class="fa-solid fa-percent text-amber-600"></i>
@@ -221,7 +219,7 @@
                             </button>
 
                             <!-- Report Generation Icon -->
-                            <button (click)="selectTab('analytics')" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 min-w-[170px] text-left" title="Reports">
+                            <button (click)="selectTab('analytics')" class="bg-white/80 backdrop-blur-sm rounded-lg shadow-lg border border-indigo-200 p-3 hover:shadow-xl transition-all duration-300 text-left" title="Reports">
                                 <div class="flex items-center justify-between mb-2">
                                     <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">
                                         <i class="fa-solid fa-file-arrow-down text-rose-600"></i>
@@ -237,7 +235,6 @@
                                     </div>
                                 </div>
                             </button>
-                        </div>
                     </div>
                 </div>
 
@@ -267,45 +264,79 @@
                 </div>
 
                 <!-- Users Popup (from Dashboard Users card) -->
-                <div *ngIf="showUsersPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" (click)="closeUsersPopup()"></div>
+                <div *ngIf="showUsersPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+                    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" (click)="closeUsersPopup()"></div>
 
-                    <div class="relative w-full max-w-2xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-indigo-200 overflow-hidden">
-                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200/60">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                                    <i class="fa-solid fa-users text-blue-600"></i>
+                    <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden border-t-4 border-cyan-500">
+                        <!-- Cyan Professional Header -->
+                        <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-11 h-11 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-400/30 backdrop-blur-sm">
+                                        <i class="fa-solid fa-users text-cyan-400 text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-lg font-semibold text-white">All Users</div>
+                                        <div class="text-xs text-cyan-300">{{ (users | filter: usersPopupSearch : ['name', 'username', 'role']).length }} of {{ users.length }} users</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="text-lg font-bold text-slate-900">All Users</div>
-                                    <div class="text-xs text-slate-500">Showing {{ users.length }} user(s)</div>
-                                </div>
+                                <button (click)="closeUsersPopup()" class="p-2 rounded-lg hover:bg-cyan-500/20 text-cyan-300 hover:text-white transition-all" title="Close">
+                                    <i class="fa-solid fa-times text-lg"></i>
+                                </button>
                             </div>
-                            <button (click)="closeUsersPopup()" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600" title="Close">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
                         </div>
 
-                        <div class="px-5 py-4">
-                            <div *ngIf="usersLoading" class="py-10 text-center text-slate-600">
-                                <div class="inline-block relative">
-                                    <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-200 border-t-blue-600"></div>
+                        <div class="bg-gradient-to-b from-cyan-50/30 to-white">
+                            <!-- Search Filter -->
+                            <div class="px-6 pt-4 pb-3 border-b border-cyan-100">
+                                <div class="relative">
+                                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500 text-sm"></i>
+                                    <input 
+                                        type="text" 
+                                        [(ngModel)]="usersPopupSearch"
+                                        placeholder="Search by name, username, or role..."
+                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-cyan-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all"
+                                    />
+                                    <button 
+                                        *ngIf="usersPopupSearch" 
+                                        (click)="usersPopupSearch = ''"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-cyan-600 transition-colors"
+                                    >
+                                        <i class="fa-solid fa-times-circle"></i>
+                                    </button>
                                 </div>
-                                <div class="mt-3 text-sm font-medium">Loading users...</div>
                             </div>
 
-                            <div *ngIf="!usersLoading" class="max-h-[60vh] overflow-y-auto pr-1">
-                                <div *ngIf="users.length === 0" class="py-10 text-center text-slate-500">
-                                    No users found.
+                            <div class="px-6 py-4">
+                                <div *ngIf="usersLoading" class="py-12 text-center">
+                                    <div class="inline-block relative">
+                                        <div class="animate-spin rounded-full h-10 w-10 border-4 border-cyan-100 border-t-cyan-500"></div>
+                                    </div>
+                                    <div class="mt-3 text-sm font-medium text-slate-600">Loading users...</div>
                                 </div>
 
-                                <div *ngFor="let user of users" class="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-blue-50/40 border border-slate-200/40 mb-2">
-                                    <div class="min-w-0">
-                                        <div class="font-semibold text-slate-900 truncate">{{ user.name || user.username }}</div>
-                                        <div class="text-xs text-slate-500 truncate">{{ user.username }} · {{ user.role }}<span *ngIf="user.is_trainer"> · Trainer</span></div>
+                                <div *ngIf="!usersLoading" class="max-h-[50vh] overflow-y-auto pr-1 space-y-1.5">
+                                    <div *ngIf="(users | filter: usersPopupSearch : ['name', 'username', 'role']).length === 0" class="py-12 text-center text-slate-500">
+                                        <i class="fa-solid fa-user-slash text-3xl text-cyan-200 mb-2"></i>
+                                        <div class="font-medium text-sm">No users found</div>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="px-2 py-1 text-[11px] rounded-full bg-slate-100 text-slate-600 font-semibold">{{ user.role }}</span>
+
+                                    <div *ngFor="let user of users | filter: usersPopupSearch : ['name', 'username', 'role']" 
+                                         class="group flex items-center justify-between gap-3 p-3.5 rounded-lg bg-white hover:bg-cyan-50/50 border border-slate-200 hover:border-cyan-300 transition-all duration-150">
+                                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
+                                                {{ (user.name || user.username).charAt(0).toUpperCase() }}
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="font-semibold text-slate-800 truncate text-sm group-hover:text-cyan-700 transition-colors">{{ user.name || user.username }}</div>
+                                                <div class="text-xs text-slate-500 truncate mt-0.5">
+                                                    <span class="font-mono">{{ user.username }}</span> · {{ user.role }}<span *ngIf="user.is_trainer" class="text-cyan-600 font-medium"> · Trainer</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span class="px-2.5 py-1 text-[11px] rounded-md bg-cyan-100 text-cyan-700 font-semibold uppercase tracking-wide">{{ user.role }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -314,45 +345,75 @@
                 </div>
 
                 <!-- Trainers Popup (from Dashboard Trainers card) -->
-                <div *ngIf="showTrainersPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" (click)="closeTrainersPopup()"></div>
+                <div *ngIf="showTrainersPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+                    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" (click)="closeTrainersPopup()"></div>
 
-                    <div class="relative w-full max-w-2xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-indigo-200 overflow-hidden">
-                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200/60">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-                                    <i class="fa-solid fa-chalkboard-teacher text-indigo-600"></i>
+                    <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden border-t-4 border-cyan-500">
+                        <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-11 h-11 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-400/30 backdrop-blur-sm">
+                                        <i class="fa-solid fa-chalkboard-teacher text-cyan-400 text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-lg font-semibold text-white">All Trainers</div>
+                                        <div class="text-xs text-cyan-300">{{ (trainerUsers | filter: trainersPopupSearch : ['name', 'username']).length }} of {{ trainerUsers.length }} trainers</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="text-lg font-bold text-slate-900">All Trainers</div>
-                                    <div class="text-xs text-slate-500">Showing {{ trainerUsers.length }} trainer(s)</div>
-                                </div>
+                                <button (click)="closeTrainersPopup()" class="p-2 rounded-lg hover:bg-cyan-500/20 text-cyan-300 hover:text-white transition-all" title="Close">
+                                    <i class="fa-solid fa-times text-lg"></i>
+                                </button>
                             </div>
-                            <button (click)="closeTrainersPopup()" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600" title="Close">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
                         </div>
 
-                        <div class="px-5 py-4">
-                            <div *ngIf="trainersPopupLoading" class="py-10 text-center text-slate-600">
-                                <div class="inline-block relative">
-                                    <div class="animate-spin rounded-full h-10 w-10 border-4 border-indigo-200 border-t-indigo-600"></div>
+                        <div class="bg-gradient-to-b from-cyan-50/30 to-white">
+                            <div class="px-6 pt-4 pb-3 border-b border-cyan-100">
+                                <div class="relative">
+                                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500 text-sm"></i>
+                                    <input 
+                                        type="text" 
+                                        [(ngModel)]="trainersPopupSearch"
+                                        placeholder="Search trainers by name or username..."
+                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-cyan-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all"
+                                    />
+                                    <button 
+                                        *ngIf="trainersPopupSearch" 
+                                        (click)="trainersPopupSearch = ''"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-cyan-600 transition-colors"
+                                    >
+                                        <i class="fa-solid fa-times-circle"></i>
+                                    </button>
                                 </div>
-                                <div class="mt-3 text-sm font-medium">Loading trainers...</div>
                             </div>
 
-                            <div *ngIf="!trainersPopupLoading" class="max-h-[60vh] overflow-y-auto pr-1">
-                                <div *ngIf="trainerUsers.length === 0" class="py-10 text-center text-slate-500">
-                                    No trainers found.
+                            <div class="px-6 py-4">
+                                <div *ngIf="trainersPopupLoading" class="py-12 text-center">
+                                    <div class="inline-block relative">
+                                        <div class="animate-spin rounded-full h-10 w-10 border-4 border-cyan-100 border-t-cyan-500"></div>
+                                    </div>
+                                    <div class="mt-3 text-sm font-medium text-slate-600">Loading trainers...</div>
                                 </div>
 
-                                <div *ngFor="let user of trainerUsers" class="flex items-center justify-between gap-3 p-3 rounded-xl hover:bg-indigo-50/40 border border-slate-200/40 mb-2">
-                                    <div class="min-w-0">
-                                        <div class="font-semibold text-slate-900 truncate">{{ user.name || user.username }}</div>
-                                        <div class="text-xs text-slate-500 truncate">{{ user.username }} · {{ user.role }}</div>
+                                <div *ngIf="!trainersPopupLoading" class="max-h-[50vh] overflow-y-auto pr-1 space-y-1.5">
+                                    <div *ngIf="(trainerUsers | filter: trainersPopupSearch : ['name', 'username']).length === 0" class="py-12 text-center text-slate-500">
+                                        <i class="fa-solid fa-user-slash text-3xl text-cyan-200 mb-2"></i>
+                                        <div class="font-medium text-sm">No trainers found</div>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="px-2 py-1 text-[11px] rounded-full bg-indigo-100 text-indigo-700 font-semibold">Trainer</span>
+
+                                    <div *ngFor="let user of trainerUsers | filter: trainersPopupSearch : ['name', 'username']" 
+                                         class="group flex items-center justify-between gap-3 p-3.5 rounded-lg bg-white hover:bg-cyan-50/50 border border-slate-200 hover:border-cyan-300 transition-all duration-150">
+                                        <div class="flex items-center gap-3 min-w-0 flex-1">
+                                            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center text-white text-sm font-semibold shadow-sm">
+                                                {{ (user.name || user.username).charAt(0).toUpperCase() }}
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="font-semibold text-slate-800 truncate text-sm group-hover:text-cyan-700 transition-colors">{{ user.name || user.username }}</div>
+                                                <div class="text-xs text-slate-500 truncate mt-0.5"><span class="font-mono">{{ user.username }}</span> · {{ user.role }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <span class="px-2.5 py-1 text-[11px] rounded-md bg-gradient-to-r from-cyan-500 to-cyan-600 text-white font-semibold uppercase tracking-wide shadow-sm">Trainer</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -361,52 +422,86 @@
                 </div>
 
                 <!-- Trainings Popup (from Dashboard Trainings card) -->
-                <div *ngIf="showTrainingsPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" (click)="closeTrainingsPopup()"></div>
+                <div *ngIf="showTrainingsPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+                    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" (click)="closeTrainingsPopup()"></div>
 
-                    <div class="relative w-full max-w-4xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-indigo-200 overflow-hidden">
-                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200/60">
-                            <div>
-                                <div class="text-lg font-bold text-slate-900">Trainings</div>
-                                <div class="text-xs text-slate-500">{{ classroomTrainingsCount }} classroom • {{ recordedTrainingsCount }} recorded • {{ totalTrainings }} total • Assigned {{ totalAssignments }} • Attended {{ attendedAssignments }}</div>
+                    <div class="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden border-t-4 border-cyan-500">
+                        <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-11 h-11 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-400/30 backdrop-blur-sm">
+                                        <i class="fa-solid fa-book-open text-cyan-400 text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-lg font-semibold text-white">Trainings Overview</div>
+                                        <div class="text-xs text-cyan-300">{{ classroomTrainingsCount }} classroom • {{ recordedTrainingsCount }} recorded • {{ (trainings | filter: trainingsPopupSearch : ['training_name', 'trainer_name']).length }} results</div>
+                                    </div>
+                                </div>
+                                <button (click)="closeTrainingsPopup()" class="p-2 rounded-lg hover:bg-cyan-500/20 text-cyan-300 hover:text-white transition-all" title="Close">
+                                    <i class="fa-solid fa-times text-lg"></i>
+                                </button>
                             </div>
-                            <button (click)="closeTrainingsPopup()" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600" title="Close">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
                         </div>
 
-                        <div class="px-5 py-5">
-                            <div *ngIf="trainingsLoading" class="flex items-center gap-2 text-slate-600">
-                                <svg class="animate-spin h-5 w-5 text-sky-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                <span class="text-sm">Loading trainings...</span>
+                        <div class="bg-gradient-to-b from-cyan-50/30 to-white">
+                            <div class="px-6 pt-4 pb-3 border-b border-cyan-100">
+                                <div class="relative">
+                                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500 text-sm"></i>
+                                    <input 
+                                        type="text" 
+                                        [(ngModel)]="trainingsPopupSearch"
+                                        placeholder="Search by training name or trainer..."
+                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-cyan-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all"
+                                    />
+                                    <button 
+                                        *ngIf="trainingsPopupSearch" 
+                                        (click)="trainingsPopupSearch = ''"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-cyan-600 transition-colors"
+                                    >
+                                        <i class="fa-solid fa-times-circle"></i>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div *ngIf="!trainingsLoading" class="max-h-[60vh] overflow-y-auto">
-                                <div *ngIf="trainings.length === 0" class="text-sm text-slate-600">No trainings found.</div>
+                            <div class="px-6 py-4">
+                                <div *ngIf="trainingsLoading" class="py-12 text-center">
+                                    <div class="inline-block relative">
+                                        <div class="animate-spin rounded-full h-10 w-10 border-4 border-cyan-100 border-t-cyan-500"></div>
+                                    </div>
+                                    <div class="mt-3 text-sm font-medium text-slate-600">Loading trainings...</div>
+                                </div>
 
-                                <div *ngFor="let t of trainings" class="flex items-center justify-between gap-3 py-3 border-b border-slate-200/60 last:border-b-0">
-                                    <div class="min-w-0">
-                                        <div class="flex items-center gap-2 min-w-0">
-                                            <div class="font-semibold text-slate-900 truncate">{{ t.training_name }}</div>
-                                            <span class="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                                                [ngClass]="getTrainingTypeLabel(t) === 'Recorded' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'">
-                                                {{ getTrainingTypeLabel(t) }}
-                                            </span>
-                                        </div>
-                                        <div class="text-xs text-slate-600 truncate">Trainer: {{ t.trainer_name || 'Not Assigned' }}<span *ngIf="t.training_date"> • {{ t.training_date }}</span></div>
+                                <div *ngIf="!trainingsLoading" class="max-h-[50vh] overflow-y-auto pr-1 space-y-1.5">
+                                    <div *ngIf="(trainings | filter: trainingsPopupSearch : ['training_name', 'trainer_name']).length === 0" class="py-12 text-center text-slate-500">
+                                        <i class="fa-solid fa-book-open text-3xl text-cyan-200 mb-2"></i>
+                                        <div class="font-medium text-sm">No trainings found</div>
                                     </div>
 
-                                    <div class="flex items-center gap-4 text-xs text-slate-600 shrink-0">
-                                        <div class="text-right">
-                                            <div class="text-slate-500">Assigned</div>
-                                            <div class="font-semibold text-slate-900">{{ t.assigned_count || 0 }}</div>
+                                    <div *ngFor="let t of trainings | filter: trainingsPopupSearch : ['training_name', 'trainer_name']" 
+                                         class="group flex items-center justify-between gap-4 p-3.5 rounded-lg bg-white hover:bg-cyan-50/50 border border-slate-200 hover:border-cyan-300 transition-all duration-150">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2 min-w-0 mb-1">
+                                                <div class="font-semibold text-slate-800 truncate text-sm group-hover:text-cyan-700 transition-colors">{{ t.training_name }}</div>
+                                                <span class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide"
+                                                    [ngClass]="getTrainingTypeLabel(t) === 'Recorded' ? 'bg-cyan-500 text-white' : 'bg-slate-200 text-slate-700'">
+                                                    {{ getTrainingTypeLabel(t) }}
+                                                </span>
+                                            </div>
+                                            <div class="text-xs text-slate-500 truncate">
+                                                <i class="fa-solid fa-user-tie text-cyan-400"></i> {{ t.trainer_name || 'Not Assigned' }}
+                                                <span *ngIf="t.training_date"> • <i class="fa-solid fa-calendar text-cyan-400"></i> {{ t.training_date }}</span>
+                                            </div>
                                         </div>
-                                        <div class="text-right">
-                                            <div class="text-slate-500">Attended</div>
-                                            <div class="font-semibold text-slate-900">{{ t.attended_count || 0 }}</div>
+
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <div class="text-center px-3 py-1.5 rounded-md bg-cyan-50 border border-cyan-200">
+                                                <div class="text-[9px] text-cyan-600 font-semibold uppercase tracking-wider">Assigned</div>
+                                                <div class="font-bold text-base text-cyan-700">{{ t.assigned_count || 0 }}</div>
+                                            </div>
+                                            <div class="text-center px-3 py-1.5 rounded-md bg-gradient-to-br from-cyan-500 to-cyan-600 border border-cyan-400 shadow-sm">
+                                                <div class="text-[9px] text-cyan-100 font-semibold uppercase tracking-wider">Attended</div>
+                                                <div class="font-bold text-base text-white">{{ t.attended_count || 0 }}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -416,28 +511,62 @@
                 </div>
 
                 <!-- Core Skills Popup (from Dashboard Skills card) -->
-                <div *ngIf="showCoreSkillsPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" (click)="closeCoreSkillsPopup()"></div>
+                <div *ngIf="showCoreSkillsPopup" class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+                    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" (click)="closeCoreSkillsPopup()"></div>
 
-                    <div class="relative w-full max-w-3xl bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl border border-indigo-200 overflow-hidden">
-                        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200/60">
-                            <div>
-                                <div class="text-lg font-bold text-slate-900">Core Skills</div>
-                                <div class="text-xs text-slate-500">{{ coreSkills.length }} skill(s)</div>
+                    <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden border-t-4 border-cyan-500">
+                        <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-900 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-11 h-11 bg-cyan-500/20 rounded-xl flex items-center justify-center border border-cyan-400/30 backdrop-blur-sm">
+                                        <i class="fa-solid fa-graduation-cap text-cyan-400 text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <div class="text-lg font-semibold text-white">Core Skills</div>
+                                        <div class="text-xs text-cyan-300">{{ (coreSkills | filter: skillsPopupSearch : ['title']).length }} of {{ coreSkills.length }} skills</div>
+                                    </div>
+                                </div>
+                                <button (click)="closeCoreSkillsPopup()" class="p-2 rounded-lg hover:bg-cyan-500/20 text-cyan-300 hover:text-white transition-all" title="Close">
+                                    <i class="fa-solid fa-times text-lg"></i>
+                                </button>
                             </div>
-                            <button (click)="closeCoreSkillsPopup()" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600" title="Close">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
                         </div>
 
-                        <div class="px-5 py-5">
-                            <div class="max-h-[60vh] overflow-y-auto">
-                                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                                    <div *ngFor="let skill of coreSkills" class="text-center">
-                                        <div class="w-14 h-14 mx-auto rounded-2xl bg-sky-100 flex items-center justify-center">
-                                            <i [class]="skill.iconClass + ' text-sky-700'" aria-hidden="true"></i>
+                        <div class="bg-gradient-to-b from-cyan-50/30 to-white">
+                            <div class="px-6 pt-4 pb-3 border-b border-cyan-100">
+                                <div class="relative">
+                                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-cyan-500 text-sm"></i>
+                                    <input 
+                                        type="text" 
+                                        [(ngModel)]="skillsPopupSearch"
+                                        placeholder="Search skills..."
+                                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-cyan-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all"
+                                    />
+                                    <button 
+                                        *ngIf="skillsPopupSearch" 
+                                        (click)="skillsPopupSearch = ''"
+                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-400 hover:text-cyan-600 transition-colors"
+                                    >
+                                        <i class="fa-solid fa-times-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="px-6 py-5">
+                                <div class="max-h-[50vh] overflow-y-auto pr-2">
+                                    <div *ngIf="(coreSkills | filter: skillsPopupSearch : ['title']).length === 0" class="py-12 text-center text-slate-500">
+                                        <i class="fa-solid fa-graduation-cap text-3xl text-cyan-200 mb-2"></i>
+                                        <div class="font-medium text-sm">No skills found</div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                        <div *ngFor="let skill of coreSkills | filter: skillsPopupSearch : ['title']" 
+                                             class="group text-center p-4 rounded-lg bg-white hover:bg-cyan-50/50 border border-slate-200 hover:border-cyan-300 transition-all duration-150">
+                                            <div class="w-14 h-14 mx-auto rounded-lg bg-cyan-100 group-hover:bg-cyan-200 flex items-center justify-center transition-colors">
+                                                <i [class]="skill.iconClass + ' text-cyan-600 text-xl'" aria-hidden="true"></i>
+                                            </div>
+                                            <div class="mt-2.5 text-xs font-semibold text-slate-700 group-hover:text-cyan-700 transition-colors">{{ skill.title }}</div>
                                         </div>
-                                        <div class="mt-2 text-sm font-semibold text-slate-700">{{ skill.title }}</div>
                                     </div>
                                 </div>
                             </div>
