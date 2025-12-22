@@ -167,12 +167,16 @@
       - View toggles (list/calendar)
       - Status filters
     -->
-    <div *ngIf="activeTab === 'mySkills' || activeTab === 'trainingCatalog' || activeTab === 'assignedTrainings' || activeTab === 'myRequests' || activeTab === 'trainerZone'" class="bg-blue-600 px-6 py-3 shadow-lg rounded-2xl mx-6 mt-4">
+    <div *ngIf="activeTab === 'mySkills' || activeTab === 'trainingCatalog' || activeTab === 'assignedTrainings' || activeTab === 'myRequests' || activeTab === 'trainerZone'" class="bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-3 shadow-lg rounded-xl mx-6 mt-3">
         <!-- My Skills Filter Bar: Toggle between core skills and additional skills views -->
         <div *ngIf="activeTab === 'mySkills'" @fadeIn>
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-4">
-                    <!-- View Toggle: Switch between Core Skills and Additional Skills -->
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                            <i class="fa-solid fa-graduation-cap text-white text-sm"></i>
+                                        </div>
+                                        <h2 class="text-sm font-semibold text-white">My Skills</h2>
+                                        <!-- View Toggle: Switch between Core Skills and Additional Skills -->
                     <div class="inline-flex rounded-lg shadow-sm bg-blue-700 p-1">
                         <!-- Core Skills Button: Shows job-required skills from API -->
                         <button (click)="mySkillsView = 'core'" class="px-3 py-1 text-xs rounded-md transition-colors duration-200" [ngClass]="{'bg-green-300 text-green-800 font-bold shadow': mySkillsView === 'core', 'text-blue-200 hover:bg-blue-500 font-semibold': mySkillsView !== 'core'}">
@@ -232,9 +236,12 @@
             </div>
         </div>
     <div *ngIf="activeTab === 'trainingCatalog'" @fadeIn>
-        <div class="flex items-center justify-between gap-2">
-            <div class="flex items-center gap-3 flex-shrink-0">
-                <h2 class="text-sm font-semibold text-white whitespace-nowrap">Training Catalog</h2>
+                <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-3 flex-shrink-0">
+                                <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-book-open text-white text-sm"></i>
+                                </div>
+                                <h2 class="text-sm font-semibold text-white">Training Catalog</h2>
                 <div class="relative">
                     <div class="bg-indigo-900/50 backdrop-blur-sm rounded-2xl p-1 border border-white/30 ring-1 ring-white/50">
                         <div class="absolute top-1 bottom-1 w-1/2 bg-gradient-to-r from-green-300 to-green-300 rounded-xl transition-all duration-500 ease-out shadow-lg"
@@ -307,7 +314,10 @@
     </div>
                     <div *ngIf="activeTab === 'assignedTrainings'" @fadeIn (click)="closeAllTakeAssignmentDropdowns()">
         <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                  <i class="fa-solid fa-paperclip text-white text-sm"></i>
+                </div>
                 <h2 class="text-sm font-semibold text-white">Assigned Trainings</h2>
                 <div class="inline-flex rounded-lg shadow-sm bg-blue-700 p-1">
                     <button (click)="setAssignedTrainingsView('list')" class="px-3 py-1 text-xs font-semibold rounded-md transition-colors duration-200" [ngClass]="{'bg-white text-blue-600 shadow': assignedTrainingsView === 'list', 'text-blue-200 hover:bg-blue-500': assignedTrainingsView !== 'list'}">
@@ -352,11 +362,11 @@
     </div>
     <div *ngIf="activeTab === 'myRequests'" @fadeIn>
         <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-clock-rotate-left text-white text-lg"></i>
-                    <h2 class="text-sm font-semibold text-white">My Training Requests</h2>
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                  <i class="fa-solid fa-clock-rotate-left text-white text-sm"></i>
                 </div>
+                <h2 class="text-sm font-semibold text-white">My Training Requests</h2>
                 <div class="inline-flex rounded-lg shadow-sm bg-blue-700 p-1">
                     <button (click)="requestStatusFilter = 'all'" class="px-3 py-1 text-xs font-semibold rounded-md transition-colors duration-200" [ngClass]="{'bg-white text-blue-600 shadow': requestStatusFilter === 'all', 'text-blue-200 hover:bg-blue-500': requestStatusFilter !== 'all'}">
                         <i class="fa-solid fa-list mr-1.5"></i>All
@@ -385,18 +395,25 @@
         </div>
     </div>
     <div *ngIf="activeTab === 'trainerZone'" @fadeIn>
-        <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-chalkboard-user text-white text-lg"></i>
-                    <h2 class="text-sm font-semibold text-white">Trainer Zone</h2>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-start gap-3 text-white">
+                <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center mt-0.5">
+                  <i class="fa-solid fa-chalkboard-user text-white text-sm"></i>
+                </div>
+                <div class="flex flex-col leading-tight">
+                    <h2 class="text-sm font-semibold">Trainer Zone</h2>
+                    <h3 class="text-base font-bold">My Scheduled Training Sessions</h3>
                 </div>
             </div>
-            <div class="flex flex-wrap items-center gap-1.5">
+            <div class="flex flex-wrap items-center gap-2">
                 <div class="relative">
                     <i class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
                     <input type="text" [(ngModel)]="trainerZoneSearch" placeholder="Search trainings..." class="w-full sm:w-48 pl-8 pr-3 py-1 rounded-md border border-indigo-200 focus:ring-2 focus:ring-sky-500 outline-none bg-white transition-all duration-300 focus:w-64 text-sm">
                 </div>
+                <button (click)="openScheduleTrainingModal()" class="bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:from-sky-600 hover:to-blue-700 hover:shadow-lg transition-all duration-200 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-base"></i>
+                    <span class="text-base">Schedule New Training</span>
+                </button>
             </div>
         </div>
     </div>
@@ -422,7 +439,7 @@
 
             <div *ngIf="!isLoading && activeTab === 'dashboard'" @slideFadeIn class="space-y-4">
                 <!-- Welcome section moved to top -->
-                <div @bouncyScale class="flex justify-between items-center bg-gradient-to-r from-blue-700 to-blue-700 text-white px-3 py-1.5 rounded-lg shadow-lg backdrop-blur-sm border border-white/10">
+                <div @bouncyScale class="flex justify-between items-center bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-5 py-3 rounded-xl shadow-lg mx-6 mt-3">
                     <div class="flex items-center gap-2">
                         <h2 class="text-xs font-bold tracking-tight">Welcome, {{ employeeName }}!</h2>
                         <div class="w-px h-3 bg-white/20"></div>
@@ -1245,10 +1262,13 @@
                 </div>
 
                 <div *ngIf="activeTab === 'myBadges'" @slideFadeIn>
-                    <div class="bg-blue-600 px-6 py-3 shadow-lg rounded-2xl mx-6 mt-4 mb-6">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <div class="flex items-center gap-2 text-white">
-                                <h2 class="text-sm font-semibold">My Badges & Achievements</h2>
+                    <div class="bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-3 shadow-lg rounded-xl mx-6 mt-3 mb-6">
+                                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                                        <div class="flex items-center gap-3 text-white">
+                                                                <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                                                    <i class="fa-solid fa-award text-white text-sm"></i>
+                                                                </div>
+                                                                <h2 class="text-sm font-semibold">My Badges & Achievements</h2>
                             </div>
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <div class="relative">
@@ -1290,10 +1310,13 @@
                 </div>
 
                 <div *ngIf="activeTab === 'levels'" @slideFadeIn>
-                    <div class="bg-blue-600 px-6 py-3 shadow-lg rounded-2xl mx-6 mt-4 mb-6">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <div class="flex items-center gap-2 text-white">
-                                <h2 class="text-sm font-semibold">Levels Definitions</h2>
+                    <div class="bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-3 shadow-lg rounded-xl mx-6 mt-3 mb-6">
+                                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                                        <div class="flex items-center gap-3 text-white">
+                                                                <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                                                    <i class="fa-solid fa-layer-group text-white text-sm"></i>
+                                                                </div>
+                                                                <h2 class="text-sm font-semibold">Levels Definitions</h2>
                             </div>
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <div class="relative">
@@ -1362,16 +1385,8 @@
                 </div>                
                 <div *ngIf="activeTab === 'trainerZone' && shouldShowTrainerZone" @slideFadeIn>
                     <div *ngIf="trainerZoneView === 'overview'" @fadeIn>
-                        <!-- Schedule New Training Button -->
-                        <div class="mb-6">
-                            <button (click)="openScheduleTrainingModal()" class="bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:from-sky-600 hover:to-blue-700 hover:shadow-lg transition-all duration-200 transform hover:scale-105">
-                                <i class="fa-solid fa-plus-circle mr-2"></i>Schedule New Training
-                            </button>
-                        </div>
-
                         <!-- Scheduled Training Sessions List -->
                         <div class="space-y-4">
-                            <h3 class="text-xl font-bold text-slate-800 mb-4">My Scheduled Training Sessions</h3>
                             <div *ngIf="getFilteredMyTrainings().length === 0" class="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-indigo-200">
                                 <i class="fa-solid fa-calendar-xmark text-4xl text-slate-400 mb-3"></i>
                                 <p class="text-slate-600 font-medium" *ngIf="myTrainings.length === 0">No training sessions scheduled yet.</p>

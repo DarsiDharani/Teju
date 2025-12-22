@@ -579,10 +579,12 @@
         <!-- User Management Tab -->
         <div *ngIf="activeTab === 'users'" @fadeIn>
             <!-- Header -->
-            <div class="mb-6 flex justify-between items-center">
-                <div>
-                    <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">User Management</h1>
-                    <p class="text-slate-600 text-lg">Manage users, roles, and permissions</p>
+            <div class="mb-6 flex flex-wrap justify-between items-center gap-3">
+                <div class="bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-3 shadow-lg rounded-xl flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                      <i class="fa-solid fa-users text-white"></i>
+                    </div>
+                    <h1 class="text-lg font-bold text-white">User Management</h1>
                 </div>
                 <div class="flex items-center gap-3">
                     <button *ngIf="getSelectedUsersCount() > 0" 
@@ -725,10 +727,12 @@
         <!-- Training Management Tab -->
         <div *ngIf="activeTab === 'trainings'" @fadeIn>
             <!-- Header -->
-            <div class="mb-6 flex justify-between items-center">
-                <div>
-                    <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">Training Management</h1>
-                    <p class="text-slate-600 text-lg">Manage all trainings across the system</p>
+            <div class="mb-6 flex flex-wrap justify-between items-center gap-3">
+                <div class="bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-3 shadow-lg rounded-xl flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                      <i class="fa-solid fa-book-open text-white"></i>
+                    </div>
+                    <h1 class="text-lg font-bold text-white">Training Management</h1>
                 </div>
                 <div class="flex items-center gap-3">
                     <button *ngIf="getSelectedTrainingsCount() > 0" 
@@ -895,10 +899,12 @@
         <!-- Skills Management Tab -->
         <div *ngIf="activeTab === 'skills'" @fadeIn>
             <!-- Header -->
-            <div class="mb-6 flex justify-between items-center">
-                <div>
-                    <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">Skills Management</h1>
-                    <p class="text-slate-600 text-lg">Manage employee skills and competencies</p>
+            <div class="mb-6 flex flex-wrap justify-between items-center gap-3">
+                <div class="bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-3 shadow-lg rounded-xl flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                      <i class="fa-solid fa-graduation-cap text-white"></i>
+                    </div>
+                    <h1 class="text-lg font-bold text-white">Skills Management</h1>
                 </div>
                 <div class="flex items-center gap-3">
                     <button (click)="openCreateSkillModal()" 
@@ -1023,8 +1029,12 @@
         <!-- Analytics Tab -->
         <div *ngIf="activeTab === 'analytics'" @fadeIn>
             <div class="mb-6">
-                <h1 class="text-4xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent mb-2">Analytics & Reports</h1>
-                <p class="text-slate-600 text-lg">View system-wide analytics and generate reports</p>
+                <div class="bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-3 shadow-lg rounded-xl flex items-center gap-3 inline-flex">
+                    <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                      <i class="fa-solid fa-chart-line text-white"></i>
+                    </div>
+                    <h1 class="text-lg font-bold text-white">Analytics & Reports</h1>
+                </div>
             </div>
 
             <div *ngIf="analyticsLoading" class="text-center py-20">
@@ -1120,8 +1130,12 @@
         <!-- Data Management Tab -->
         <div *ngIf="activeTab === 'data'" @fadeIn>
             <div class="mb-6">
-                <h1 class="text-4xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent mb-2">Data Management</h1>
-                <p class="text-slate-600 text-lg">Import and export system data</p>
+                <div class="bg-gradient-to-r from-blue-500 to-cyan-500 px-5 py-3 shadow-lg rounded-xl flex items-center gap-3 inline-flex">
+                    <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                      <i class="fa-solid fa-database text-white"></i>
+                    </div>
+                    <h1 class="text-lg font-bold text-white">Data Management</h1>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
