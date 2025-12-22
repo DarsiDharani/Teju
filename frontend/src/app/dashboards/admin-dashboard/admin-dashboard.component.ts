@@ -167,6 +167,15 @@ export class AdminDashboardComponent implements OnInit {
   pendingRequests: number = 0;
   activeTrainers: number = 0;
   
+  // Attendance breakdown data
+  attendanceByLevel: any = {};
+  skillBreakdown: any = {};
+  attendanceLoading: boolean = false;
+  expandedLevelInCard: string | null = null;
+  showAttendanceModal: boolean = false;
+  attendanceViewMode: 'skill' | 'level' = 'skill';
+  expandedSkillInModal: string | null = null;
+  
   // User Management
   users: User[] = [];
   usersLoading: boolean = false;
@@ -337,6 +346,9 @@ export class AdminDashboardComponent implements OnInit {
             this.activeTrainers = data.metrics.active_trainers || 0;
           }
           
+          // Load detailed attendance breakdown
+          this.loadAttendanceBreakdown();
+          
           this.isLoading = false;
         },
         error: (err) => {
@@ -353,6 +365,68 @@ export class AdminDashboardComponent implements OnInit {
         }
       });
   }
+
+  loadAttendanceBreakdown(): void {
+    this.attendanceLoading = true;
+    this.http.get<any>(this.apiService.adminAttendanceBreakdownUrl, { headers: this.getHeaders() })
+      .subscribe({
+        next: (data) => {
+          this.attendanceByLevel = data.attendance_by_level || {};
+          this.skillBreakdown = data.skill_breakdown || {};
+          this.attendanceLoading = false;
+        },
+        error: (err) => {
+          console.error('Error loading attendance breakdown:', err);
+          this.attendanceLoading = false;
+        }
+      });
+  }
+
+  toggleLevelExpansion(level: string): void {
+    this.expandedLevelInCard = this.expandedLevelInCard === level ? null : level;
+  }
+
+  openAttendanceModal(): void {
+    this.showAttendanceModal = true;
+  }
+
+  closeAttendanceModal(): void {
+    this.showAttendanceModal = false;
+    this.expandedSkillInModal = null;
+  }
+
+  toggleSkillExpansion(skillName: string): void {
+    this.expandedSkillInModal = this.expandedSkillInModal === skillName ? null : skillName;
+  }
+
+  getAttendanceStatusColor(status: string): string {
+    switch (status) {
+      case 'good': return 'text-green-600';
+      case 'warning': return 'text-yellow-600';
+      case 'critical': return 'text-red-600';
+      case 'no_data': return 'text-gray-400';
+      default: return 'text-slate-600';
+    }
+  }
+
+  getAttendanceStatusBg(status: string): string {
+    switch (status) {
+      case 'good': return 'bg-green-50 border-green-200';
+      case 'warning': return 'bg-yellow-50 border-yellow-200';
+      case 'critical': return 'bg-red-50 border-red-200';
+      case 'no_data': return 'bg-gray-50 border-gray-200';
+      default: return 'bg-slate-50 border-slate-200';
+    }
+  }
+
+  getSkillBreakdownEntries(): Array<{key: string, value: any}> {
+    return Object.entries(this.skillBreakdown).map(([key, value]) => ({ key, value }));
+  }
+
+  asAny(val: any): any {
+    return val;
+  }
+
 
   getUpcomingTrainings(): Training[] {
     const now = new Date();

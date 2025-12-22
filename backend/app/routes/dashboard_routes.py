@@ -20,7 +20,7 @@ Endpoints:
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, func
+from sqlalchemy import update, func, and_
 from datetime import datetime, date
 from app.database import get_db_async
 # Ensure you import your AdditionalSkill model
@@ -824,6 +824,140 @@ async def get_admin_dashboard_data(
             "total_skills": total_skills_count,
             "pending_requests": pending_requests_count,
             "active_trainers": trainers
+        }
+    }
+
+
+@router.get("/admin/attendance-breakdown")
+async def get_attendance_breakdown(
+    current_user: dict = Depends(get_current_active_admin),
+    db: AsyncSession = Depends(get_db_async)
+):
+    """
+    Get detailed attendance breakdown by skill level (L1-L5).
+    Calculates attendance rate for each skill level across all trainings.
+    """
+    # Define skill levels
+    skill_levels = ['L1', 'L2', 'L3', 'L4', 'L5']
+    attendance_by_level = {}
+    
+    for level in skill_levels:
+        # Get total assignments for this level
+        total_for_level_result = await db.execute(
+            select(func.count(TrainingAssignment.id)).join(
+                TrainingDetail, TrainingAssignment.training_id == TrainingDetail.id
+            ).where(TrainingDetail.skill_category == level)
+        )
+        total_for_level = total_for_level_result.scalar() or 0
+        
+        # Get attended assignments for this level
+        # TrainingAttendance uses training_id (not assignment_id)
+        attended_for_level_result = await db.execute(
+            select(func.count(TrainingAttendance.id)).join(
+                TrainingDetail, TrainingAttendance.training_id == TrainingDetail.id
+            ).where(
+                and_(
+                    TrainingDetail.skill_category == level,
+                    TrainingAttendance.attended == True
+                )
+            )
+        )
+        attended_for_level = attended_for_level_result.scalar() or 0
+        
+        attendance_rate_for_level = round(
+            (attended_for_level / total_for_level) * 100, 2
+        ) if total_for_level > 0 else 0
+        
+        attendance_by_level[level] = {
+            "level": level,
+            "total_assigned": total_for_level,
+            "total_attended": attended_for_level,
+            "attendance_rate": attendance_rate_for_level,
+            "status": "good" if attendance_rate_for_level >= 80 else "warning" if attendance_rate_for_level >= 60 else "critical"
+        }
+    
+    # Get skill-wise breakdown with level details (for the 10 core skills)
+    core_skills = ['EXAM', 'Softcar', 'Python', 'C++ (CPP)', 'Axivion', 'MATLAB', 'DOORS', 'Azure DevOps', 'Smart Git', 'Integrity']
+    skill_breakdown = {}
+    
+    for skill_name in core_skills:
+        # Overall skill attendance
+        total_for_skill_result = await db.execute(
+            select(func.count(TrainingAssignment.id)).join(
+                TrainingDetail, TrainingAssignment.training_id == TrainingDetail.id
+            ).where(TrainingDetail.skill == skill_name)
+        )
+        total_for_skill = total_for_skill_result.scalar() or 0
+        
+        attended_for_skill_result = await db.execute(
+            select(func.count(TrainingAttendance.id)).join(
+                TrainingDetail, TrainingAttendance.training_id == TrainingDetail.id
+            ).where(
+                and_(
+                    TrainingDetail.skill == skill_name,
+                    TrainingAttendance.attended == True
+                )
+            )
+        )
+        attended_for_skill = attended_for_skill_result.scalar() or 0
+        
+        attendance_rate_for_skill = round(
+            (attended_for_skill / total_for_skill) * 100, 2
+        ) if total_for_skill > 0 else 0
+        
+        # Level-wise breakdown for this skill
+        levels_data = {}
+        for level in skill_levels:
+            total_skill_level = await db.execute(
+                select(func.count(TrainingAssignment.id)).join(
+                    TrainingDetail, TrainingAssignment.training_id == TrainingDetail.id
+                ).where(
+                    and_(
+                        TrainingDetail.skill == skill_name,
+                        TrainingDetail.skill_category == level
+                    )
+                )
+            )
+            total_sl = total_skill_level.scalar() or 0
+            
+            attended_skill_level = await db.execute(
+                select(func.count(TrainingAttendance.id)).join(
+                    TrainingDetail, TrainingAttendance.training_id == TrainingDetail.id
+                ).where(
+                    and_(
+                        TrainingDetail.skill == skill_name,
+                        TrainingDetail.skill_category == level,
+                        TrainingAttendance.attended == True
+                    )
+                )
+            )
+            attended_sl = attended_skill_level.scalar() or 0
+            
+            rate_sl = round((attended_sl / total_sl) * 100, 2) if total_sl > 0 else 0
+            
+            levels_data[level] = {
+                "level": level,
+                "total_assigned": total_sl,
+                "total_attended": attended_sl,
+                "attendance_rate": rate_sl,
+                "status": "good" if rate_sl >= 80 else "warning" if rate_sl >= 60 else "critical" if total_sl > 0 else "no_data"
+            }
+        
+        skill_breakdown[skill_name] = {
+            "skill": skill_name,
+            "total_assigned": total_for_skill,
+            "total_attended": attended_for_skill,
+            "attendance_rate": attendance_rate_for_skill,
+            "status": "good" if attendance_rate_for_skill >= 80 else "warning" if attendance_rate_for_skill >= 60 else "critical" if total_for_skill > 0 else "no_data",
+            "levels": levels_data
+        }
+    
+    return {
+        "attendance_by_level": attendance_by_level,
+        "skill_breakdown": skill_breakdown,
+        "summary": {
+            "levels_covered": skill_levels,
+            "skills_tracked": core_skills
         }
     }
     

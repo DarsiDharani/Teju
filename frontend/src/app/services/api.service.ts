@@ -275,6 +275,10 @@ export class ApiService {
     return this.getUrl('/admin/analytics/overview');
   }
 
+  get adminAttendanceBreakdownUrl(): string {
+    return this.getUrl('/data/admin/attendance-breakdown');
+  }
+
   get uploadExcelUrl(): string {
     return this.getUrl('/upload-and-refresh');
   }
