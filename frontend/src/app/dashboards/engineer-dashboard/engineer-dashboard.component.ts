@@ -317,6 +317,13 @@ export class EngineerDashboardComponent implements OnInit {
     questions: []
   };
   assignmentFile: File | null = null; // File to upload with assignment
+
+  // Previous Questions Management
+  previousQuestions: any[] = []; // Store all previous questions from trainer
+  showPreviousQuestions: boolean = false; // Toggle to show/hide previous questions panel
+  previousQuestionsSearch: string = ''; // Search filter for previous questions
+  isLoadingPreviousQuestions: boolean = false;
+
   defaultFeedbackQuestions: FeedbackQuestion[] = [
     { text: "How would you rate your overall experience with this training?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
     { text: "Was the content relevant and applicable to your role?", options: ['Yes', 'No', 'Partially'], isDefault: true },
@@ -1060,11 +1067,16 @@ export class EngineerDashboardComponent implements OnInit {
         this.userName = this.employeeName || this.employeeId;
         this.skills = response.skills;
         this.isTrainer = response.employee_is_trainer || false;
+        
+        // Load additional skills from response (includes both self-reported and N/A target skills)
+        if (response.additional_skills) {
+          this.additionalSkills = response.additional_skills;
+        }
+        
         if (this.skills && this.skills.length > 0) {
           this.skillNames = Array.from(new Set(this.skills.map(skill => skill.skill))).sort();
         }
         this.processDashboardData();
-        this.loadAdditionalSkills();
         this.isLoading = false;
         return response;
       }),
@@ -1090,8 +1102,8 @@ export class EngineerDashboardComponent implements OnInit {
   }
 
   processDashboardData(): void {
-    // Core Skills count is based on static sections (10 skills)
-    this.totalSkills = this.sections.length;
+    // Core Skills count is based on actual core sections (excluding moved to additional)
+    this.totalSkills = this.getCoreSkillSections().length;
     
     if (!this.skills || this.skills.length === 0) {
       // Use hardcoded defaults if API fails or returns no skills
@@ -2137,6 +2149,11 @@ export class EngineerDashboardComponent implements OnInit {
     this.resetNewAssignmentForm();
     this.newAssignment.trainingId = trainingId;
     
+    // Fetch previous questions automatically when opening assignment form
+    if (this.previousQuestions.length === 0) {
+      this.fetchPreviousQuestions();
+    }
+    
     // Check shared status and load existing data if available
     const token = this.authService.getToken();
     if (token) {
@@ -2146,13 +2163,16 @@ export class EngineerDashboardComponent implements OnInit {
       this.http.get(this.apiService.getUrl(`/shared-content/trainer/related-assignments/${trainingId}`), { headers }).subscribe({
         next: (relatedResponse: any) => {
           if (relatedResponse && relatedResponse.shared) {
-            // Assignment already shared by another trainer for related training
-            this.sharedAssignments.set(trainingId, true);
-            if (relatedResponse.trainer_username) {
+            // Check if the assignment was shared by a different trainer
+            const currentUser = this.authService.getUsername() || this.employeeId || '';
+            if (relatedResponse.trainer_username && relatedResponse.trainer_username !== currentUser) {
+              // Assignment already shared by ANOTHER trainer for related training
+              this.sharedAssignments.set(trainingId, true);
               this.assignmentSharedBy.set(trainingId, relatedResponse.trainer_username);
+              this.toastService.warning('Assignment and feedback are already shared by your respective trainer.');
+              return; // Don't open the form
             }
-            this.toastService.warning('Assignment and feedback are already shared by your respective trainer.');
-            return; // Don't open the form
+            // If shared by same trainer, continue to load it for editing
           }
           
           // Check if this specific training has shared assignment
@@ -2231,13 +2251,16 @@ export class EngineerDashboardComponent implements OnInit {
       this.http.get(this.apiService.getUrl(`/shared-content/trainer/related-feedback/${trainingId}`), { headers }).subscribe({
         next: (relatedResponse: any) => {
           if (relatedResponse && relatedResponse.shared) {
-            // Feedback already shared by another trainer for related training
-            this.sharedFeedback.set(trainingId, true);
-            if (relatedResponse.trainer_username) {
+            // Check if the feedback was shared by a different trainer
+            const currentUser = this.authService.getUsername() || this.employeeId || '';
+            if (relatedResponse.trainer_username && relatedResponse.trainer_username !== currentUser) {
+              // Feedback already shared by ANOTHER trainer for related training
+              this.sharedFeedback.set(trainingId, true);
               this.feedbackSharedBy.set(trainingId, relatedResponse.trainer_username);
+              this.toastService.warning('Assignment and feedback are already shared by your respective trainer.');
+              return; // Don't open the form
             }
-            this.toastService.warning('Assignment and feedback are already shared by your respective trainer.');
-            return; // Don't open the form
+            // If shared by same trainer, continue to load it for editing
           }
           
           // Check if this specific training has shared feedback
@@ -2362,6 +2385,7 @@ export class EngineerDashboardComponent implements OnInit {
 
     this.http.post(this.apiService.getUrl('/shared-content/assignments'), payload, { headers }).subscribe({
       next: (response: any) => {
+        const wasShared = this.newAssignment.trainingId && this.isAssignmentShared(this.newAssignment.trainingId);
         // Mark assignment as shared for this training
         if (this.newAssignment.trainingId) {
           this.sharedAssignments.set(this.newAssignment.trainingId, true);
@@ -2374,7 +2398,7 @@ export class EngineerDashboardComponent implements OnInit {
         if (this.assignmentFile && this.newAssignment.trainingId) {
           this.uploadAssignmentFile(this.newAssignment.trainingId, this.assignmentFile);
         } else {
-          this.toastService.success('Assignment shared successfully!');
+          this.toastService.success(wasShared ? 'Assignment updated successfully!' : 'Assignment shared successfully!');
           this.resetNewAssignmentForm();
           this.setTrainerZoneView('overview');
         }
@@ -2511,6 +2535,7 @@ export class EngineerDashboardComponent implements OnInit {
 
     this.http.post(this.apiService.getUrl('/shared-content/feedback'), payload, { headers }).subscribe({
       next: (response: any) => {
+        const wasShared = this.newFeedback.trainingId && this.isFeedbackShared(this.newFeedback.trainingId);
         // Mark feedback as shared for this training
         if (this.newFeedback.trainingId) {
           this.sharedFeedback.set(this.newFeedback.trainingId, true);
@@ -2519,7 +2544,7 @@ export class EngineerDashboardComponent implements OnInit {
             this.feedbackSharedBy.set(this.newFeedback.trainingId, response.trainer_username);
           }
         }
-        this.toastService.success('Feedback form shared successfully!');
+        this.toastService.success(wasShared ? 'Feedback form updated successfully!' : 'Feedback form shared successfully!');
         this.setTrainerZoneView('overview');
       },
       error: (err) => {
@@ -2564,6 +2589,64 @@ export class EngineerDashboardComponent implements OnInit {
 
   trackByFn(index: any, item: any) {
     return index;
+  }
+
+  // --- Previous Questions Management ---
+  fetchPreviousQuestions(): void {
+    const token = this.authService.getToken();
+    if (!token) return;
+
+    this.isLoadingPreviousQuestions = true;
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+    
+    this.http.get<{questions: any[], total: number}>(this.apiService.trainerPreviousQuestionsUrl, { headers }).subscribe({
+      next: (response) => {
+        this.previousQuestions = response.questions || [];
+        this.isLoadingPreviousQuestions = false;
+        if (this.previousQuestions.length === 0) {
+          this.toastService.info('No previous questions found. Start creating assignments to build your question library!');
+        }
+      },
+      error: (err) => {
+        console.error('Failed to fetch previous questions:', err);
+        this.isLoadingPreviousQuestions = false;
+        this.toastService.error('Failed to load previous questions.');
+      }
+    });
+  }
+
+  togglePreviousQuestions(): void {
+    this.showPreviousQuestions = !this.showPreviousQuestions;
+    if (this.showPreviousQuestions && this.previousQuestions.length === 0) {
+      this.fetchPreviousQuestions();
+    }
+  }
+
+  get filteredPreviousQuestions(): any[] {
+    if (!this.previousQuestionsSearch.trim()) {
+      return this.previousQuestions;
+    }
+    const searchTerm = this.previousQuestionsSearch.toLowerCase();
+    return this.previousQuestions.filter(q => 
+      q.text.toLowerCase().includes(searchTerm) ||
+      q.trainingName.toLowerCase().includes(searchTerm) ||
+      q.assignmentTitle.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  addPreviousQuestionToAssignment(question: any): void {
+    // Create a deep copy of the question to avoid reference issues
+    const newQuestion = {
+      text: question.text,
+      helperText: question.helperText || '',
+      type: question.type,
+      options: question.options.map((opt: any) => ({
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      }))
+    };
+    this.newAssignment.questions.push(newQuestion);
+    this.toastService.success('Question added to assignment!');
   }
 
   // --- Skills Modal Logic ---
@@ -3729,6 +3812,37 @@ export class EngineerDashboardComponent implements OnInit {
   getAdditionalSoftSkillsCount = () => this.additionalSkills.filter(s => s.skill_category === 'Soft Skills').length;
   getAdditionalLeadershipSkillsCount = () => this.additionalSkills.filter(s => s.skill_category === 'Leadership').length;
 
+  /**
+   * Get skills that were moved from core competencies (current value but N/A target).
+   * These skills have the from_competency flag set to true.
+   */
+  getSkillsFromCompetency(): any[] {
+    return this.additionalSkills.filter(skill => skill.from_competency === true);
+  }
+
+  /**
+   * Get self-reported additional skills (not from core competencies).
+   * These skills were manually added by the user.
+   */
+  getSelfReportedSkills(): any[] {
+    return this.additionalSkills.filter(skill => !skill.from_competency);
+  }
+
+  /**
+   * Get core skill sections that should be displayed in the dashboard.
+   * Filters out skills that have been moved to additional skills (N/A targets with current values).
+   */
+  getCoreSkillSections(): Section[] {
+    // Get list of skills moved to additional (from competency with N/A targets)
+    const movedSkillNames = this.getSkillsFromCompetency().map(s => s.skill_name.toLowerCase().trim());
+    
+    // Filter sections to exclude skills that have been moved
+    return this.sections.filter(section => {
+      const sectionTitle = section.title.toLowerCase().trim();
+      return !movedSkillNames.includes(sectionTitle);
+    });
+  }
+
   // --- Additional Skills CRUD ---
   loadAdditionalSkills(): void {
     const token = this.authService.getToken();
@@ -3793,6 +3907,18 @@ export class EngineerDashboardComponent implements OnInit {
   removeAdditionalSkill(skillId: number): void {
     const token = this.authService.getToken();
     if (!token) return;
+    
+    // Check if skill is from competency (should not be deleted)
+    const skill = this.additionalSkills.find(s => s.id === skillId);
+    if (skill && skill.from_competency) {
+      this.toastService.warning(
+        'Skills from core competencies cannot be deleted. Update the target value in core skills instead.',
+        'Cannot Delete',
+        5000
+      );
+      return;
+    }
+    
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
     this.http.delete(this.apiService.getUrl(`/additional-skills/${skillId}`), { headers }).subscribe({
       next: () => { this.additionalSkills = this.additionalSkills.filter(skill => skill.id !== skillId); }
@@ -3800,6 +3926,16 @@ export class EngineerDashboardComponent implements OnInit {
   }
 
   editAdditionalSkill(skill: any): void {
+    // Check if skill is from competency (should not be edited)
+    if (skill.from_competency) {
+      this.toastService.warning(
+        'Skills from core competencies cannot be edited here. Update them in core skills instead.',
+        'Cannot Edit',
+        5000
+      );
+      return;
+    }
+    
     this.newSkill = { name: skill.skill_name, level: skill.skill_level, category: skill.skill_category, description: skill.description || '' };
     this.showAddSkillForm = true;
     this.editingSkillId = skill.id;

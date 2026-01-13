@@ -126,6 +126,10 @@ class TrainingAssignment(Base):
     assignment_date = Column(DateTime, default=datetime.utcnow)
     # Optional target completion date set by manager at the time of assignment
     target_date = Column(Date, nullable=True)
+    # Relationships
+    training = relationship("TrainingDetail")
+    user = relationship("User", foreign_keys=[employee_empid])
+    assigned_at = assignment_date  # Alias for consistency
 
 class TrainingAttendance(Base):
     __tablename__ = 'training_attendance'

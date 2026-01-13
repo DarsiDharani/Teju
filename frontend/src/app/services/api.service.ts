@@ -147,6 +147,10 @@ export class ApiService {
     return this.getUrl(`/shared-content/trainer/feedback/${trainingId}`);
   }
 
+  get trainerPreviousQuestionsUrl(): string {
+    return this.getUrl('/shared-content/trainer/previous-questions');
+  }
+
   get managerTeamAssignmentsSubmissionsUrl(): string {
     return this.getUrl('/shared-content/manager/team/assignments');
   }
@@ -279,11 +283,20 @@ export class ApiService {
     return this.getUrl('/data/admin/attendance-breakdown');
   }
 
+  get adminFeedbackRatingsUrl(): string {
+    return this.getUrl('/admin/feedback-ratings');
+  }
+
   get uploadExcelUrl(): string {
     return this.getUrl('/upload-and-refresh');
   }
 
   get uploadCsvUrl(): string {
     return this.getUrl('/upload-manager-employee-csv');
+  }
+
+  // Report generation endpoints
+  adminGenerateReportUrl(reportType: string): string {
+    return this.getUrl(`/admin/reports/generate?report_type=${reportType}`);
   }
 }

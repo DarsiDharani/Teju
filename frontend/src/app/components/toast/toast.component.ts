@@ -182,6 +182,12 @@ export class ToastComponent implements OnInit, OnDestroy {
    * Formats message with line breaks and basic HTML
    */
   formatMessage(message: string): string {
+    // Ensure message is a string
+    if (typeof message !== 'string') {
+      // Convert non-string to string safely
+      message = message ? String(message) : '';
+    }
+    
     // Convert newlines to <br> and escape HTML
     return message
       .replace(/&/g, '&amp;')

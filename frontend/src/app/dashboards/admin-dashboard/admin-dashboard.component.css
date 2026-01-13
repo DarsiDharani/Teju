@@ -244,3 +244,129 @@ textarea:focus {
 .chevron-rotate.expanded {
   transform: rotate(180deg);
 }
+
+/* Circular Card Design Styles */
+.metric-card-circular {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.metric-card-circular:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Circular number container with gradient */
+.circle-metric {
+  position: relative;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.circle-metric:hover {
+  transform: scale(1.08);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Pulsing animation for circular metrics */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 0 20px rgba(255, 255, 255, 0.3);
+  }
+}
+
+button:hover .circle-metric {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Separator line animation */
+.separator-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.separator-line::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Card heading enhancement */
+.card-heading {
+  letter-spacing: 0.025em;
+  transition: color 0.3s ease;
+}
+
+button:hover .card-heading {
+  color: #1e293b;
+}
+
+/* Circular metric text */
+.circle-text {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced card borders with rounded corners */
+.rounded-xl {
+  border-radius: 1rem;
+}
+
+/* Card border transitions */
+button[class*=\"border-2\"] {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button[class*=\"border-2\"]:hover {
+  border-width: 2.5px;
+}
+
+/* Professional card shadows */
+.shadow-lg {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 12px 20px -8px rgba(0, 0, 0, 0.1);
+}
+
+/* Card hover lift effect */
+button.group:hover {
+  transform: translateY(-4px);
+}
+
+button.group:active {
+  transform: translateY(-2px);
+}
+
+/* Separator line styling */
+.border-t-2 {
+  border-top-width: 2px;
+}
+
+/* Enhanced backdrop blur */
+.bg-white\\/90 {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Smooth color transitions for borders */
+[class*=\"hover:border-\"] {
+  transition: border-color 0.3s ease-in-out;
+}

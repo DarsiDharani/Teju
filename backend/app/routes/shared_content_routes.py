@@ -634,12 +634,13 @@ async def get_shared_feedback(
         )
 
     # Verify the training is assigned to this employee
+    # Use order_by and first() to handle duplicate assignments gracefully
     assignment_stmt = select(models.TrainingAssignment).where(
         models.TrainingAssignment.training_id == training_id,
         models.TrainingAssignment.employee_empid == employee_username
-    )
+    ).order_by(models.TrainingAssignment.id.desc())
     assignment_result = await db.execute(assignment_stmt)
-    assignment = assignment_result.scalar_one_or_none()
+    assignment = assignment_result.scalars().first()
 
     if not assignment:
         raise HTTPException(
@@ -1067,6 +1068,68 @@ async def check_related_trainings_feedback(
     
     return {"shared": False, "trainer_username": None}
 
+@router.get("/trainer/previous-questions")
+async def get_trainer_previous_questions(
+    db: AsyncSession = Depends(get_db_async),
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Get all previous questions shared by the trainer across all their trainings.
+    This helps trainers avoid duplicate questions and reuse/edit existing ones.
+    Returns a list of unique questions with their metadata.
+    """
+    trainer_username = current_user.get("username")
+    if not trainer_username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials"
+        )
+
+    # Get all assignments shared by this trainer
+    assignments_stmt = select(models.SharedAssignment).where(
+        models.SharedAssignment.trainer_username == trainer_username
+    ).order_by(models.SharedAssignment.updated_at.desc())
+    
+    assignments_result = await db.execute(assignments_stmt)
+    assignments = assignments_result.scalars().all()
+    
+    # Extract all questions from all assignments
+    all_questions = []
+    question_id = 0
+    
+    for assignment in assignments:
+        try:
+            questions_data = json.loads(assignment.assignment_data)
+            
+            # Get training info for context
+            training_stmt = select(models.TrainingDetail).where(
+                models.TrainingDetail.id == assignment.training_id
+            )
+            training_result = await db.execute(training_stmt)
+            training = training_result.scalar_one_or_none()
+            training_name = training.training_name if training else "Unknown Training"
+            
+            for idx, question in enumerate(questions_data):
+                question_id += 1
+                all_questions.append({
+                    "id": question_id,
+                    "text": question.get("text", ""),
+                    "type": question.get("type", ""),
+                    "helperText": question.get("helperText", ""),
+                    "options": question.get("options", []),
+                    "trainingName": training_name,
+                    "assignmentTitle": assignment.title,
+                    "sharedAt": assignment.updated_at.isoformat() if assignment.updated_at else None
+                })
+        except (json.JSONDecodeError, TypeError) as e:
+            # Skip invalid assignment data
+            continue
+    
+    return {
+        "questions": all_questions,
+        "total": len(all_questions)
+    }
+
 # --- Assignment Submission Schemas ---
 
 class AnswerSubmission(BaseModel):
@@ -1113,12 +1176,13 @@ async def submit_assignment(
         )
 
     # Verify the training is assigned to this employee
+    # Use order_by and first() to handle duplicate assignments gracefully
     assignment_stmt = select(models.TrainingAssignment).where(
         models.TrainingAssignment.training_id == submission_data.training_id,
         models.TrainingAssignment.employee_empid == employee_username
-    )
+    ).order_by(models.TrainingAssignment.id.desc())
     assignment_result = await db.execute(assignment_stmt)
-    assignment = assignment_result.scalar_one_or_none()
+    assignment = assignment_result.scalars().first()
 
     if not assignment:
         raise HTTPException(
@@ -1390,12 +1454,13 @@ async def submit_feedback(
         )
 
     # Verify the training is assigned to this employee
+    # Use order_by and first() to handle duplicate assignments gracefully
     assignment_stmt = select(models.TrainingAssignment).where(
         models.TrainingAssignment.training_id == submission_data.training_id,
         models.TrainingAssignment.employee_empid == employee_username
-    )
+    ).order_by(models.TrainingAssignment.id.desc())
     assignment_result = await db.execute(assignment_stmt)
-    assignment = assignment_result.scalar_one_or_none()
+    assignment = assignment_result.scalars().first()
 
     if not assignment:
         raise HTTPException(

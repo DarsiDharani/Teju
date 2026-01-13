@@ -136,6 +136,7 @@ class TrainingRequestResponse(BaseModel):
 class TrainingRequestUpdate(BaseModel):
     status: str  # approved, rejected
     manager_notes: Optional[str] = None
+    target_date: Optional[date] = None  # Optional target completion date for approved requests
 
 # --- Schemas for Notifications ---
 

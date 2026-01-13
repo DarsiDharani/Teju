@@ -57,13 +57,17 @@ export class ToastService {
    * @param duration - Auto-dismiss duration in ms (default: 0 = no auto-dismiss for modals, user must click)
    * @returns The generated notification ID for programmatic removal
    */
-  show(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', title?: string, duration: number = 0): string {
+  show(message: any, type: 'success' | 'error' | 'warning' | 'info' = 'info', title?: string, duration: number = 0): string {
     const id = this.generateId();
+    
+    // Ensure message is always a string and handle various error formats
+    const messageStr = this.extractMessage(message);
+    
     const toast: ToastMessage = {
       id,
       type,
       title: title || this.getDefaultTitle(type),
-      message,
+      message: messageStr,
       duration
     };
 
@@ -79,6 +83,57 @@ export class ToastService {
     }
 
     return id;
+  }
+
+  /**
+   * Extracts a readable message from various input types
+   * @param message - Message in any format (string, object, error, etc.)
+   * @returns Formatted string message
+   */
+  private extractMessage(message: any): string {
+    // If it's already a string, return it
+    if (typeof message === 'string') {
+      return message;
+    }
+
+    // If it's null or undefined
+    if (message == null) {
+      return 'No message provided';
+    }
+
+    // If it's an object, try to extract meaningful information
+    if (typeof message === 'object') {
+      // Check for common error object structures
+      if (message.detail) {
+        return typeof message.detail === 'string' ? message.detail : JSON.stringify(message.detail);
+      }
+      if (message.message) {
+        return typeof message.message === 'string' ? message.message : JSON.stringify(message.message);
+      }
+      if (message.error) {
+        return this.extractMessage(message.error);
+      }
+      
+      // For FastAPI 422 validation errors
+      if (Array.isArray(message) && message.length > 0 && message[0].msg) {
+        return message.map((err: any) => err.msg).join(', ');
+      }
+
+      // Try to stringify the object
+      try {
+        const str = JSON.stringify(message);
+        // Don't return empty objects
+        if (str === '{}' || str === '[]') {
+          return 'An error occurred';
+        }
+        return str;
+      } catch (e) {
+        return 'An error occurred';
+      }
+    }
+
+    // For any other type, convert to string
+    return String(message);
   }
 
   /**

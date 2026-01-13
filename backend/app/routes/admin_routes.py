@@ -15,12 +15,16 @@ Features:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func, or_, and_, delete
+from sqlalchemy import func, or_, and_, delete, text
 from sqlalchemy.orm import selectinload
 from typing import Optional, List
 from datetime import datetime, date
+import json
+import csv
+from io import BytesIO, StringIO
 
 from app.database import get_db_async
 from app.auth_utils import get_current_active_admin
@@ -963,3 +967,431 @@ async def get_system_analytics(
         }
     }
 
+
+@router.get("/feedback-ratings")
+async def get_training_feedback_ratings(
+    current_user: dict = Depends(get_current_active_admin),
+    db: AsyncSession = Depends(get_db_async)
+):
+    """
+    Get consolidated feedback ratings for all trainings.
+    Returns average ratings from employee feedback submissions.
+    """
+    # Get all trainings with their feedback submissions
+    trainings_result = await db.execute(
+        select(TrainingDetail).order_by(TrainingDetail.training_name)
+    )
+    trainings = trainings_result.scalars().all()
+    
+    feedback_ratings = []
+    
+    for training in trainings:
+        # Get all feedback submissions for this training
+        feedback_submissions_result = await db.execute(
+            select(FeedbackSubmission).where(
+                FeedbackSubmission.training_id == training.id
+            )
+        )
+        feedback_submissions = feedback_submissions_result.scalars().all()
+        
+        if not feedback_submissions:
+            # No feedback yet
+            continue
+        
+        # Calculate average rating from all submissions
+        total_rating = 0.0
+        total_responses = 0
+        
+        for submission in feedback_submissions:
+            try:
+                responses_data = json.loads(submission.responses_data)
+                
+                # Extract rating responses (assuming rating questions have numeric values)
+                for response in responses_data:
+                    answer = response.get('answer', '')
+                    question_text = response.get('question', '').lower()
+                    
+                    # Try to parse numeric ratings
+                    # Common patterns: "5", "4 out of 5", "4/5", "80%"
+                    if isinstance(answer, (int, float)):
+                        rating_value = float(answer)
+                        # Normalize to 0-100 scale if needed
+                        if rating_value <= 5:  # Assume 1-5 scale
+                            rating_value = rating_value * 20
+                    elif isinstance(answer, str):
+                        # Try to extract numeric value
+                        import re
+                        # Look for rating patterns
+                        match = re.search(r'(\d+(?:\.\d+)?)\s*(?:out of|/)\s*(\d+)', answer)
+                        if match:
+                            numerator = float(match.group(1))
+                            denominator = float(match.group(2))
+                            rating_value = (numerator / denominator) * 100 if denominator > 0 else 0
+                        else:
+                            # Look for single number (assume 1-5 or 1-10 scale)
+                            match = re.search(r'(\d+(?:\.\d+)?)', answer)
+                            if match:
+                                rating_value = float(match.group(1))
+                                if rating_value <= 5:
+                                    rating_value = rating_value * 20
+                                elif rating_value <= 10:
+                                    rating_value = rating_value * 10
+                            else:
+                                continue
+                    else:
+                        continue
+                    
+                    total_rating += rating_value
+                    total_responses += 1
+                    
+            except (json.JSONDecodeError, ValueError, AttributeError):
+                continue
+        
+        # Calculate average rating for this training
+        if total_responses > 0:
+            avg_rating = total_rating / total_responses
+            feedback_ratings.append({
+                "training_id": training.id,
+                "training_name": training.training_name,
+                "trainer_name": training.trainer_name or "Unknown",
+                "skill": training.skill or "",
+                "division": training.division or "",
+                "department": training.department or "",
+                "average_rating": round(avg_rating, 2),
+                "total_submissions": len(feedback_submissions),
+                "total_responses": total_responses
+            })
+    
+    # Sort by average rating (highest first)
+    feedback_ratings.sort(key=lambda x: x['average_rating'], reverse=True)
+    
+    return {
+        "trainings": feedback_ratings,
+        "total_trainings_with_feedback": len(feedback_ratings)
+    }
+
+
+# ==================== REPORT GENERATION ====================
+
+@router.get("/reports/generate")
+async def generate_report(
+    report_type: str = Query(..., description="Type of report: users, trainings, skills, attendance, assignments, feedback, all"),
+    db: AsyncSession = Depends(get_db_async),
+    current_user: User = Depends(get_current_active_admin)
+):
+    """
+    Generate comprehensive reports for admin
+    Report types:
+    - users: All users report with roles and managers
+    - trainings: All trainings with assignments and attendance
+    - skills: Employee competencies and skill gaps
+    - attendance: Training attendance breakdown
+    - assignments: Training assignments by training
+    - feedback: Feedback submissions summary
+    - all: Complete system report
+    """
+    report_data = []
+    filename = f"report_{report_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    
+    try:
+        if report_type == "users" or report_type == "all":
+            # Users Report - Get users with their roles and managers
+            result = await db.execute(
+                select(User).order_by(User.username)
+            )
+            users = result.scalars().all()
+            
+            # Get all admin users
+            admin_result = await db.execute(select(Admin))
+            admins = {admin.username for admin in admin_result.scalars().all()}
+            
+            # Get all manager-employee relationships
+            manager_result = await db.execute(select(ManagerEmployee))
+            manager_relations = manager_result.scalars().all()
+            
+            # Create mappings
+            employee_to_manager = {}
+            user_info = {}
+            
+            for rel in manager_relations:
+                # Map employee to their manager
+                employee_to_manager[rel.employee_empid] = rel.manager_name
+                
+                # Store user info
+                if rel.manager_empid not in user_info:
+                    user_info[rel.manager_empid] = {
+                        'name': rel.manager_name,
+                        'role': 'manager',
+                        'is_trainer': rel.manager_is_trainer
+                    }
+                if rel.employee_empid not in user_info:
+                    user_info[rel.employee_empid] = {
+                        'name': rel.employee_name,
+                        'role': 'employee',
+                        'is_trainer': rel.employee_is_trainer
+                    }
+            
+            if report_type == "users":
+                report_data = []
+                for user in users:
+                    # Determine role
+                    if user.username in admins:
+                        role = "admin"
+                    elif user.username in user_info:
+                        role = user_info[user.username]['role']
+                    else:
+                        role = "unknown"
+                    
+                    # Get name
+                    name = user_info.get(user.username, {}).get('name', user.username)
+                    
+                    # Get is_trainer status
+                    is_trainer = user_info.get(user.username, {}).get('is_trainer', False)
+                    
+                    # Get manager
+                    manager = employee_to_manager.get(user.username, "N/A")
+                    
+                    report_data.append({
+                        "Username": user.username,
+                        "Name": name,
+                        "Role": role,
+                        "Is Trainer": "Yes" if is_trainer else "No",
+                        "Manager": manager,
+                        "Created At": user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else "N/A"
+                    })
+        
+        if report_type == "trainings" or report_type == "all":
+            # Trainings Report with Assignment and Attendance Stats
+            result = await db.execute(
+                select(TrainingDetail)
+                .options(
+                    selectinload(TrainingDetail.assignments),
+                    selectinload(TrainingDetail.attendances)
+                )
+                .order_by(TrainingDetail.training_name)
+            )
+            trainings = result.scalars().all()
+            
+            trainings_data = []
+            for training in trainings:
+                assigned_count = len(training.assignments)
+                attended_count = len([a for a in training.attendances if a.attended])
+                completion_rate = (attended_count / assigned_count * 100) if assigned_count > 0 else 0
+                
+                trainings_data.append({
+                    "Training ID": training.id,
+                    "Training Name": training.training_name,
+                    "Trainer": training.trainer_name or "N/A",
+                    "Division": training.division or "N/A",
+                    "Department": training.department or "N/A",
+                    "Skill": training.skill or "N/A",
+                    "Competency": training.competency or "N/A",
+                    "Training Type": training.training_type or "N/A",
+                    "Training Date": training.training_date or "N/A",
+                    "Duration": training.duration or "N/A",
+                    "Seats": training.seats or "N/A",
+                    "Assigned Count": assigned_count,
+                    "Attended Count": attended_count,
+                    "Completion Rate (%)": f"{completion_rate:.2f}"
+                })
+            
+            if report_type == "trainings":
+                report_data = trainings_data
+        
+        if report_type == "skills" or report_type == "all":
+            # Skills/Competencies Report
+            result = await db.execute(
+                select(EmployeeCompetency)
+                .order_by(EmployeeCompetency.employee_empid, EmployeeCompetency.skill)
+            )
+            competencies = result.scalars().all()
+            
+            skills_data = []
+            for comp in competencies:
+                skills_data.append({
+                    "Employee ID": comp.employee_empid,
+                    "Employee Name": comp.employee_name,
+                    "Skill": comp.skill,
+                    "Competency": comp.competency or "N/A",
+                    "Current Expertise": comp.current_expertise,
+                    "Target Expertise": comp.target_expertise,
+                    "Status": comp.status,
+                    "Division": comp.division or "N/A",
+                    "Department": comp.department or "N/A",
+                    "Project": comp.project or "N/A",
+                    "Target Date": comp.target_date or "N/A",
+                    "Comments": comp.comments or "N/A"
+                })
+            
+            if report_type == "skills":
+                report_data = skills_data
+        
+        if report_type == "attendance" or report_type == "all":
+            # Attendance Report
+            result = await db.execute(
+                select(TrainingAttendance)
+                .options(
+                    selectinload(TrainingAttendance.training)
+                )
+                .order_by(TrainingAttendance.training_id, TrainingAttendance.employee_empid)
+            )
+            attendances = result.scalars().all()
+            
+            # Get employee names from ManagerEmployee table
+            emp_names = {}
+            for attendance in attendances:
+                if attendance.employee_empid not in emp_names:
+                    emp_result = await db.execute(
+                        select(ManagerEmployee).where(
+                            or_(
+                                ManagerEmployee.employee_empid == attendance.employee_empid,
+                                ManagerEmployee.manager_empid == attendance.employee_empid
+                            )
+                        ).limit(1)
+                    )
+                    emp_row = emp_result.scalars().first()
+                    if emp_row:
+                        if emp_row.employee_empid == attendance.employee_empid:
+                            emp_names[attendance.employee_empid] = emp_row.employee_name
+                        else:
+                            emp_names[attendance.employee_empid] = emp_row.manager_name
+                    else:
+                        emp_names[attendance.employee_empid] = attendance.employee_empid
+            
+            attendance_data = []
+            for attendance in attendances:
+                attendance_data.append({
+                    "Training ID": attendance.training_id,
+                    "Training Name": attendance.training.training_name if attendance.training else "N/A",
+                    "Employee ID": attendance.employee_empid,
+                    "Employee Name": emp_names.get(attendance.employee_empid, attendance.employee_empid),
+                    "Attended": "Yes" if attendance.attended else "No",
+                    "Marked At": attendance.marked_at.strftime('%Y-%m-%d %H:%M:%S') if attendance.marked_at else "N/A"
+                })
+            
+            if report_type == "attendance":
+                report_data = attendance_data
+        
+        if report_type == "assignments" or report_type == "all":
+            # Assignments Report
+            result = await db.execute(
+                select(TrainingAssignment)
+                .options(
+                    selectinload(TrainingAssignment.training)
+                )
+                .order_by(TrainingAssignment.training_id, TrainingAssignment.employee_empid)
+            )
+            assignments = result.scalars().all()
+            
+            # Get employee names from ManagerEmployee table
+            emp_names = {}
+            for assignment in assignments:
+                if assignment.employee_empid not in emp_names:
+                    emp_result = await db.execute(
+                        select(ManagerEmployee).where(
+                            or_(
+                                ManagerEmployee.employee_empid == assignment.employee_empid,
+                                ManagerEmployee.manager_empid == assignment.employee_empid
+                            )
+                        ).limit(1)
+                    )
+                    emp_row = emp_result.scalars().first()
+                    if emp_row:
+                        if emp_row.employee_empid == assignment.employee_empid:
+                            emp_names[assignment.employee_empid] = emp_row.employee_name
+                        else:
+                            emp_names[assignment.employee_empid] = emp_row.manager_name
+                    else:
+                        emp_names[assignment.employee_empid] = assignment.employee_empid
+            
+            assignments_data = []
+            for assignment in assignments:
+                assignments_data.append({
+                    "Training ID": assignment.training_id,
+                    "Training Name": assignment.training.training_name if assignment.training else "N/A",
+                    "Employee ID": assignment.employee_empid,
+                    "Employee Name": emp_names.get(assignment.employee_empid, assignment.employee_empid),
+                    "Assigned At": assignment.assignment_date.strftime('%Y-%m-%d %H:%M:%S') if assignment.assignment_date else "N/A"
+                })
+            
+            if report_type == "assignments":
+                report_data = assignments_data
+        
+        if report_type == "feedback" or report_type == "all":
+            # Feedback Submissions Report
+            result = await db.execute(
+                select(FeedbackSubmission)
+                .options(
+                    selectinload(FeedbackSubmission.training)
+                )
+                .order_by(FeedbackSubmission.training_id, FeedbackSubmission.employee_empid)
+            )
+            feedbacks = result.scalars().all()
+            
+            # Get employee names from ManagerEmployee table
+            emp_names = {}
+            for feedback in feedbacks:
+                if feedback.employee_empid not in emp_names:
+                    emp_result = await db.execute(
+                        select(ManagerEmployee).where(
+                            or_(
+                                ManagerEmployee.employee_empid == feedback.employee_empid,
+                                ManagerEmployee.manager_empid == feedback.employee_empid
+                            )
+                        ).limit(1)
+                    )
+                    emp_row = emp_result.scalars().first()
+                    if emp_row:
+                        if emp_row.employee_empid == feedback.employee_empid:
+                            emp_names[feedback.employee_empid] = emp_row.employee_name
+                        else:
+                            emp_names[feedback.employee_empid] = emp_row.manager_name
+                    else:
+                        emp_names[feedback.employee_empid] = feedback.employee_empid
+            
+            feedback_data = []
+            for feedback in feedbacks:
+                feedback_data.append({
+                    "Training ID": feedback.training_id,
+                    "Training Name": feedback.training.training_name if feedback.training else "N/A",
+                    "Employee ID": feedback.employee_empid,
+                    "Employee Name": emp_names.get(feedback.employee_empid, feedback.employee_empid),
+                    "Submitted At": feedback.submitted_at.strftime('%Y-%m-%d %H:%M:%S') if feedback.submitted_at else "N/A"
+                })
+            
+            if report_type == "feedback":
+                report_data = feedback_data
+        
+        if not report_data:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No data found for report type: {report_type}"
+            )
+        
+        # Generate CSV using StringIO
+        output = StringIO()
+        if report_data:
+            csv_writer = csv.DictWriter(output, fieldnames=report_data[0].keys())
+            csv_writer.writeheader()
+            csv_writer.writerows(report_data)
+        
+        # Convert to bytes for streaming
+        csv_content = output.getvalue()
+        output.close()
+        
+        return StreamingResponse(
+            iter([csv_content.encode('utf-8')]),
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}",
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating report: {str(e)}"
+        )

@@ -176,6 +176,40 @@ export class AdminDashboardComponent implements OnInit {
   attendanceViewMode: 'skill' | 'level' = 'skill';
   expandedSkillInModal: string | null = null;
   
+  // New dashboard cards data
+  trainingRate: number = 0;
+  trainingCompletionRate: number = 0;
+  topFeedbackRatings: any[] = [];
+  allFeedbackRatings: any[] = [];  // Store all feedback ratings for modal
+  topTrainers: Array<{ name: string; value: number; display: string; metric: 'deliveries' | 'completion' | 'assigned' | 'attended'; count?: number; }> = [];
+  newCardsLoading: boolean = false;
+  // Calculation trace values
+  trainingRateNumerator: number = 0;     // available trainings
+  trainingRateDenominator: number = 0;   // same as available trainings (by definition)
+  completionNumerator: number = 0;       // attended assignments
+  completionDenominator: number = 0;     // total assignments
+  
+  // Modal controls for new cards
+  showTrainingRateModal: boolean = false;
+  showCompletionRateModal: boolean = false;
+  showFeedbackRatingsModal: boolean = false;
+  showTopTrainersModal: boolean = false;
+  feedbackRatingsSearch: string = '';
+  trainersDetailSearch: string = '';
+  // Trainer ranking basis
+  trainerRankBasis: 'deliveries' | 'completion' | 'assigned' | 'attended' = 'deliveries';
+  private trainerRankLabels: Record<'deliveries' | 'completion' | 'assigned' | 'attended', string> = {
+    deliveries: 'Deliveries',
+    completion: 'Completion %',
+    assigned: 'Assigned',
+    attended: 'Attended'
+  };
+  // All Training Rates modal
+  showAllTrainingRatesModal: boolean = false;
+  allRatesSearch: string = '';
+  allRatesSort: 'name' | 'trainer' | 'assigned' | 'attended' | 'trainingRate' | 'completionRate' = 'name';
+  allRatesSortDir: 'asc' | 'desc' = 'asc';
+  
   // User Management
   users: User[] = [];
   usersLoading: boolean = false;
@@ -262,6 +296,20 @@ export class AdminDashboardComponent implements OnInit {
   csvFile: File | null = null;
   uploading: boolean = false;
   
+  // Report Generation
+  showReportModal: boolean = false;
+  selectedReportType: string = '';
+  reportTypes = [
+    { value: 'users', label: 'Users Report', description: 'All users with roles and managers', icon: 'fa-users' },
+    { value: 'trainings', label: 'Trainings Report', description: 'All trainings with assignments and attendance', icon: 'fa-book-open' },
+    { value: 'skills', label: 'Skills Report', description: 'Employee competencies and skill gaps', icon: 'fa-graduation-cap' },
+    { value: 'attendance', label: 'Attendance Report', description: 'Training attendance breakdown', icon: 'fa-clipboard-check' },
+    { value: 'assignments', label: 'Assignments Report', description: 'Training assignments by training', icon: 'fa-tasks' },
+    { value: 'feedback', label: 'Feedback Report', description: 'Feedback submissions summary', icon: 'fa-comment-dots' },
+    { value: 'all', label: 'Complete Report', description: 'All system data in one report', icon: 'fa-database' }
+  ];
+  generatingReport: boolean = false;
+  
   // Analytics
   analytics: any = null;
   analyticsLoading: boolean = false;
@@ -291,9 +339,11 @@ export class AdminDashboardComponent implements OnInit {
     this.adminId = this.authService.getUsername() || '';
     this.adminName = `Admin (${this.adminId})`;
     
+    this.loadTrainersForPopup(); // Load trainer list first
     this.loadDashboardData();
     this.loadTrainings();
     this.loadGapAnalysis();
+    this.loadAdditionalDashboardCards();
   }
 
   getHeaders(): HttpHeaders {
@@ -349,6 +399,9 @@ export class AdminDashboardComponent implements OnInit {
           
           // Load detailed attendance breakdown
           this.loadAttendanceBreakdown();
+
+          // Refresh calculated card values after metrics arrive
+          this.loadAdditionalDashboardCards();
           
           this.isLoading = false;
         },
@@ -394,6 +447,49 @@ export class AdminDashboardComponent implements OnInit {
   closeAttendanceModal(): void {
     this.showAttendanceModal = false;
     this.expandedSkillInModal = null;
+  }
+
+  openTrainingRateModal(): void {
+    this.showTrainingRateModal = true;
+  }
+
+  closeTrainingRateModal(): void {
+    this.showTrainingRateModal = false;
+  }
+
+  openCompletionRateModal(): void {
+    this.showCompletionRateModal = true;
+  }
+
+  closeCompletionRateModal(): void {
+    this.showCompletionRateModal = false;
+  }
+
+  openFeedbackRatingsModal(): void {
+    this.showFeedbackRatingsModal = true;
+  }
+
+  closeFeedbackRatingsModal(): void {
+    this.showFeedbackRatingsModal = false;
+    this.feedbackRatingsSearch = '';
+  }
+
+  openTopTrainersModal(): void {
+    this.showTopTrainersModal = true;
+  }
+
+  closeTopTrainersModal(): void {
+    this.showTopTrainersModal = false;
+    this.trainersDetailSearch = '';
+  }
+
+  openAllTrainingRatesModal(): void {
+    this.showAllTrainingRatesModal = true;
+  }
+
+  closeAllTrainingRatesModal(): void {
+    this.showAllTrainingRatesModal = false;
+    this.allRatesSearch = '';
   }
 
   toggleSkillExpansion(skillName: string): void {
@@ -948,6 +1044,9 @@ export class AdminDashboardComponent implements OnInit {
           this.selectedTrainings.clear();
           this.isSelectAllTrainings = false;
           this.trainingsLoading = false;
+          
+          // Refresh the additional dashboard cards
+          this.loadAdditionalDashboardCards();
         },
         error: (err) => {
           console.error('Error loading trainings:', err);
@@ -1275,11 +1374,366 @@ export class AdminDashboardComponent implements OnInit {
       });
   }
 
+  loadAdditionalDashboardCards(): void {
+    this.newCardsLoading = true;
+    
+    // Calculate Training Rate based on assignments vs trainings available
+    // Definition: Assigned Trainings ÷ Available Trainings × 100
+    // Uses total assignments as the count of trainings assigned out.
+    this.trainingRateNumerator = this.totalAssignments;
+    this.trainingRateDenominator = this.totalTrainings;
+    this.trainingRate = this.trainingRateDenominator > 0
+      ? (this.trainingRateNumerator / this.trainingRateDenominator) * 100
+      : 0;
+    
+    // Calculate overall training completion rate
+    this.completionNumerator = this.attendedAssignments;
+    this.completionDenominator = this.totalAssignments;
+    this.trainingCompletionRate = this.completionDenominator > 0
+      ? (this.completionNumerator / this.completionDenominator) * 100
+      : 0;
+    
+    // Load top 5 training feedback ratings
+    this.loadTopFeedbackRatings();
+    
+    // Load top 5 trainers
+    this.loadTopTrainers();
+  }
+
+  loadTopFeedbackRatings(): void {
+    // Fetch consolidated feedback ratings from backend
+    this.http.get<any>(this.apiService.adminFeedbackRatingsUrl, { headers: this.getHeaders() })
+      .subscribe({
+        next: (data) => {
+          this.allFeedbackRatings = data.trainings || [];
+          
+          // Get top 5 trainings by average rating
+          this.topFeedbackRatings = this.allFeedbackRatings
+            .slice(0, 5)
+            .map(training => ({
+              id: training.training_id,
+              name: training.training_name,
+              trainer: training.trainer_name,
+              rating: training.average_rating,
+              submissions: training.total_submissions,
+              responses: training.total_responses,
+              skill: training.skill,
+              division: training.division,
+              department: training.department
+            }));
+        },
+        error: (err) => {
+          console.error('Error loading feedback ratings:', err);
+          this.topFeedbackRatings = [];
+          this.allFeedbackRatings = [];
+        }
+      });
+  }
+
+  loadTopTrainers(): void {
+    // Compute top trainers based on the selected basis
+    this.topTrainers = this.computeTopTrainers(this.trainerRankBasis);
+    this.newCardsLoading = false;
+  }
+
+  private computeTopTrainers(basis: 'deliveries' | 'completion' | 'assigned' | 'attended')
+    : Array<{ name: string; value: number; display: string; metric: 'deliveries' | 'completion' | 'assigned' | 'attended'; count?: number; }> {
+    const result: Array<{ name: string; value: number; display: string; metric: 'deliveries' | 'completion' | 'assigned' | 'attended'; count?: number; }> = [];
+    if (!this.trainings || this.trainings.length === 0) return result;
+
+    // Build aggregates per trainer (filter out invalid names)
+    const trainerMap = new Map<string, { deliveries: number; assigned: number; attended: number; completion: number }>();
+    const namesSet = new Set<string>();
+    this.trainings.forEach(t => {
+      const name = t.trainer_name || 'Unknown';
+      // Filter out "Not Assigned", "Unknown", empty strings, etc.
+      if (!name || name.trim() === '' || name.toLowerCase() === 'not assigned' || name.toLowerCase() === 'unknown') {
+        return;
+      }
+      namesSet.add(name);
+      if (!trainerMap.has(name)) {
+        trainerMap.set(name, { deliveries: 0, assigned: 0, attended: 0, completion: 0 });
+      }
+      const agg = trainerMap.get(name)!;
+      agg.deliveries += 1;
+      agg.assigned += t.assigned_count || 0;
+      agg.attended += t.attended_count || 0;
+    });
+
+    // Compute completion after counts
+    trainerMap.forEach(agg => {
+      agg.completion = agg.assigned > 0 ? (agg.attended / agg.assigned) * 100 : 0;
+    });
+
+    // Build sortable array according to basis
+    namesSet.forEach(name => {
+      const agg = trainerMap.get(name)!;
+      let value = 0;
+      let display = '';
+      if (basis === 'deliveries') {
+        value = agg.deliveries;
+        display = `${agg.deliveries}`;
+      } else if (basis === 'assigned') {
+        value = agg.assigned;
+        display = `${agg.assigned}`;
+      } else if (basis === 'attended') {
+        value = agg.attended;
+        display = `${agg.attended}`;
+      } else { // completion
+        value = Math.round(agg.completion * 100) / 100;
+        display = `${Math.round(agg.completion)}%`;
+      }
+      result.push({ name, value, display, metric: basis, count: agg.deliveries });
+    });
+
+    // Sort desc by value and take top 5
+    return result.sort((a, b) => (b.value - a.value)).slice(0, 5);
+  }
+
+  onTrainerRankBasisChange(basis: 'deliveries' | 'completion' | 'assigned' | 'attended') {
+    this.trainerRankBasis = basis;
+    this.topTrainers = this.computeTopTrainers(this.trainerRankBasis);
+  }
+
+  getTrainerRankLabel(): string {
+    return this.trainerRankLabels[this.trainerRankBasis];
+  }
+
+  getTrainerBasisSubtext(): string {
+    switch (this.trainerRankBasis) {
+      case 'deliveries':
+        return 'Leading trainers by number of training deliveries';
+      case 'completion':
+        return 'Leading trainers by average completion rate across their trainings';
+      case 'assigned':
+        return 'Leading trainers by total assigned candidates across their trainings';
+      case 'attended':
+        return 'Leading trainers by total attendees across their trainings';
+    }
+  }
+
+  // ==================== TRAINING RATES HELPERS ====================
+  private parseSeats(val: any): number {
+    if (val == null) return 0;
+    try {
+      const str = String(val);
+      const match = str.match(/\d+/);
+      return match ? Number(match[0]) : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  getSeatsNumber(t: Training): number {
+    return this.parseSeats(t.seats);
+  }
+
+  getTrainingRateValue(t: Training): number {
+    const assigned = t.assigned_count || 0;
+    const totalAssigned = this.totalAssignments || 0;
+    if (totalAssigned > 0) {
+      const rate = (assigned / totalAssigned) * 100;
+      return Math.round(rate * 100) / 100; // 2-decimals
+    }
+    return 0;
+  }
+
+  getCompletionRateValue(t: Training): number {
+    if (typeof t.completion_rate === 'number') {
+      return Math.round(t.completion_rate * 100) / 100; // ensure 2-decimals
+    }
+    const assigned = t.assigned_count || 0;
+    const attended = t.attended_count || 0;
+    if (assigned > 0) {
+      const rate = (attended / assigned) * 100;
+      return Math.round(rate * 100) / 100;
+    }
+    return 0;
+  }
+
+  getAllTrainingRatesRows(): Array<{
+    name: string;
+    trainer: string;
+    assigned: number;
+    attended: number;
+    trainingRate: number;
+    completionRate: number;
+    seats: number;
+    insight: string;
+    ref: Training;
+  }> {
+    const rows = (this.trainings || []).map(t => ({
+      name: t.training_name,
+      trainer: t.trainer_name || 'Unknown',
+      assigned: t.assigned_count || 0,
+      attended: t.attended_count || 0,
+      trainingRate: this.getTrainingRateValue(t),
+      completionRate: this.getCompletionRateValue(t),
+      seats: this.getSeatsNumber(t),
+      insight: this.getTrainingInsight(t),
+      ref: t
+    }));
+
+    // filter
+    const q = (this.allRatesSearch || '').toLowerCase();
+    const filtered = q
+      ? rows.filter(r =>
+          (r.name || '').toLowerCase().includes(q) ||
+          (r.trainer || '').toLowerCase().includes(q)
+        )
+      : rows;
+
+    // sort
+    const key = this.allRatesSort;
+    const dir = this.allRatesSortDir === 'asc' ? 1 : -1;
+    filtered.sort((a, b) => {
+      const va = a[key];
+      const vb = b[key];
+      if (typeof va === 'string' && typeof vb === 'string') {
+        return va.localeCompare(vb) * dir;
+      }
+      return ((va as number) - (vb as number)) * dir;
+    });
+
+    return filtered;
+  }
+
+  getTrainingInsight(t: Training): string {
+    const assigned = t.assigned_count || 0;
+    const attended = t.attended_count || 0;
+    const trainingRate = this.getTrainingRateValue(t);
+    const completion = this.getCompletionRateValue(t);
+
+    if (!t.training_name) return 'Needs definition';
+    if (assigned === 0) return 'No learners assigned yet';
+    if (trainingRate >= 20) return 'High participation rate';
+    if (trainingRate >= 10) return 'Good participation';
+    if (trainingRate >= 5) return 'Moderate participation';
+    if (trainingRate < 5) return 'Low participation';
+    if (completion >= 90) return 'Excellent completion rate';
+    if (completion >= 75) return 'Steady progress';
+    if (completion < 60) return 'Completion risk';
+    return 'Monitor engagement';
+  }
+
+  getTrainingStats(trainingName: string): any {
+      const training = this.trainings.find(t => t.training_name === trainingName);
+      if (training) {
+        const rate = training.assigned_count > 0 
+          ? (training.attended_count / training.assigned_count) * 100 
+          : 0;
+        return {
+          assigned: training.assigned_count || 0,
+          attended: training.attended_count || 0,
+          rate: rate
+        };
+      }
+      return { assigned: 0, attended: 0, rate: 0 };
+  }
+
+  getTrainerTrainings(trainerName: string): Training[] {
+    return this.trainings.filter(t => t.trainer_name === trainerName);
+  }
+
+  getTrainerAggregates(trainerName: string): { trainings: number; assigned: number; attended: number; completion: number; } {
+    const list = this.getTrainerTrainings(trainerName);
+    let assigned = 0;
+    let attended = 0;
+    list.forEach(t => {
+      assigned += t.assigned_count || 0;
+      attended += t.attended_count || 0;
+    });
+    const completion = assigned > 0 ? Math.round((attended / assigned) * 10000) / 100 : 0;
+    return { trainings: list.length, assigned, attended, completion };
+  }
+
+  getTop5TrainingsByAssignment(): Array<{
+    name: string;
+    assigned: number;
+    trainingRate: number;
+  }> {
+    const rows = (this.trainings || [])
+      .map(t => ({
+        name: t.training_name,
+        assigned: t.assigned_count || 0,
+        trainingRate: this.getTrainingRateValue(t)
+      }))
+      .sort((a, b) => b.assigned - a.assigned)  // Sort by assigned count descending
+      .slice(0, 5);  // Take top 5
+    return rows;
+  }
+
+  getAllTrainersWithCounts(): Array<{
+    name: string;
+    trainingCount: number;
+  }> {
+    const trainerMap = new Map<string, number>();
+    
+    // Get known trainer names from trainerUsers (loaded from backend)
+    const knownTrainerNames = (this.trainerUsers || [])
+      .map(t => t.name?.trim())
+      .filter(name => name && name.length > 0);
+    
+    console.log('Known trainer names from backend:', knownTrainerNames);
+    
+    // Process each training
+    (this.trainings || []).forEach(t => {
+      let nameField = t.trainer_name;
+      
+      // Filter out invalid names
+      if (!nameField || nameField.trim() === '' || 
+          nameField.toLowerCase() === 'not assigned' || 
+          nameField.toLowerCase() === 'unknown') {
+        return;
+      }
+      
+      nameField = nameField.trim();
+      const nameLower = nameField.toLowerCase();
+      const matchedTrainers: string[] = [];
+      
+      // Check each known trainer name
+      for (const knownName of knownTrainerNames) {
+        const knownLower = knownName.toLowerCase();
+        // Check if this known trainer name appears in the training's trainer_name
+        if (nameLower.includes(knownLower)) {
+          matchedTrainers.push(knownName);
+        }
+      }
+      
+      console.log(`Training "${t.training_name}" has trainer_name: "${nameField}" -> matched: [${matchedTrainers.join(', ')}]`);
+      
+      // If no matches, treat as single trainer
+      if (matchedTrainers.length === 0) {
+        matchedTrainers.push(nameField);
+      }
+      
+      // Count each matched trainer
+      matchedTrainers.forEach(name => {
+        trainerMap.set(name, (trainerMap.get(name) || 0) + 1);
+      });
+    });
+
+    const result: Array<{ name: string; trainingCount: number }> = [];
+    trainerMap.forEach((count, name) => {
+      result.push({ name, trainingCount: count });
+    });
+
+    console.log('Final trainer counts:', result);
+
+    // Sort by training count descending
+    return result.sort((a, b) => b.trainingCount - a.trainingCount);
+  }
+
+  getTrainingByName(name: string): Training | null {
+    const match = this.trainings.find(t => t.training_name === name);
+    return match ? { ...match } : null;
+  }
+
   openEditSkillModal(competency: Competency): void {
     this.selectedCompetency = { ...competency };
     this.skillUpdate = {
-      current_expertise: competency.current_expertise,
-      target_expertise: competency.target_expertise
+      current_expertise: competency.current_expertise || '',
+      target_expertise: competency.target_expertise || ''
     };
     this.showEditSkillModal = true;
   }
@@ -1287,7 +1741,25 @@ export class AdminDashboardComponent implements OnInit {
   updateSkill(): void {
     if (!this.selectedCompetency) return;
 
-    this.http.put(this.apiService.adminSkillCompetencyUrl(this.selectedCompetency.id), this.skillUpdate, { headers: this.getHeaders() })
+    // Validate required fields
+    if (!this.skillUpdate.current_expertise || !this.skillUpdate.target_expertise) {
+      this.toastService.show('Both Current Expertise and Target Expertise are required', 'warning');
+      return;
+    }
+
+    // Trim whitespace
+    const payload = {
+      current_expertise: this.skillUpdate.current_expertise.trim(),
+      target_expertise: this.skillUpdate.target_expertise.trim()
+    };
+
+    // Validate after trimming
+    if (!payload.current_expertise || !payload.target_expertise) {
+      this.toastService.show('Both Current Expertise and Target Expertise are required', 'warning');
+      return;
+    }
+
+    this.http.put(this.apiService.adminSkillCompetencyUrl(this.selectedCompetency.id), payload, { headers: this.getHeaders() })
       .subscribe({
         next: () => {
           this.toastService.show('Skill updated successfully', 'success');
@@ -1301,7 +1773,26 @@ export class AdminDashboardComponent implements OnInit {
           }, 500);
         },
         error: (err) => {
-          this.toastService.show(err.error?.detail || 'Failed to update skill', 'error');
+          console.error('Error updating skill:', err);
+          // Handle different error response structures
+          let errorMessage = 'Failed to update skill';
+          
+          if (err.error) {
+            if (typeof err.error === 'string') {
+              errorMessage = err.error;
+            } else if (err.error.detail) {
+              errorMessage = typeof err.error.detail === 'string' 
+                ? err.error.detail 
+                : JSON.stringify(err.error.detail);
+            } else if (Array.isArray(err.error) && err.error.length > 0) {
+              // FastAPI validation error format
+              errorMessage = err.error.map((e: any) => e.msg || e.message).join(', ');
+            } else {
+              errorMessage = err.statusText || errorMessage;
+            }
+          }
+          
+          this.toastService.show(errorMessage, 'error');
         }
       });
   }
@@ -1511,6 +2002,84 @@ export class AdminDashboardComponent implements OnInit {
       // Reload dashboard data when switching back to dashboard
       this.loadDashboardData();
     }
+  }
+
+  // ==================== REPORT GENERATION ====================
+  
+  openReportModal(): void {
+    this.showReportModal = true;
+    this.selectedReportType = '';
+  }
+
+  closeReportModal(): void {
+    this.showReportModal = false;
+    this.selectedReportType = '';
+  }
+
+  selectReportType(reportType: string): void {
+    this.selectedReportType = reportType;
+  }
+
+  generateReport(): void {
+    if (!this.selectedReportType) {
+      this.toastService.show('Please select a report type', 'error');
+      return;
+    }
+
+    // Check if user is logged in
+    if (!this.authService.isLoggedIn()) {
+      this.toastService.show('Please log in to continue', 'error');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.generatingReport = true;
+    const url = this.apiService.adminGenerateReportUrl(this.selectedReportType);
+    const token = this.authService.getToken();
+
+    // Create headers without Content-Type for blob response
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get(url, {
+      headers: headers,
+      responseType: 'blob',
+      observe: 'response'
+    }).subscribe({
+      next: (response: any) => {
+        // Extract filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `report_${this.selectedReportType}_${new Date().getTime()}.csv`;
+        
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+          }
+        }
+
+        // Create blob and download
+        const blob = new Blob([response.body], { type: 'text/csv' });
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        this.toastService.show('Report generated successfully', 'success');
+        this.generatingReport = false;
+        this.closeReportModal();
+      },
+      error: (err) => {
+        console.error('Error generating report:', err);
+        this.toastService.show(err.error?.detail || 'Failed to generate report', 'error');
+        this.generatingReport = false;
+      }
+    });
   }
 
   logout(): void {

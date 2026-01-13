@@ -357,6 +357,7 @@ async def get_manager_data(
         return None
 
     manager_skills_list = []
+    manager_additional_skills_from_na = []
     # Cache weighted progress per (employee, skill) to avoid duplicate DB queries
     weighted_progress_cache = {}
 
@@ -372,32 +373,49 @@ async def get_manager_data(
         return weighted_progress_cache[key]
 
     for comp in manager_skills_orm:
-        skill_obj = {
-            "skill": comp.skill,
-            "competency": comp.competency,
-            "current_expertise": comp.current_expertise,
-            "target_expertise": comp.target_expertise,
-            "status": get_status_from_levels(comp.current_expertise, comp.target_expertise)
-        }
+        # Check if this skill has current value but N/A target - move to additional skills
+        target_is_na = comp.target_expertise and norm_text(comp.target_expertise) == "n/a"
+        has_current = comp.current_expertise and norm_text(comp.current_expertise) not in ["", "n/a"]
         
-        # Add assignment dates if available (normalized match + skill-only fallback)
-        skill_key = norm_text(comp.skill)
-        comp_key = norm_text(comp.competency)
-        key = (skill_key, comp_key)
-        assignment_info = manager_assignment_map.get(key)
-        if assignment_info is None:
-            assignment_info = manager_assignment_skill_map.get(skill_key)
-        if assignment_info:
-            skill_obj["assignment_start_date"] = to_iso(assignment_info.get("assignment_start_date"))
-            skill_obj["target_completion_date"] = to_iso(assignment_info.get("target_completion_date"))
+        if target_is_na and has_current:
+            # Move to additional skills section
+            manager_additional_skills_from_na.append({
+                "id": comp.id,
+                "skill_name": comp.skill,
+                "skill_level": comp.current_expertise,
+                "skill_category": comp.competency or "Technical",
+                "description": f"Skill from competency matrix (target: N/A)",
+                "created_at": None,
+                "from_competency": True
+            })
+        else:
+            # Keep in core skills
+            skill_obj = {
+                "skill": comp.skill,
+                "competency": comp.competency,
+                "current_expertise": comp.current_expertise,
+                "target_expertise": comp.target_expertise,
+                "status": get_status_from_levels(comp.current_expertise, comp.target_expertise)
+            }
+            
+            # Add assignment dates if available (normalized match + skill-only fallback)
+            skill_key = norm_text(comp.skill)
+            comp_key = norm_text(comp.competency)
+            key = (skill_key, comp_key)
+            assignment_info = manager_assignment_map.get(key)
+            if assignment_info is None:
+                assignment_info = manager_assignment_skill_map.get(skill_key)
+            if assignment_info:
+                skill_obj["assignment_start_date"] = to_iso(assignment_info.get("assignment_start_date"))
+                skill_obj["target_completion_date"] = to_iso(assignment_info.get("target_completion_date"))
 
-        # Add weighted actual progress (used by frontend for Actual% and timeline status)
-        skill_obj["weighted_actual_progress"] = await get_cached_weighted_progress(
-            manager_username,
-            comp.skill
-        )
-        
-        manager_skills_list.append(skill_obj)
+            # Add weighted actual progress (used by frontend for Actual% and timeline status)
+            skill_obj["weighted_actual_progress"] = await get_cached_weighted_progress(
+                manager_username,
+                comp.skill
+            )
+            
+            manager_skills_list.append(skill_obj)
 
     # Fetch manager_is_trainer from ManagerEmployee table
     manager_trainer_result = await db.execute(
@@ -414,6 +432,26 @@ async def get_manager_data(
     team_member_usernames = [member.employee_empid for member in team_members]
     team_member_names = {member.employee_empid: member.employee_name for member in team_members}
 
+    # Fetch manager's own additional skills from additional_skills table
+    manager_additional_skills_result = await db.execute(
+        select(AdditionalSkill).where(AdditionalSkill.employee_empid == manager_username)
+    )
+    manager_additional_skills_data = manager_additional_skills_result.scalars().all()
+    
+    # Combine both sources of additional skills for manager
+    manager_all_additional_skills = manager_additional_skills_from_na + [
+        {
+            "id": add_skill.id,
+            "skill_name": add_skill.skill_name,
+            "skill_level": add_skill.skill_level,
+            "skill_category": add_skill.skill_category,
+            "description": add_skill.description,
+            "created_at": add_skill.created_at.isoformat() if add_skill.created_at else None,
+            "from_competency": False
+        }
+        for add_skill in manager_additional_skills_data
+    ]
+    
     # Step 2: Prepare the base structure for all team members, including 'additional_skills'
     team_members_data = {
         username: {"id": username, "name": team_member_names.get(username, username), "skills": [], "additional_skills": []}
@@ -510,36 +548,53 @@ async def get_manager_data(
     for competency in competencies_data:
         username = competency.employee_empid
         if username in team_members_data:
-            status_val = get_status_from_levels(competency.current_expertise, competency.target_expertise)
+            # Check if this skill has current value but N/A target - move to additional skills
+            target_is_na = competency.target_expertise and norm_text(competency.target_expertise) == "n/a"
+            has_current = competency.current_expertise and norm_text(competency.current_expertise) not in ["", "n/a"]
             
-            skill_obj = {
-                "skill": competency.skill,
-                "competency": competency.competency,
-                "current_expertise": competency.current_expertise,
-                "target_expertise": competency.target_expertise,
-                "status": status_val
-            }
-            
-            # Add assignment dates if available from manager's assignments
-            skill_key = norm_text(competency.skill)
-            comp_key = norm_text(competency.competency)
-            key = (skill_key, comp_key)
-            assignment_info = None
-            if username in team_assignment_map:
-                assignment_info = team_assignment_map[username].get(key)
-            if assignment_info is None and username in team_assignment_skill_map:
-                assignment_info = team_assignment_skill_map[username].get(skill_key)
-            if assignment_info:
-                skill_obj["assignment_start_date"] = to_iso(assignment_info.get("assignment_start_date"))
-                skill_obj["target_completion_date"] = to_iso(assignment_info.get("target_completion_date"))
+            if target_is_na and has_current:
+                # Move to additional skills section
+                team_members_data[username]["additional_skills"].append({
+                    "id": competency.id,
+                    "skill_name": competency.skill,
+                    "skill_level": competency.current_expertise,
+                    "skill_category": competency.competency or "Technical",
+                    "description": f"Skill from competency matrix (target: N/A)",
+                    "created_at": None,
+                    "from_competency": True
+                })
+            else:
+                # Keep in core skills
+                status_val = get_status_from_levels(competency.current_expertise, competency.target_expertise)
+                
+                skill_obj = {
+                    "skill": competency.skill,
+                    "competency": competency.competency,
+                    "current_expertise": competency.current_expertise,
+                    "target_expertise": competency.target_expertise,
+                    "status": status_val
+                }
+                
+                # Add assignment dates if available from manager's assignments
+                skill_key = norm_text(competency.skill)
+                comp_key = norm_text(competency.competency)
+                key = (skill_key, comp_key)
+                assignment_info = None
+                if username in team_assignment_map:
+                    assignment_info = team_assignment_map[username].get(key)
+                if assignment_info is None and username in team_assignment_skill_map:
+                    assignment_info = team_assignment_skill_map[username].get(skill_key)
+                if assignment_info:
+                    skill_obj["assignment_start_date"] = to_iso(assignment_info.get("assignment_start_date"))
+                    skill_obj["target_completion_date"] = to_iso(assignment_info.get("target_completion_date"))
 
-            # Add weighted actual progress for the team member skill
-            skill_obj["weighted_actual_progress"] = await get_cached_weighted_progress(
-                username,
-                competency.skill
-            )
-            
-            team_members_data[username]["skills"].append(skill_obj)
+                # Add weighted actual progress for the team member skill
+                skill_obj["weighted_actual_progress"] = await get_cached_weighted_progress(
+                    username,
+                    competency.skill
+                )
+                
+                team_members_data[username]["skills"].append(skill_obj)
     
     # Step 5: Fetch all ADDITIONAL skill data for the team in a single query
     additional_skills_result = await db.execute(
@@ -565,6 +620,7 @@ async def get_manager_data(
         "role": "manager",
         "id": manager_username,
         "skills": manager_skills_list,
+        "additional_skills": manager_all_additional_skills,
         "team": list(team_members_data.values()),
         "manager_is_trainer": manager_is_trainer
     }
@@ -729,39 +785,60 @@ async def get_engineer_skills_with_assignments(
             return val.isoformat()
         return None
 
+    def norm_text(val: str | None) -> str:
+        return (val or "").strip().lower()
+
     skills_list = []
+    additional_skills_from_na = []
     for comp in competencies_orm:
-        skill_obj = {
-            "id": comp.id,
-            "skill": comp.skill,
-            "current_expertise": comp.current_expertise,
-            "target_expertise": comp.target_expertise,
-            "status": get_status_from_levels(comp.current_expertise, comp.target_expertise),
-        }
+        # Check if this skill has current value but N/A target - move to additional skills
+        target_is_na = comp.target_expertise and norm_text(comp.target_expertise) == "n/a"
+        has_current = comp.current_expertise and norm_text(comp.current_expertise) not in ["", "n/a"]
         
-        # Add assignment dates if available
-        key = (comp.skill, comp.competency)
-        if key in assignment_map:
-            assignment_info = assignment_map[key]
-            skill_obj["assignment_start_date"] = to_iso(assignment_info["assignment_start_date"])
-            skill_obj["target_completion_date"] = to_iso(assignment_info["target_completion_date"])
+        if target_is_na and has_current:
+            # Move to additional skills section
+            additional_skills_from_na.append({
+                "id": comp.id,
+                "skill_name": comp.skill,
+                "skill_level": comp.current_expertise,
+                "skill_category": "Technical",
+                "description": f"Skill from competency matrix (target: N/A)",
+                "created_at": None,
+                "from_competency": True
+            })
         else:
-            # Fallback by skill name only
-            skill_only_key = (comp.skill or "").strip().lower()
-            if skill_only_key in assignment_skill_map:
-                assignment_info = assignment_skill_map[skill_only_key]
+            # Keep in core skills
+            skill_obj = {
+                "id": comp.id,
+                "skill": comp.skill,
+                "current_expertise": comp.current_expertise,
+                "target_expertise": comp.target_expertise,
+                "status": get_status_from_levels(comp.current_expertise, comp.target_expertise),
+            }
+            
+            # Add assignment dates if available
+            key = (comp.skill, comp.competency)
+            if key in assignment_map:
+                assignment_info = assignment_map[key]
                 skill_obj["assignment_start_date"] = to_iso(assignment_info["assignment_start_date"])
                 skill_obj["target_completion_date"] = to_iso(assignment_info["target_completion_date"])
-        
-        # Calculate and add weighted actual progress for the skill
-        weighted_progress = await get_weighted_actual_progress_for_skill(
-            employee_username,
-            comp.skill,
-            db
-        )
-        skill_obj["weighted_actual_progress"] = weighted_progress
-        
-        skills_list.append(skill_obj)
+            else:
+                # Fallback by skill name only
+                skill_only_key = (comp.skill or "").strip().lower()
+                if skill_only_key in assignment_skill_map:
+                    assignment_info = assignment_skill_map[skill_only_key]
+                    skill_obj["assignment_start_date"] = to_iso(assignment_info["assignment_start_date"])
+                    skill_obj["target_completion_date"] = to_iso(assignment_info["target_completion_date"])
+            
+            # Calculate and add weighted actual progress for the skill
+            weighted_progress = await get_weighted_actual_progress_for_skill(
+                employee_username,
+                comp.skill,
+                db
+            )
+            skill_obj["weighted_actual_progress"] = weighted_progress
+            
+            skills_list.append(skill_obj)
 
     # Fetch employee details
     employee_details_result = await db.execute(
@@ -779,12 +856,33 @@ async def get_engineer_skills_with_assignments(
     )
     user_id = user_id_result.scalar_one_or_none()
 
+    # Fetch additional skills from additional_skills table
+    engineer_additional_skills_result = await db.execute(
+        select(AdditionalSkill).where(AdditionalSkill.employee_empid == employee_username)
+    )
+    engineer_additional_skills_data = engineer_additional_skills_result.scalars().all()
+    
+    # Combine both sources of additional skills
+    all_additional_skills = additional_skills_from_na + [
+        {
+            "id": add_skill.id,
+            "skill_name": add_skill.skill_name,
+            "skill_level": add_skill.skill_level,
+            "skill_category": add_skill.skill_category,
+            "description": add_skill.description,
+            "created_at": add_skill.created_at.isoformat() if add_skill.created_at else None,
+            "from_competency": False
+        }
+        for add_skill in engineer_additional_skills_data
+    ]
+
     return {
         "username": employee_username,
         "employee_name": employee_name,
         "employee_id": user_id,
         "employee_is_trainer": is_trainer,
-        "skills": skills_list
+        "skills": skills_list,
+        "additional_skills": all_additional_skills
     }
 
 @router.put("/manager/team-skill")

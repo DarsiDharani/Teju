@@ -94,28 +94,28 @@
 
 .progress-expected {
   position: absolute;
-  inset: 0;
-  width: 3px;
-  right: auto;
-  border-radius: 0;
-  background: #fbbf24;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  border-radius: 9999px;
+  background: #60a5fa;
   opacity: 1;
   border: none;
-  box-shadow: 0 0 8px #fbbf24;
-  transition: left 0.7s ease;
-  z-index: 3;
-  margin-left: calc(var(--expected-width, 2%) - 1.5px);
+  transition: width 0.7s ease;
+  z-index: 1;
+  width: var(--expected-width, 0%);
 }
 
 .progress-actual {
   position: absolute;
-  inset: 0;
+  top: 25%;
   left: 0;
+  bottom: 25%;
   border-radius: 9999px;
-  background: #10b981;
-  opacity: 0.9;
+  background: #a855f7;
+  opacity: 1;
   border: none;
-  box-shadow: 0 4px 12px -4px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
   transition: width 0.7s ease;
   z-index: 2;
 }

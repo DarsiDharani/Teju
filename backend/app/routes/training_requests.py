@@ -462,7 +462,8 @@ async def respond_to_request(
         assignment = TrainingAssignment(
             training_id=request.training_id,
             employee_empid=request.employee_empid,
-            manager_empid=request.manager_empid
+            manager_empid=request.manager_empid,
+            target_date=response_data.target_date  # Set target date from request
         )
         db.add(assignment)
 

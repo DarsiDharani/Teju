@@ -89,6 +89,7 @@ interface AdditionalSkill {
   skill_category: string;
   description?: string;
   created_at?: string;
+  from_competency?: boolean;  // Flag to indicate if skill came from N/A target in competency matrix
 }
 
 interface TeamMember {
@@ -103,6 +104,7 @@ interface ManagerData {
   role: string;
   id: string;
   skills: Competency[];
+  additional_skills?: AdditionalSkill[];  // Manager's own additional skills
   team: TeamMember[];
   manager_is_trainer: boolean;
 }
@@ -353,6 +355,10 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   trainingRequests: TrainingRequest[] = [];
   requestStatusFilter: string = 'all';
   requestSearch: string = '';
+  showApprovalModal: boolean = false;
+  selectedRequestForApproval: TrainingRequest | null = null;
+  approvalTargetDate: string = '';
+  approvalNotes: string = '';
 
   // --- Badges Properties ---
   badges: any[] = [];
@@ -414,6 +420,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     questions: []
   };
   assignmentFile: File | null = null; // File to upload with assignment
+
+  // Previous Questions Management
+  previousQuestions: any[] = []; // Store all previous questions from trainer
+  showPreviousQuestions: boolean = false; // Toggle to show/hide previous questions panel
+  previousQuestionsSearch: string = ''; // Search filter for previous questions
+  isLoadingPreviousQuestions: boolean = false;
 
   defaultFeedbackQuestions: FeedbackQuestion[] = [
     { text: "How would you rate your overall experience with this training?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
@@ -1288,6 +1300,35 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     };
   }
 
+  // Open approval modal with target date input
+  openApprovalModal(request: TrainingRequest): void {
+    this.selectedRequestForApproval = request;
+    this.approvalTargetDate = '';
+    this.approvalNotes = '';
+    this.showApprovalModal = true;
+  }
+
+  // Close approval modal
+  closeApprovalModal(): void {
+    this.showApprovalModal = false;
+    this.selectedRequestForApproval = null;
+    this.approvalTargetDate = '';
+    this.approvalNotes = '';
+  }
+
+  // Confirm approval with target date
+  confirmApproval(): void {
+    if (!this.selectedRequestForApproval) return;
+    
+    this.respondToRequest(
+      this.selectedRequestForApproval, 
+      'approved', 
+      this.approvalNotes, 
+      this.approvalTargetDate || undefined
+    );
+    this.closeApprovalModal();
+  }
+
   // Open final evaluation modal from submission card
   openFinalEvaluationFromCard(submission: TeamAssignmentSubmission | TeamFeedbackSubmission): void {
     // Determine submission type by checking if it has 'score' property (assignment) or 'responses' property (feedback)
@@ -1914,11 +1955,17 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   respondToRequestById(requestId: number, status: 'approved' | 'rejected'): void {
     const request = this.pendingRequests.find(r => r.id === requestId);
     if (request) {
-      this.respondToRequest(request, status);
+      if (status === 'approved') {
+        // Open modal to get target date
+        this.openApprovalModal(request);
+      } else {
+        // Direct rejection without modal
+        this.respondToRequest(request, status);
+      }
     }
   }
 
-  private respondToRequest(request: TrainingRequest, status: 'approved' | 'rejected', notes?: string): void {
+  private respondToRequest(request: TrainingRequest, status: 'approved' | 'rejected', notes?: string, targetDate?: string): void {
     const token = this.authService.getToken();
     if (!token) {
       this.toastService.error('Authentication error. Please log in again.');
@@ -1926,10 +1973,15 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     }
 
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    const responseData = {
+    const responseData: any = {
       status: status,
       manager_notes: notes || null
     };
+    
+    // Add target_date if provided and status is approved
+    if (status === 'approved' && targetDate) {
+      responseData.target_date = targetDate;
+    }
 
     this.http.put(this.apiService.trainingRequestRespondUrl(request.id), responseData, { headers }).subscribe({
       next: (response) => {
@@ -2678,8 +2730,100 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   getMySkillsMetCount(): number {
     // "Met" count on dashboard is now based on timeline status "Completed"
-    const skills = this.manager?.skills || [];
-    return skills.filter(skill => this.getTimelineStatus(skill, skills) === 'Completed').length;
+    // Use only core skills (excluding those moved to additional)
+    const coreSkills = this.getMyCoreSkillsOnly();
+    return coreSkills.filter(skill => this.getTimelineStatus(skill, coreSkills) === 'Completed').length;
+  }
+
+  /**
+   * Get only manager's core skills (excluding those moved to additional skills).
+   */
+  getMyCoreSkillsOnly(): Competency[] {
+    if (!this.manager || !this.manager.skills || this.manager.skills.length === 0) {
+      return [];
+    }
+    const skillsToExclude = new Set(
+      this.getMySkillsMovedToAdditional().map(s => `${s.skill}_${s.competency}`)
+    );
+    return this.manager.skills.filter(
+      skill => !skillsToExclude.has(`${skill.skill}_${skill.competency}`)
+    );
+  }
+
+  /**
+   * Get manager's own skills that should be treated as additional skills.
+   * These are skills with a current value but target marked as 'N/A'.
+   */
+  getMySkillsMovedToAdditional(): Competency[] {
+    if (!this.manager || !this.manager.skills || this.manager.skills.length === 0) {
+      return [];
+    }
+    return this.manager.skills.filter(skill => 
+      skill.current_expertise && 
+      skill.current_expertise.trim() !== '' && 
+      skill.current_expertise.toLowerCase() !== 'n/a' &&
+      (!skill.target_expertise || 
+       skill.target_expertise.trim() === '' || 
+       skill.target_expertise.toLowerCase() === 'n/a')
+    );
+  }
+
+  /**
+   * Get team member's skills that should be treated as additional skills.
+   * These are skills with a current value but target marked as 'N/A'.
+   */
+  getTeamMemberSkillsMovedToAdditional(member: TeamMember): Competency[] {
+    if (!member || !member.skills || member.skills.length === 0) {
+      return [];
+    }
+    return member.skills.filter(skill => 
+      skill.current_expertise && 
+      skill.current_expertise.trim() !== '' && 
+      skill.current_expertise.toLowerCase() !== 'n/a' &&
+      (!skill.target_expertise || 
+       skill.target_expertise.trim() === '' || 
+       skill.target_expertise.toLowerCase() === 'n/a')
+    );
+  }
+
+  getAdditionalSkillsTotalCount(): number {
+    return this.additionalSkills.length + this.getMySkillsMovedToAdditional().length;
+  }
+
+  getAdditionalTechnicalSkillsCount(): number {
+    const movedSkills = this.getMySkillsMovedToAdditional().filter(
+      s => s.competency === 'Technical' || s.competency?.includes('Technical')
+    );
+    return this.additionalSkills.filter(s => s.skill_category === 'Technical').length + movedSkills.length;
+  }
+
+  getAdditionalSoftSkillsCount(): number {
+    const movedSkills = this.getMySkillsMovedToAdditional().filter(
+      s => s.competency === 'Soft Skills' || s.competency?.includes('Soft')
+    );
+    return this.additionalSkills.filter(s => s.skill_category === 'Soft Skills').length + movedSkills.length;
+  }
+
+  getAdditionalLeadershipSkillsCount(): number {
+    const movedSkills = this.getMySkillsMovedToAdditional().filter(
+      s => s.competency === 'Leadership' || s.competency?.includes('Leadership')
+    );
+    return this.additionalSkills.filter(s => s.skill_category === 'Leadership').length + movedSkills.length;
+  }
+
+  /**
+   * Get core skill sections that should be displayed in the dashboard.
+   * Filters out skills that have been moved to additional skills (N/A targets with current values).
+   */
+  getCoreSkillSections(): Section[] {
+    // Get list of skills moved to additional (from competency with N/A targets)
+    const movedSkillNames = this.getMySkillsMovedToAdditional().map(s => s.skill?.toLowerCase().trim());
+    
+    // Filter sections to exclude skills that have been moved
+    return this.sections.filter(section => {
+      const sectionTitle = section.title.toLowerCase().trim();
+      return !movedSkillNames.includes(sectionTitle);
+    });
   }
 
   getTeamSkillsOnTrack(): number {
@@ -2940,10 +3084,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   getFilteredMySkills(): Competency[] {
-    if (!this.manager || !this.manager.skills) {
-      return [];
-    }
-    let filtered = [...this.manager.skills];
+    // Start with core skills only (excluding moved skills)
+    let filtered = this.getMyCoreSkillsOnly();
+    
     if (this.mySkillsSkillFilter && this.mySkillsSkillFilter.length > 0) {
       const names = new Set(this.mySkillsSkillFilter);
       filtered = filtered.filter(skill => names.has(skill.skill));
@@ -3283,13 +3426,21 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   // Additional Skills Management
   loadAdditionalSkills(): void {
-    const token = this.authService.getToken();
-    if (!token) return;
-    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    this.http.get<any[]>(this.apiService.additionalSkillsUrl, { headers }).subscribe({
-      next: (skills) => { this.additionalSkills = skills; },
-      error: (err) => { this.additionalSkills = []; }
-    });
+    // Additional skills are now loaded from the dashboard data response
+    // This method is kept for compatibility but data comes from fetchDashboardData
+    // If manager.additional_skills exists, use it
+    if (this.manager && this.manager.additional_skills) {
+      this.additionalSkills = this.manager.additional_skills;
+    } else {
+      // Fallback to API call if not in dashboard response
+      const token = this.authService.getToken();
+      if (!token) return;
+      const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+      this.http.get<any[]>(this.apiService.additionalSkillsUrl, { headers }).subscribe({
+        next: (skills) => { this.additionalSkills = skills; },
+        error: (err) => { this.additionalSkills = []; }
+      });
+    }
   }
 
   toggleAddSkillForm(): void {
@@ -3336,6 +3487,15 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   removeAdditionalSkill(skillId: number): void {
     const token = this.authService.getToken();
     if (!token) return;
+    
+    // Check if skill is from competency (should not be deleted)
+    const skill = this.additionalSkills.find(s => s.id === skillId);
+    if (skill && skill.from_competency) {
+      // Show warning - skills from competencies cannot be deleted
+      console.warn('Skills from core competencies cannot be deleted');
+      return;
+    }
+    
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
     this.http.delete(this.apiService.additionalSkillUrl(skillId), { headers }).subscribe({
       next: () => { this.additionalSkills = this.additionalSkills.filter(skill => skill.id !== skillId); },
@@ -3344,6 +3504,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   editAdditionalSkill(skill: any): void {
+    // Check if skill is from competency (should not be edited)
+    if (skill.from_competency) {
+      console.warn('Skills from core competencies cannot be edited here');
+      return;
+    }
+    
     this.newSkill = {
       name: skill.skill_name,
       level: skill.skill_level,
@@ -3823,6 +3989,11 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.resetNewAssignmentForm();
     this.newAssignment.trainingId = trainingId;
 
+    // Fetch previous questions automatically when opening assignment form
+    if (this.previousQuestions.length === 0) {
+      this.fetchPreviousQuestions();
+    }
+
     // Check shared status and load existing data if available
     const token = this.authService.getToken();
     if (token) {
@@ -3959,6 +4130,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
     this.http.post(this.apiService.sharedAssignmentsUrl, payload, { headers }).subscribe({
       next: (response: any) => {
+        const wasShared = this.newAssignment.trainingId && this.isAssignmentShared(this.newAssignment.trainingId);
         if (this.newAssignment.trainingId) {
           this.sharedAssignments.set(this.newAssignment.trainingId, true);
           // Store who shared it
@@ -3970,7 +4142,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         if (this.assignmentFile && this.newAssignment.trainingId) {
           this.uploadAssignmentFile(this.newAssignment.trainingId, this.assignmentFile);
         } else {
-          this.toastService.success('Assignment shared successfully!');
+          this.toastService.success(wasShared ? 'Assignment updated successfully!' : 'Assignment shared successfully!');
           this.setTrainerZoneView('overview');
           // Refresh the trainings to update the UI
           if (this.activeTab === 'trainerZone') {
@@ -4101,6 +4273,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
     this.http.post(this.apiService.sharedFeedbackUrl, payload, { headers }).subscribe({
       next: (response: any) => {
+        const wasShared = this.newFeedback.trainingId && this.isFeedbackShared(this.newFeedback.trainingId);
         if (this.newFeedback.trainingId) {
           this.sharedFeedback.set(this.newFeedback.trainingId, true);
           // Store who shared it
@@ -4108,7 +4281,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             this.feedbackSharedBy.set(this.newFeedback.trainingId, response.trainer_username);
           }
         }
-        this.toastService.success('Feedback form shared successfully!');
+        this.toastService.success(wasShared ? 'Feedback form updated successfully!' : 'Feedback form shared successfully!');
         this.setTrainerZoneView('overview');
         // Refresh the trainings to update the UI
         if (this.activeTab === 'trainerZone') {
@@ -4160,6 +4333,64 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   trackByFn(index: any, item: any) {
     return index;
+  }
+
+  // --- Previous Questions Management ---
+  fetchPreviousQuestions(): void {
+    const token = this.authService.getToken();
+    if (!token) return;
+
+    this.isLoadingPreviousQuestions = true;
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+    
+    this.http.get<{questions: any[], total: number}>(this.apiService.trainerPreviousQuestionsUrl, { headers }).subscribe({
+      next: (response) => {
+        this.previousQuestions = response.questions || [];
+        this.isLoadingPreviousQuestions = false;
+        if (this.previousQuestions.length === 0) {
+          this.toastService.info('No previous questions found. Start creating assignments to build your question library!');
+        }
+      },
+      error: (err) => {
+        console.error('Failed to fetch previous questions:', err);
+        this.isLoadingPreviousQuestions = false;
+        this.toastService.error('Failed to load previous questions.');
+      }
+    });
+  }
+
+  togglePreviousQuestions(): void {
+    this.showPreviousQuestions = !this.showPreviousQuestions;
+    if (this.showPreviousQuestions && this.previousQuestions.length === 0) {
+      this.fetchPreviousQuestions();
+    }
+  }
+
+  get filteredPreviousQuestions(): any[] {
+    if (!this.previousQuestionsSearch.trim()) {
+      return this.previousQuestions;
+    }
+    const searchTerm = this.previousQuestionsSearch.toLowerCase();
+    return this.previousQuestions.filter(q => 
+      q.text.toLowerCase().includes(searchTerm) ||
+      q.trainingName.toLowerCase().includes(searchTerm) ||
+      q.assignmentTitle.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  addPreviousQuestionToAssignment(question: any): void {
+    // Create a deep copy of the question to avoid reference issues
+    const newQuestion = {
+      text: question.text,
+      helperText: question.helperText || '',
+      type: question.type,
+      options: question.options.map((opt: any) => ({
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      }))
+    };
+    this.newAssignment.questions.push(newQuestion);
+    this.toastService.success('Question added to assignment!');
   }
 
   // --- Missing Methods ---
