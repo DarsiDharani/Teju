@@ -43,33 +43,34 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 import traceback
 
-from app.routes import register, login, dashboard_routes, additional_skills, training_routes, assignment_routes, training_requests, shared_content_routes, training_files_routes, notifications, admin_routes, admin_routes
+from app.routes import register, login, dashboard_routes, additional_skills, training_routes, assignment_routes, training_requests, shared_content_routes, training_files_routes, notifications, admin_routes
 from app.auth_utils import get_current_active_admin
 from app.database import AsyncSessionLocal, create_db_and_tables
 from app.excel_loader import load_all_from_excel, load_manager_employee_from_csv
+from app.config import CORS_ORIGINS, settings, validate_settings
 
 # --- Configuration ---
 # Set up logging with timestamp and level information
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Validate configuration on import
+if not validate_settings():
+    logging.warning("Configuration validation found issues. Please review settings.")
+
 # --- FastAPI App Initialization ---
-# Create FastAPI application instance with metadata
+# Create FastAPI application instance with metadata from configuration
 app = FastAPI(
-    title="SkillOrbit API",
-    description="API for managing skills and training data.",
-    version="1.0.0"
+    title=settings.APP_NAME,
+    description=settings.APP_DESCRIPTION,
+    version=settings.APP_VERSION
 )
 
 # --- CORS Middleware ---
 # Configure CORS to allow requests from Angular frontend
-# Update origins list for production deployment
-origins = [
-    "http://localhost:4200",  # Angular development server
-    "http://127.0.0.1:4200",  # Alternative localhost
-]
+# Origins are loaded from configuration (environment variable or default)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
@@ -78,6 +79,19 @@ app.add_middleware(
 
 # --- Global Exception Handlers ---
 # These ensure CORS headers are always present, even for unhandled exceptions
+
+def get_cors_headers():
+    """
+    Generate CORS headers for exception responses.
+    Uses the first configured CORS origin for error responses.
+    """
+    origin = CORS_ORIGINS[0] if CORS_ORIGINS else "*"
+    return {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+        "Access-Control-Allow-Headers": "*",
+    }
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
@@ -88,30 +102,21 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
-        headers={
-            "Access-Control-Allow-Origin": "http://localhost:4200",
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-            "Access-Control-Allow-Headers": "*",
-        }
+        headers=get_cors_headers()
     )
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
     Handle validation errors with CORS headers.
+    Logs validation details for debugging.
     """
     logging.error(f"Validation error: {exc.errors()}")
     
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"detail": exc.errors(), "body": exc.body},
-        headers={
-            "Access-Control-Allow-Origin": "http://localhost:4200",
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-            "Access-Control-Allow-Headers": "*",
-        }
+        headers=get_cors_headers()
     )
 
 @app.exception_handler(Exception)
@@ -119,6 +124,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     """
     Global exception handler to ensure CORS headers are always present.
     This catches all unhandled exceptions (excluding HTTPException which is handled above).
+    Logs full traceback for debugging.
     """
     logging.error(f"Unhandled exception: {str(exc)}", exc_info=True)
     logging.error(f"Traceback: {traceback.format_exc()}")
@@ -130,12 +136,7 @@ async def global_exception_handler(request: Request, exc: Exception):
             "detail": f"Internal server error: {str(exc)}",
             "type": type(exc).__name__
         },
-        headers={
-            "Access-Control-Allow-Origin": "http://localhost:4200",
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
-            "Access-Control-Allow-Headers": "*",
-        }
+        headers=get_cors_headers()
     )
 
 # --- API Routers ---

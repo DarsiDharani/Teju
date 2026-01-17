@@ -580,68 +580,53 @@
           <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border-2 border-black p-4">
             <h3 class="text-lg font-bold text-slate-900 mb-2">Team Skills Matrix</h3>
             <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
-              <table class="w-full">
+              <table class="w-full border-collapse">
                 <thead class="sticky top-0 bg-white z-10">
                   <tr class="border-b-2 border-slate-200">
-                    <th class="text-left py-1.5 px-2 text-xs font-semibold text-slate-700">Team Member</th>
-                    <th class="text-center py-1.5 px-2 text-xs font-semibold text-slate-700">
-                      <div class="flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-check-circle text-slate-600 text-[10px]"></i>
-                        <span>Skills Completed</span>
+                    <th class="text-left py-2 px-3 text-xs font-semibold text-slate-700 bg-slate-50 sticky left-0 z-20 border-r-2 border-slate-200">Team Member</th>
+                    <th *ngFor="let skillName of getAllUniqueSkills()" 
+                        class="text-center py-2 px-2 text-xs font-semibold text-slate-700 min-w-[120px] border-r border-slate-100">
+                      <div class="flex flex-col items-center gap-1">
+                        <i class="fa-solid fa-graduation-cap text-slate-600 text-[10px]"></i>
+                        <span class="whitespace-nowrap">{{ skillName }}</span>
                       </div>
                     </th>
-                    <th class="text-center py-1.5 px-2 text-xs font-semibold text-slate-700">
-                      <div class="flex items-center justify-center gap-1">
-                        <i class="fa-solid fa-exclamation-triangle text-slate-600 text-[10px]"></i>
-                        <span>Skills Behind</span>
-                      </div>
-                    </th>
-                    <th class="text-center py-1.5 px-2 text-xs font-semibold text-slate-700">Total Skills</th>
-                    <th class="text-center py-1.5 px-2 text-xs font-semibold text-slate-700">Progress</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let member of (manager && manager.team ? manager.team : [])"
                     class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td class="py-1.5 px-2">
-                      <div class="flex items-center gap-1.5">
-                        <img src="https://ui-avatars.com/api/?name={{member.name}}&background=random&color=fff&size=24"
-                          alt="{{member.name}}" class="rounded-full h-6 w-6">
+                    <td class="py-2 px-3 bg-slate-50 sticky left-0 z-10 border-r-2 border-slate-200">
+                      <div class="flex items-center gap-2">
+                        <img src="https://ui-avatars.com/api/?name={{member.name}}&background=random&color=fff&size=28"
+                          alt="{{member.name}}" class="rounded-full h-7 w-7">
                         <span class="text-xs font-medium text-slate-800">{{ member.name }}</span>
                       </div>
                     </td>
-                    <td class="py-1.5 px-2 text-center">
-                      <span
-                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
-                        {{ getTeamSkillsMetCount(member) }}
-                      </span>
-                    </td>
-                    <td class="py-1.5 px-2 text-center">
-                      <span
-                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
-                        {{ getTeamSkillsGapCount(member) }}
-                      </span>
-                    </td>
-                    <td class="py-1.5 px-2 text-center">
-                      <span class="text-xs font-medium text-slate-600">
-                        {{ member.skills.length }}
-                      </span>
-                    </td>
-                    <td class="py-1.5 px-2 text-center">
-                      <div class="flex items-center justify-center gap-1.5">
-                        <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                          <div
-                            class="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-300"
-                            [style.width.%]="getMemberProgressPercentage(member)"></div>
+                    <td *ngFor="let skillName of getAllUniqueSkills()" 
+                        class="py-2 px-2 text-center border-r border-slate-100">
+                      <ng-container *ngIf="getMemberSkillByName(member, skillName) as skill; else noSkill">
+                        <div class="flex flex-col items-center gap-1">
+                          <span class="text-[10px] font-semibold"
+                            [ngClass]="{
+                              'text-emerald-600': getTimelineStatus(skill, member.skills) === 'Completed',
+                              'text-sky-600': getTimelineStatus(skill, member.skills) === 'On Track',
+                              'text-orange-600': getTimelineStatus(skill, member.skills) === 'Behind',
+                              'text-slate-500': getTimelineStatus(skill, member.skills) === 'Not Started'
+                            }">
+                            {{ getSkillProgress(skill) }}%
+                          </span>
                         </div>
-                        <span class="text-[10px] font-medium text-slate-600 min-w-[2.5rem]">
-                          {{ getMemberProgressPercentage(member) }}%
-                        </span>
-                      </div>
+                      </ng-container>
+                      <ng-template #noSkill>
+                        <div class="text-slate-300">
+                          <i class="fa-solid fa-minus text-xs"></i>
+                        </div>
+                      </ng-template>
                     </td>
                   </tr>
                   <tr *ngIf="!manager || !manager.team || manager.team.length === 0" class="border-b border-slate-100">
-                    <td colspan="5" class="py-6 text-center text-slate-500">
+                    <td [attr.colspan]="getAllUniqueSkills().length + 1" class="py-6 text-center text-slate-500">
                       <i class="fa-solid fa-users text-xl mb-2 block"></i>
                       <p class="text-xs">No team members found</p>
                     </td>
@@ -649,25 +634,16 @@
                 </tbody>
                 <tfoot class="sticky bottom-0 bg-slate-50">
                   <tr class="bg-slate-50 border-t-2 border-slate-200">
-                    <td class="py-1.5 px-2 text-xs font-bold text-slate-800">Total</td>
-                    <td class="py-1.5 px-2 text-center">
-                      <span
-                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
-                        {{ teamSkillsMet }}
-                      </span>
-                    </td>
-                    <td class="py-1.5 px-2 text-center">
-                      <span
-                        class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
-                        {{ teamSkillsGap }}
-                      </span>
-                    </td>
-                    <td class="py-1.5 px-2 text-center">
+                    <td class="py-2 px-3 text-xs font-bold text-slate-800 sticky left-0 z-10 border-r-2 border-slate-200">Progress</td>
+                    <td *ngFor="let skillName of getAllUniqueSkills()" 
+                        class="py-2 px-2 text-center border-r border-slate-100">
                       <span class="text-xs font-bold text-slate-700">
-                        {{ getTotalTeamSkillsCount() }}
+                        {{ getSkillAverageProgress(skillName) }}%
                       </span>
                     </td>
-                    <td class="py-1.5 px-2 text-center">
+                  </tr>
+                  <tr class="bg-slate-50">
+                    <td class="py-2 px-3 text-xs font-bold text-slate-800 sticky left-0 z-10 border-r-2 border-slate-200">
                       <span class="text-xs font-bold text-slate-700">
                         {{ getTeamProgressPercentage() }}%
                       </span>

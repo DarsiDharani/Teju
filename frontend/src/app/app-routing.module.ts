@@ -20,36 +20,66 @@
  * @date 2025
  */
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { AboutComponent } from './components/about/about.component';
-import { HomeComponent } from './components/home/home.component';
-import { LoginComponent } from './components/login/login.component';
-import { RegisterComponent } from './components/register/register.component';
+// Core Angular routing modules
+import { NgModule } from '@angular/core';  // NgModule decorator for defining modules
+import { RouterModule, Routes } from '@angular/router';  // Router and Routes for navigation configuration
 
-import { EngineerDashboardComponent } from './dashboards/engineer-dashboard/engineer-dashboard.component';
-import { ManagerDashboardComponent } from './dashboards/manager-dashboard/manager-dashboard.component';
-import { AdminDashboardComponent } from './dashboards/admin-dashboard/admin-dashboard.component';
+// Public components (accessible without authentication)
+import { AboutComponent } from './components/about/about.component';  // About/information page
+import { HomeComponent } from './components/home/home.component';  // Landing page
+import { LoginComponent } from './components/login/login.component';  // User login form
+import { RegisterComponent } from './components/register/register.component';  // New user registration
 
-import { AuthGuard } from './guards/auth.guard';
+// Protected components (require authentication via AuthGuard)
+import { EngineerDashboardComponent } from './dashboards/engineer-dashboard/engineer-dashboard.component';  // Employee view
+import { ManagerDashboardComponent } from './dashboards/manager-dashboard/manager-dashboard.component';  // Manager view
+import { AdminDashboardComponent } from './dashboards/admin-dashboard/admin-dashboard.component';  // Admin view
+
+// Route guards for access control
+import { AuthGuard } from './guards/auth.guard';  // Protects routes requiring authentication
 
 /**
  * Application routes configuration
- * AuthGuard protects dashboard routes, requiring user authentication
+ * Each route maps a URL path to a component and optionally applies guards
+ * 
+ * Route Structure:
+ * - path: URL segment (e.g., 'login' maps to /login)
+ * - component: Component to display for this route
+ * - canActivate: Array of guards that must pass before route activates
+ * - redirectTo: Redirect to another route
+ * - pathMatch: How to match URL (full = exact match)
  */
 const routes: Routes = [
+  // Default route: Redirect root URL (/) to /home
+  // pathMatch: 'full' ensures only exact match redirects (not partial matches)
   { path: '', redirectTo: 'home', pathMatch: 'full' },
-  { path: 'home', component: HomeComponent },
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
-  { path: 'about', component: AboutComponent },
-  { path: 'admin-dashboard', component: AdminDashboardComponent, canActivate: [AuthGuard] },
-  { path: 'engineer-dashboard', component: EngineerDashboardComponent, canActivate: [AuthGuard] },
-  { path: 'manager-dashboard', component: ManagerDashboardComponent, canActivate: [AuthGuard] },
+  
+  // Public routes: Accessible to all users without authentication
+  { path: 'home', component: HomeComponent },              // Landing page with app overview
+  { path: 'login', component: LoginComponent },            // User authentication page
+  { path: 'register', component: RegisterComponent },      // New user registration page
+  { path: 'about', component: AboutComponent },            // About page with app information
+  
+  // Protected routes: Require authentication (AuthGuard checks if user is logged in)
+  // If not authenticated, user is redirected to /login
+  { path: 'admin-dashboard', component: AdminDashboardComponent, canActivate: [AuthGuard] },       // Admin control panel
+  { path: 'engineer-dashboard', component: EngineerDashboardComponent, canActivate: [AuthGuard] }, // Employee/Engineer view
+  { path: 'manager-dashboard', component: ManagerDashboardComponent, canActivate: [AuthGuard] },   // Manager view
+  
+  // TODO: Add wildcard route for 404 page
+  // { path: '**', component: NotFoundComponent },
 ];
 
 @NgModule({
+  // imports: Configure router with routes using forRoot (for root module only)
+  // forRoot creates router service and registers global router directives
   imports: [RouterModule.forRoot(routes)],
+  
+  // exports: Make RouterModule available to components in this module
+  // This makes router directives (routerLink, router-outlet) available
   exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule {
+  // This module handles all application routing configuration
+  // Imported in AppModule to enable navigation throughout the app
+}

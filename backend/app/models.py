@@ -46,6 +46,20 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class ManagerEmployee(Base):
+    """
+    Manager-Employee Relationship Model - Maps hierarchical reporting relationships.
+    
+    This table stores the organizational hierarchy and trainer designations.
+    A manager can have multiple employees, and both managers and employees can be trainers.
+    
+    Attributes:
+        manager_empid: Employee ID of the manager (references users table)
+        manager_name: Full name of the manager
+        employee_empid: Employee ID of the employee (references users table)
+        employee_name: Full name of the employee
+        manager_is_trainer: Flag indicating if manager is qualified as a trainer
+        employee_is_trainer: Flag indicating if employee is qualified as a trainer
+    """
     __tablename__ = 'manager_employee'
     manager_empid = Column(String, ForeignKey('users.username'), primary_key=True)
     manager_name = Column(String)
@@ -55,6 +69,30 @@ class ManagerEmployee(Base):
     employee_is_trainer = Column(Boolean, default=False, nullable=False)
 
 class EmployeeCompetency(Base):
+    """
+    Employee Competency Model - Tracks employee skills and expertise levels.
+    
+    This table stores the current and target expertise levels for each skill
+    assigned to an employee. It forms the basis for skill gap analysis and
+    training recommendations.
+    
+    Attributes:
+        id: Primary key
+        employee_empid: Employee ID (references users table)
+        employee_name: Employee's full name
+        department: Department name (e.g., Software, Testing, Hardware)
+        division: Division/business unit
+        project: Current project assignment
+        role_specific_comp: Role-specific competency area
+        destination: Career path or target role
+        competency: Competency category (e.g., Programming, Testing, Design)
+        skill: Specific skill name (e.g., Python, C++, AUTOSAR)
+        current_expertise: Current skill level (L0-L5 or Beginner/Intermediate/Advanced/Expert)
+        target_expertise: Desired skill level
+        comments: Additional notes or observations
+        target_date: Target date to achieve the desired expertise level
+        employee: Relationship to User model
+    """
     __tablename__ = 'employee_competency'
     id = Column(Integer, primary_key=True, index=True)
     employee_empid = Column(String, ForeignKey('users.username'))
@@ -73,6 +111,23 @@ class EmployeeCompetency(Base):
     employee = relationship("User")
 
 class AdditionalSkill(Base):
+    """
+    Additional Skills Model - Self-reported skills beyond assigned competencies.
+    
+    Allows employees to add skills not covered in their formal competency matrix.
+    This enables skill discovery and helps identify hidden talents in the organization.
+    
+    Attributes:
+        id: Primary key
+        employee_empid: Employee ID (references users table)
+        skill_name: Name of the skill (e.g., Docker, Kubernetes, React)
+        skill_level: Proficiency level (Beginner/Intermediate/Advanced/Expert)
+        skill_category: Category (Technical/Soft Skill/Certification/Language)
+        description: Optional notes about skill application or projects
+        created_at: Timestamp when skill was added
+        updated_at: Timestamp of last update
+        employee: Relationship to User model
+    """
     __tablename__ = 'additional_skills'
     id = Column(Integer, primary_key=True, index=True)
     employee_empid = Column(String, ForeignKey('users.username'), nullable=False)
@@ -85,6 +140,19 @@ class AdditionalSkill(Base):
     employee = relationship("User")
 
 class Trainer(Base):
+    """
+    Trainer Model - Qualified trainers and their areas of expertise.
+    
+    Stores information about internal trainers who can conduct training sessions.
+    A trainer can have expertise in multiple skills and competencies.
+    
+    Attributes:
+        id: Primary key
+        skill: Skill area of expertise (e.g., Python, AUTOSAR, Testing)
+        competency: Competency category
+        trainer_name: Trainer's full name or employee ID
+        expertise_level: Level of expertise in this skill (Expert/Advanced)
+    """
     __tablename__ = "trainers"
     id = Column(Integer, primary_key=True, index=True)
     skill = Column(String, nullable=False)
@@ -93,6 +161,33 @@ class Trainer(Base):
     expertise_level = Column(String, nullable=False)
 
 class TrainingDetail(Base):
+    """
+    Training Detail Model - Training sessions and courses available.
+    
+    Stores comprehensive information about training programs, workshops,
+    and online courses. Supports both in-person and virtual training.
+    
+    Attributes:
+        id: Primary key
+        division: Target division
+        department: Target department
+        competency: Competency area covered
+        skill: Specific skill being trained
+        training_name: Name/title of the training
+        training_topics: Comma-separated list of topics covered
+        prerequisites: Required prior knowledge or skills
+        skill_category: Category classification
+        trainer_name: Name or ID of the trainer conducting the session
+        lecture_url: Optional URL to recorded lecture or online course
+        description: Detailed description for online courses
+        email: Trainer's contact email
+        training_date: Scheduled date of the training
+        duration: Training duration (e.g., "2 days", "4 hours")
+        time: Training time (e.g., "9:00 AM - 5:00 PM")
+        training_type: Type (In-person/Virtual/Hybrid/Self-paced)
+        seats: Number of available seats
+        assessment_details: Information about post-training assessment
+    """
     __tablename__ = "training_details"
     id = Column(Integer, primary_key=True, index=True)
     division = Column(String, nullable=True)
@@ -117,6 +212,23 @@ class TrainingDetail(Base):
     assessment_details = Column(String, nullable=True)
 
 class TrainingAssignment(Base):
+    """
+    Training Assignment Model - Tracks training assignments to employees.
+    
+    Records when a manager assigns a training to an employee. This is the initial
+    step in the training workflow, followed by attendance marking and assessment.
+    
+    Attributes:
+        id: Primary key
+        training_id: Reference to training_details table
+        employee_empid: Employee receiving the assignment (references users table)
+        manager_empid: Manager who made the assignment (references users table)
+        assignment_date: Timestamp when assignment was created
+        target_date: Optional target completion date set by manager
+        training: Relationship to TrainingDetail model
+        user: Relationship to User model (employee)
+        assigned_at: Alias for assignment_date for consistency
+    """
     __tablename__ = 'training_assignments'
     id = Column(Integer, primary_key=True, index=True)
     training_id = Column(Integer, ForeignKey('training_details.id'), nullable=False)
@@ -132,6 +244,21 @@ class TrainingAssignment(Base):
     assigned_at = assignment_date  # Alias for consistency
 
 class TrainingAttendance(Base):
+    """
+    Training Attendance Model - Records actual attendance for trainings.
+    
+    Trainers mark attendance after conducting a training session. Only employees
+    who attended can access assignments and submit feedback for that training.
+    
+    Attributes:
+        id: Primary key
+        training_id: Reference to training_details table
+        employee_empid: Employee whose attendance is being recorded
+        attended: Boolean flag - True if attended, False if absent
+        marked_at: Timestamp when attendance was marked
+        training: Relationship to TrainingDetail model
+        employee: Relationship to User model
+    """
     __tablename__ = 'training_attendance'
     id = Column(Integer, primary_key=True, index=True)
     training_id = Column(Integer, ForeignKey('training_details.id'), nullable=False)
@@ -143,6 +270,25 @@ class TrainingAttendance(Base):
     employee = relationship("User", foreign_keys=[employee_empid])
 
 class TrainingRequest(Base):
+    """
+    Training Request Model - Employee training enrollment requests.
+    
+    Employees can request to enroll in trainings, which then require manager approval.
+    This implements a request-approval workflow for training enrollment.
+    
+    Attributes:
+        id: Primary key
+        training_id: Reference to requested training
+        employee_empid: Employee requesting the training
+        manager_empid: Manager who will approve/reject the request
+        request_date: Timestamp when request was submitted
+        status: Request status ('pending', 'approved', 'rejected')
+        manager_notes: Optional notes from manager explaining decision
+        response_date: Timestamp when manager responded to request
+        training: Relationship to TrainingDetail model
+        employee: Relationship to User model (employee)
+        manager: Relationship to User model (manager)
+    """
     __tablename__ = 'training_requests'
     id = Column(Integer, primary_key=True, index=True)
     training_id = Column(Integer, ForeignKey('training_details.id'), nullable=False)
@@ -158,6 +304,24 @@ class TrainingRequest(Base):
     manager = relationship("User", foreign_keys=[manager_empid])
 
 class SharedAssignment(Base):
+    """
+    Shared Assignment Model - Quiz/assessment questions shared by trainers.
+    
+    Trainers create assignments (quizzes/tests) for their training sessions.
+    These are stored as JSON data with questions, options, and correct answers.
+    
+    Attributes:
+        id: Primary key
+        training_id: Reference to associated training
+        trainer_username: Trainer who created the assignment
+        title: Assignment title
+        description: Optional instructions or description
+        assignment_data: JSON string containing questions, options, and answers
+        created_at: Creation timestamp
+        updated_at: Last modification timestamp
+        training: Relationship to TrainingDetail model
+        trainer: Relationship to User model (trainer)
+    """
     __tablename__ = 'shared_assignments'
     id = Column(Integer, primary_key=True, index=True)
     training_id = Column(Integer, ForeignKey('training_details.id'), nullable=False)
@@ -172,6 +336,22 @@ class SharedAssignment(Base):
     trainer = relationship("User", foreign_keys=[trainer_username])
 
 class SharedFeedback(Base):
+    """
+    Shared Feedback Model - Feedback forms created by trainers.
+    
+    Trainers create feedback forms to collect training effectiveness data.
+    Stored as JSON with questions (rating scales, multiple choice, text).
+    
+    Attributes:
+        id: Primary key
+        training_id: Reference to associated training
+        trainer_username: Trainer who created the feedback form
+        feedback_data: JSON string containing feedback questions
+        created_at: Creation timestamp
+        updated_at: Last modification timestamp
+        training: Relationship to TrainingDetail model
+        trainer: Relationship to User model (trainer)
+    """
     __tablename__ = 'shared_feedback'
     id = Column(Integer, primary_key=True, index=True)
     training_id = Column(Integer, ForeignKey('training_details.id'), nullable=False)

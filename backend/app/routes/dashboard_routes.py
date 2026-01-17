@@ -97,17 +97,28 @@ class SkillUpdateRequest(BaseModel):
 # Helper function to get status based on string levels
 def get_status_from_levels(current_level_str: str, target_level_str: str) -> str:
     """
-    Compares two level strings (e.g., 'L0', 'L2' or 'Beginner', 'Expert') to determine competency status.
+    Compare expertise levels to determine competency status.
     
-    Supports both L-format (L1-L5) and text format (Beginner, Intermediate, Advanced, Expert).
+    Supports both L-format (L0-L5) and text format (Beginner/Intermediate/Advanced/Expert).
     Returns 'Met' if current >= target, 'Gap' if current < target, 'Error' if invalid.
     
+    This is a reusable helper that can be used across the application for
+    standardized level comparisons.
+    
     Args:
-        current_level_str: Current expertise level
-        target_level_str: Target expertise level
+        current_level_str: Current expertise level (e.g., 'L2', 'Intermediate')
+        target_level_str: Target expertise level (e.g., 'L4', 'Expert')
         
     Returns:
-        str: 'Met', 'Gap', or 'Error'
+        str: 'Met' (current >= target), 'Gap' (current < target), or 'Error' (invalid input)
+        
+    Examples:
+        >>> get_status_from_levels('L3', 'L2')
+        'Met'
+        >>> get_status_from_levels('Intermediate', 'Expert')
+        'Gap'
+        >>> get_status_from_levels('L2', 'Advanced')
+        'Gap'  # L2 converted to 2, Advanced to 3
     """
     # Check for None values and return 'Error' immediately
     if current_level_str is None or target_level_str is None:

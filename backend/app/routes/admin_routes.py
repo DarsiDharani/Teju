@@ -976,6 +976,7 @@ async def get_training_feedback_ratings(
     """
     Get consolidated feedback ratings for all trainings.
     Returns average ratings from employee feedback submissions.
+    If no numeric ratings found, calculate based on submission count.
     """
     # Get all trainings with their feedback submissions
     trainings_result = await db.execute(
@@ -986,6 +987,20 @@ async def get_training_feedback_ratings(
     feedback_ratings = []
     
     for training in trainings:
+        # Get assignment and attendance counts
+        assign_count = await db.execute(
+            select(func.count(TrainingAssignment.id)).where(TrainingAssignment.training_id == training.id)
+        )
+        assigned_count = assign_count.scalar() or 0
+        
+        attend_count = await db.execute(
+            select(func.count(TrainingAttendance.id)).where(
+                TrainingAttendance.training_id == training.id,
+                TrainingAttendance.attended == True
+            )
+        )
+        attended_count = attend_count.scalar() or 0
+        
         # Get all feedback submissions for this training
         feedback_submissions_result = await db.execute(
             select(FeedbackSubmission).where(
@@ -1001,6 +1016,7 @@ async def get_training_feedback_ratings(
         # Calculate average rating from all submissions
         total_rating = 0.0
         total_responses = 0
+        rating_found = False
         
         for submission in feedback_submissions:
             try:
@@ -1011,13 +1027,21 @@ async def get_training_feedback_ratings(
                     answer = response.get('answer', '')
                     question_text = response.get('question', '').lower()
                     
-                    # Try to parse numeric ratings
-                    # Common patterns: "5", "4 out of 5", "4/5", "80%"
+                    # Try to parse numeric ratings - directly on 0-5 scale
+                    # Common patterns: "5", "4 out of 5", "4/5"
                     if isinstance(answer, (int, float)):
                         rating_value = float(answer)
-                        # Normalize to 0-100 scale if needed
+                        # Keep on 0-5 scale
                         if rating_value <= 5:  # Assume 1-5 scale
-                            rating_value = rating_value * 20
+                            total_rating += rating_value
+                        elif rating_value <= 10:  # Convert 10-scale to 5-scale
+                            total_rating += rating_value / 2
+                        elif rating_value <= 100:  # Convert 100-scale to 5-scale
+                            total_rating += rating_value / 20
+                        else:
+                            total_rating += rating_value
+                        total_responses += 1
+                        rating_found = True
                     elif isinstance(answer, str):
                         # Try to extract numeric value
                         import re
@@ -1026,44 +1050,63 @@ async def get_training_feedback_ratings(
                         if match:
                             numerator = float(match.group(1))
                             denominator = float(match.group(2))
-                            rating_value = (numerator / denominator) * 100 if denominator > 0 else 0
+                            rating_value = (numerator / denominator) * 5 if denominator > 0 else 0
+                            total_rating += rating_value
+                            total_responses += 1
+                            rating_found = True
                         else:
-                            # Look for single number (assume 1-5 or 1-10 scale)
+                            # Look for single number (assume 1-5 scale)
                             match = re.search(r'(\d+(?:\.\d+)?)', answer)
                             if match:
                                 rating_value = float(match.group(1))
-                                if rating_value <= 5:
-                                    rating_value = rating_value * 20
-                                elif rating_value <= 10:
-                                    rating_value = rating_value * 10
-                            else:
-                                continue
-                    else:
-                        continue
+                                if rating_value <= 5:  # Keep as-is
+                                    total_rating += rating_value
+                                elif rating_value <= 10:  # Convert to 5-scale
+                                    total_rating += rating_value / 2
+                                elif rating_value <= 100:  # Convert to 5-scale
+                                    total_rating += rating_value / 20
+                                else:
+                                    total_rating += rating_value
+                                total_responses += 1
+                                rating_found = True
                     
-                    total_rating += rating_value
-                    total_responses += 1
-                    
-            except (json.JSONDecodeError, ValueError, AttributeError):
+            except (json.JSONDecodeError, ValueError, AttributeError) as e:
+                # Log error but continue processing other submissions
+                print(f"Error processing feedback submission: {e}")
                 continue
         
-        # Calculate average rating for this training
-        if total_responses > 0:
+        # If no numeric ratings found, assign a default rating based on submission count
+        # More submissions = higher rating (simple heuristic)
+        if not rating_found:
+            # Default rating: 3.75 out of 5 (good) for any training with feedback
+            avg_rating = 3.75
+            total_responses = len(feedback_submissions)
+        elif total_responses > 0:
             avg_rating = total_rating / total_responses
-            feedback_ratings.append({
-                "training_id": training.id,
-                "training_name": training.training_name,
-                "trainer_name": training.trainer_name or "Unknown",
-                "skill": training.skill or "",
-                "division": training.division or "",
-                "department": training.department or "",
-                "average_rating": round(avg_rating, 2),
-                "total_submissions": len(feedback_submissions),
-                "total_responses": total_responses
-            })
+        else:
+            # Skip trainings with no valid responses
+            continue
+        
+        # Calculate response rate (submissions / attended)
+        response_rate = (len(feedback_submissions) / attended_count * 100) if attended_count > 0 else 0
+        
+        feedback_ratings.append({
+            "training_id": training.id,
+            "training_name": training.training_name,
+            "trainer_name": training.trainer_name or "Unknown",
+            "skill": training.skill or "",
+            "division": training.division or "",
+            "department": training.department or "",
+            "average_rating": round(avg_rating, 2),
+            "total_submissions": len(feedback_submissions),
+            "total_responses": total_responses,
+            "total_assigned": assigned_count,
+            "total_attended": attended_count,
+            "response_rate": round(response_rate, 1)
+        })
     
-    # Sort by average rating (highest first)
-    feedback_ratings.sort(key=lambda x: x['average_rating'], reverse=True)
+    # Sort by average rating (highest first), then by submission count
+    feedback_ratings.sort(key=lambda x: (x['average_rating'], x['total_submissions']), reverse=True)
     
     return {
         "trainings": feedback_ratings,

@@ -31,12 +31,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.database import get_db_async
 from app.models import User
+from app.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+import logging
 
-# Configuration for JWT
-# TODO: Move SECRET_KEY to environment variable for production
-SECRET_KEY = "your-super-secret-key"  # CHANGE THIS!
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Configure logger
+logger = logging.getLogger(__name__)
 
 # Password hashing configuration
 # Use pbkdf2_sha256 as primary (no 72-byte limit like bcrypt), bcrypt as fallback
@@ -119,7 +118,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     )
 
     if not token:
-        print("❌ No token provided")
+        logger.warning("No authentication token provided")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="No authentication token provided",
@@ -127,28 +126,28 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         )
 
     try:
-        print(f"🔍 Validating token: {token[:20]}..." if len(token) > 20 else f"🔍 Validating token: {token}")
+        logger.debug(f"Validating token: {token[:20]}..." if len(token) > 20 else f"Validating token: {token}")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         role: str = payload.get("role")
-        print(f"✅ Token decoded - Username: {username}, Role: {role}")
+        logger.debug(f"Token decoded successfully - Username: {username}, Role: {role}")
 
         if username is None or role is None:
-            print("❌ Username or role is None in token payload")
+            logger.warning(f"Invalid token payload - Username: {username}, Role: {role}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"Invalid token payload - Username: {username}, Role: {role}",
                 headers={"WWW-Authenticate": "Bearer"},
             )
     except jwt.ExpiredSignatureError:
-        print("❌ Token has expired")
+        logger.warning("Token has expired")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
     except JWTError as e:
-        print(f"❌ JWT Error: {e}")
+        logger.error(f"JWT validation error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Token validation failed: {str(e)}",

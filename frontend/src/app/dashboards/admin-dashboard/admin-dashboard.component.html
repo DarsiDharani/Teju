@@ -309,29 +309,72 @@
                             <div class="text-[10px] text-slate-500 mt-1">Overall</div>
                             <div class="text-[9px] text-slate-600 italic">Training completion tracking</div>
                             <div class="mt-2 pt-2 border-t border-slate-200/60 text-[10px] text-slate-600">
-                                <div class="flex items-center justify-between">
+                                <div class="flex items-center justify-between mb-1.5">
                                     <span>Completed</span>
                                     <span class="font-semibold text-slate-900">{{ attendedAssignments }}/{{ totalAssignments }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Top 5 Trainings by Completion Rate -->
+                            <div *ngIf="topCompletionTrainings.length > 0" class="mt-2 pt-2 border-t border-emerald-200/60 text-left">
+                                <div class="text-[9px] text-emerald-700 font-bold mb-1.5 uppercase tracking-wide">Top 5 Completions</div>
+                                <div class="space-y-1">
+                                    <div *ngFor="let training of topCompletionTrainings; let i = index" class="flex items-center gap-1.5 text-[9px] hover:bg-emerald-50 rounded px-1 py-0.5 transition-colors">
+                                        <span class="text-emerald-600 font-bold w-3">{{ i + 1 }}.</span>
+                                        <span class="flex-1 text-slate-700 truncate font-medium" [title]="training.training_name">{{ training.training_name }}</span>
+                                        <span class="text-emerald-700 font-bold">{{ training.completion_rate | number:'1.0-0' }}%</span>
+                                    </div>
                                 </div>
                             </div>
                         </button>
 
                         <!-- Top 5 Training Feedback Ratings Card -->
-                        <button (click)="openFeedbackRatingsModal()" class="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-3 border-black hover:border-amber-500 p-5 hover:shadow-2xl transition-all duration-300 text-center cursor-pointer hover:bg-amber-50/30 group">
-                            <div class="flex items-center justify-center gap-2 mb-2 pt-1">
+                        <button (click)="openFeedbackRatingsModal()" class="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border-3 border-black hover:border-amber-500 p-3 hover:shadow-2xl transition-all duration-300 text-center cursor-pointer hover:bg-amber-50/30 group">
+                            <div class="flex items-center justify-center gap-2 mb-1.5">
                                 <i class="fa-solid fa-star text-amber-600 text-lg"></i>
                                 <div class="text-base text-slate-800 font-bold">Feedback Ratings</div>
                             </div>
-                            <div class="border-t-2 border-amber-100 mb-5"></div>
-                            <div class="flex justify-center">
-                                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg">
-                                    <i class="fa-solid fa-star text-white text-2xl"></i>
-                                </div>
+                            <div class="border-t-2 border-amber-100 mb-2"></div>
+                            
+                            <!-- Loading State -->
+                            <div *ngIf="feedbackRatingsLoading" class="flex justify-center py-6">
+                                <div class="animate-spin rounded-full h-10 w-10 border-4 border-amber-200 border-t-amber-600"></div>
                             </div>
-                            <div class="text-xs text-slate-500 mt-2">No feedback data available</div>
-                            <div class="mt-3 pt-3 border-t border-slate-200/60 text-xs text-amber-600 font-semibold flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-arrow-right text-xs"></i>
-                                <span>Click to view all ratings</span>
+                            
+                            <!-- Content -->
+                            <div *ngIf="!feedbackRatingsLoading">
+                                <div class="flex justify-center">
+                                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg">
+                                        <i class="fa-solid fa-star text-white text-xl"></i>
+                                    </div>
+                                </div>
+                                <div class="text-lg text-slate-800 mt-2 mb-2 font-bold">Top 5 Trainings</div>
+                                
+                                <!-- Top 5 Feedback Ratings List -->
+                                <div class="mt-2 pt-2 border-t border-slate-200/60 text-left space-y-2">
+                                    <div *ngFor="let feedback of topFeedbackRatings; let i = index" class="flex items-center justify-between text-xs hover:bg-amber-50 p-2 rounded">
+                                        <div class="flex items-center gap-2 flex-1 pr-2">
+                                            <span class="font-bold text-amber-600">{{ i + 1 }}.</span>
+                                            <span class="text-slate-800 truncate font-medium" [title]="feedback.training_name">{{ feedback.training_name }}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <i class="fa-solid fa-star text-amber-500 text-xs"></i>
+                                            <span class="font-bold text-amber-700 whitespace-nowrap text-base">{{ (feedback.average_rating || 0) | number:'1.1-1' }}</span>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="topFeedbackRatings.length === 0" class="text-xs text-slate-500 italic text-center py-2">
+                                        <i class="fa-solid fa-inbox text-2xl text-slate-300 mb-2 block"></i>
+                                        No feedback data available
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-2 pt-2 border-t border-slate-200/60 text-xs text-slate-700">
+                                    <div class="flex items-center justify-between font-medium">
+                                        <span>Total with Feedback</span>
+                                        <span class="font-bold text-slate-900 text-sm">{{ allFeedbackRatings.length }}</span>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-slate-600 italic mt-1">Click to view all</div>
                             </div>
                         </button>
 
@@ -1055,14 +1098,19 @@
                             </div>
 
                             <div class="px-6 py-4 max-h-[65vh] overflow-y-auto">
-                                <div *ngIf="allFeedbackRatings.length === 0" class="py-12 text-center text-slate-500">
+                                <div *ngIf="feedbackRatingsLoading" class="py-12 text-center">
+                                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-200 border-t-amber-600"></div>
+                                    <div class="text-slate-600 mt-4 font-medium">Loading feedback ratings...</div>
+                                </div>
+
+                                <div *ngIf="!feedbackRatingsLoading && allFeedbackRatings.length === 0" class="py-12 text-center text-slate-500">
                                     <i class="fa-solid fa-star text-4xl text-amber-200 mb-3"></i>
                                     <div class="font-medium text-base">No feedback data available</div>
                                     <div class="text-xs text-slate-400 mt-1">Trainings with feedback submissions will appear here</div>
                                 </div>
 
-                                <div class="space-y-3">
-                                    <div *ngFor="let training of allFeedbackRatings | filter: feedbackRatingsSearch : ['name', 'trainer', 'skill']; let i = index" 
+                                <div *ngIf="!feedbackRatingsLoading" class="space-y-3">
+                                    <div *ngFor="let training of allFeedbackRatings | filter: feedbackRatingsSearch : ['training_name', 'trainer_name', 'skill']; let i = index" 
                                             class="group p-5 rounded-xl bg-white hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 hover:shadow-md transition-all duration-200">
                                         <!-- Header Row -->
                                         <div class="flex items-start justify-between mb-4">
@@ -1106,7 +1154,7 @@
                                             <div class="flex-shrink-0 text-right ml-4">
                                                 <div class="flex items-center gap-2 justify-end mb-1">
                                                     <i class="fa-solid fa-star text-amber-400 text-lg"></i>
-                                                    <div class="text-3xl font-black text-amber-600">{{ training.average_rating | number:'1.1-1' }}</div>
+                                                    <div class="text-3xl font-black text-amber-600">{{ (training.average_rating || 0) | number:'1.1-1' }}</div>
                                                 </div>
                                                 <div class="text-xs text-slate-500 font-medium">Avg Rating</div>
                                             </div>
@@ -1116,43 +1164,23 @@
                                         <div class="grid grid-cols-4 gap-3 pt-4 border-t border-slate-100">
                                             <div class="text-center px-3 py-2.5 rounded-lg bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200">
                                                 <div class="text-xs text-amber-700 font-bold uppercase tracking-wider mb-1">Rating</div>
-                                                <div class="text-2xl font-black text-amber-600">{{ training.average_rating | number:'1.0-0' }}</div>
-                                                <div class="text-[10px] text-amber-600 mt-0.5">out of 100</div>
+                                                <div class="text-2xl font-black text-amber-600">{{ (training.average_rating || 0) | number:'1.1-1' }}</div>
+                                                <div class="text-[10px] text-amber-600 mt-0.5">out of 5</div>
                                             </div>
                                             <div class="text-center px-3 py-2.5 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
-                                                <div class="text-xs text-blue-700 font-bold uppercase tracking-wider mb-1">Submissions</div>
-                                                <div class="text-2xl font-black text-blue-600">{{ training.total_submissions }}</div>
+                                                <div class="text-xs text-blue-700 font-bold uppercase tracking-wider mb-1">Assigned</div>
+                                                <div class="text-2xl font-black text-blue-600">{{ training.total_assigned }}</div>
                                                 <div class="text-[10px] text-blue-600 mt-0.5">employees</div>
                                             </div>
                                             <div class="text-center px-3 py-2.5 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
-                                                <div class="text-xs text-green-700 font-bold uppercase tracking-wider mb-1">Responses</div>
-                                                <div class="text-2xl font-black text-green-600">{{ training.total_responses }}</div>
-                                                <div class="text-[10px] text-green-600 mt-0.5">total</div>
+                                                <div class="text-xs text-green-700 font-bold uppercase tracking-wider mb-1">Attended</div>
+                                                <div class="text-2xl font-black text-green-600">{{ training.total_attended }}</div>
+                                                <div class="text-[10px] text-green-600 mt-0.5">employees</div>
                                             </div>
                                             <div class="text-center px-3 py-2.5 rounded-lg bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
-                                                <div class="text-xs text-purple-700 font-bold uppercase tracking-wider mb-1">Avg/Sub</div>
-                                                <div class="text-2xl font-black text-purple-600">{{ (training.total_responses / training.total_submissions) | number:'1.1-1' }}</div>
-                                                <div class="text-[10px] text-purple-600 mt-0.5">responses</div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Visual Rating Bar -->
-                                        <div class="mt-4 pt-3 border-t border-slate-100">
-                                            <div class="flex justify-between items-center text-xs mb-2">
-                                                <span class="text-slate-600 font-semibold">Feedback Quality</span>
-                                                <span class="text-amber-600 font-bold">{{ training.average_rating | number:'1.2-2' }}%</span>
-                                            </div>
-                                            <div class="w-full bg-slate-200 rounded-full h-3 shadow-inner">
-                                                <div 
-                                                    class="h-3 rounded-full transition-all duration-500 shadow-md"
-                                                    [ngClass]="{
-                                                        'bg-gradient-to-r from-green-400 to-green-600': training.average_rating >= 80,
-                                                        'bg-gradient-to-r from-amber-400 to-amber-600': training.average_rating >= 60 && training.average_rating < 80,
-                                                        'bg-gradient-to-r from-orange-400 to-orange-600': training.average_rating >= 40 && training.average_rating < 60,
-                                                        'bg-gradient-to-r from-red-400 to-red-600': training.average_rating < 40
-                                                    }"
-                                                    [style.width.%]="training.average_rating">
-                                                </div>
+                                                <div class="text-xs text-purple-700 font-bold uppercase tracking-wider mb-1">Feedback</div>
+                                                <div class="text-2xl font-black text-purple-600">{{ training.total_submissions }}</div>
+                                                <div class="text-[10px] text-purple-600 mt-0.5">submitted</div>
                                             </div>
                                         </div>
                                     </div>

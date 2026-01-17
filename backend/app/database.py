@@ -17,14 +17,10 @@ Connection: Configured via DATABASE_URL environment variable or hardcoded for de
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+from app.config import DATABASE_URL
 
-# Database connection URL
-# Format: postgresql+asyncpg://username:password@host:port/database
-# TODO: Move to environment variable for production
-DATABASE_URL = "postgresql+asyncpg://postgres:admin123@localhost:5432/skillorbit"
-
-# Create async database engine
-# echo=True enables SQL query logging (disable in production)
+# Create async database engine using configuration
+# echo=True enables SQL query logging (disable in production for performance)
 # future=True enables SQLAlchemy 2.0 style
 async_engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 

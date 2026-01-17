@@ -82,6 +82,25 @@ interface CoreSkill {
   iconClass: string;
 }
 
+interface FeedbackRating {
+  training_id: number;
+  training_name: string;
+  trainer_name: string;
+  skill: string;
+  division: string;
+  department: string;
+  average_rating: number | null;
+  has_numeric_rating: boolean;
+  total_submissions: number;
+  total_responses: number;
+  total_assigned: number;
+  total_attended: number;
+  submission_rate: number;
+  total_questions: number;
+  first_submission?: string;
+  last_submission?: string;
+}
+
 @Component({
   selector: 'app-admin-dashboard',
   templateUrl: './admin-dashboard.component.html',
@@ -179,9 +198,11 @@ export class AdminDashboardComponent implements OnInit {
   // New dashboard cards data
   trainingRate: number = 0;
   trainingCompletionRate: number = 0;
-  topFeedbackRatings: any[] = [];
-  allFeedbackRatings: any[] = [];  // Store all feedback ratings for modal
+  topFeedbackRatings: FeedbackRating[] = [];  // Top 5 feedback ratings
+  allFeedbackRatings: FeedbackRating[] = [];  // Store all feedback ratings for modal
+  feedbackRatingsLoading: boolean = false;
   topTrainers: Array<{ name: string; value: number; display: string; metric: 'deliveries' | 'completion' | 'assigned' | 'attended'; count?: number; }> = [];
+  topCompletionTrainings: Training[] = []; // Top 5 trainings by completion rate
   newCardsLoading: boolean = false;
   // Calculation trace values
   trainingRateNumerator: number = 0;     // available trainings
@@ -344,6 +365,7 @@ export class AdminDashboardComponent implements OnInit {
     this.loadTrainings();
     this.loadGapAnalysis();
     this.loadAdditionalDashboardCards();
+    this.loadFeedbackRatings();
   }
 
   getHeaders(): HttpHeaders {
@@ -1374,6 +1396,22 @@ export class AdminDashboardComponent implements OnInit {
       });
   }
 
+  loadFeedbackRatings(): void {
+    this.feedbackRatingsLoading = true;
+    this.http.get<any>(this.apiService.adminFeedbackRatingsUrl, { headers: this.getHeaders() })
+      .subscribe({
+        next: (data) => {
+          this.allFeedbackRatings = data.trainings || [];
+          this.topFeedbackRatings = this.allFeedbackRatings.slice(0, 5);
+          this.feedbackRatingsLoading = false;
+        },
+        error: (err) => {
+          console.error('Error loading feedback ratings:', err);
+          this.feedbackRatingsLoading = false;
+        }
+      });
+  }
+
   loadAdditionalDashboardCards(): void {
     this.newCardsLoading = true;
     
@@ -1393,41 +1431,14 @@ export class AdminDashboardComponent implements OnInit {
       ? (this.completionNumerator / this.completionDenominator) * 100
       : 0;
     
-    // Load top 5 training feedback ratings
-    this.loadTopFeedbackRatings();
+    // Get top 5 trainings by completion rate
+    this.topCompletionTrainings = [...this.trainings]
+      .filter(t => t.assigned_count > 0) // Only include trainings with assignments
+      .sort((a, b) => b.completion_rate - a.completion_rate)
+      .slice(0, 5);
     
     // Load top 5 trainers
     this.loadTopTrainers();
-  }
-
-  loadTopFeedbackRatings(): void {
-    // Fetch consolidated feedback ratings from backend
-    this.http.get<any>(this.apiService.adminFeedbackRatingsUrl, { headers: this.getHeaders() })
-      .subscribe({
-        next: (data) => {
-          this.allFeedbackRatings = data.trainings || [];
-          
-          // Get top 5 trainings by average rating
-          this.topFeedbackRatings = this.allFeedbackRatings
-            .slice(0, 5)
-            .map(training => ({
-              id: training.training_id,
-              name: training.training_name,
-              trainer: training.trainer_name,
-              rating: training.average_rating,
-              submissions: training.total_submissions,
-              responses: training.total_responses,
-              skill: training.skill,
-              division: training.division,
-              department: training.department
-            }));
-        },
-        error: (err) => {
-          console.error('Error loading feedback ratings:', err);
-          this.topFeedbackRatings = [];
-          this.allFeedbackRatings = [];
-        }
-      });
   }
 
   loadTopTrainers(): void {

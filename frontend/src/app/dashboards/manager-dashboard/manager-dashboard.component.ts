@@ -3115,6 +3115,40 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     return (this.manager?.team || []).reduce((sum, m) => sum + m.skills.length, 0);
   }
 
+  // New methods for Team Skills Matrix with individual skills
+  getAllUniqueSkills(): string[] {
+    if (!this.manager || !this.manager.team) return [];
+    const skillsSet = new Set<string>();
+    this.manager.team.forEach(member => {
+      member.skills.forEach(skill => {
+        if (skill.skill) {
+          skillsSet.add(skill.skill);
+        }
+      });
+    });
+    return Array.from(skillsSet).sort();
+  }
+
+  getMemberSkillByName(member: TeamMember, skillName: string): Competency | null {
+    const skill = member.skills.find(s => s.skill === skillName);
+    return skill || null;
+  }
+
+  getSkillAverageProgress(skillName: string): number {
+    if (!this.manager || !this.manager.team) return 0;
+    const membersWithSkill = this.manager.team.filter(member => 
+      member.skills.some(s => s.skill === skillName)
+    );
+    if (membersWithSkill.length === 0) return 0;
+    
+    const totalProgress = membersWithSkill.reduce((sum, member) => {
+      const skill = member.skills.find(s => s.skill === skillName);
+      return sum + (skill ? this.getSkillProgress(skill) : 0);
+    }, 0);
+    
+    return Math.round(totalProgress / membersWithSkill.length);
+  }
+
   viewMemberDetails(member: TeamMember): void {
     this.selectedTeamMember = member;
   }
