@@ -229,7 +229,7 @@ async def get_weighted_actual_progress_for_skill(
         if submission is not None:
             assignment_scores.append(submission)
         
-        # Get manager performance feedback ratings
+        # Get manager performance feedback ratings (most recent feedback only)
         feedback_result = await db.execute(
             select(
                 ManagerPerformanceFeedback.application_of_training,
@@ -241,7 +241,7 @@ async def get_weighted_actual_progress_for_skill(
             ).where(
                 ManagerPerformanceFeedback.training_id == training_id,
                 ManagerPerformanceFeedback.employee_empid == employee_username
-            )
+            ).order_by(ManagerPerformanceFeedback.created_at.desc())
         )
         feedback = feedback_result.first()
         if feedback:

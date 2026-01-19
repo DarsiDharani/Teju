@@ -1784,6 +1784,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
         // Refresh team submissions to update status from backend
         this.fetchTeamSubmissions();
+        
+        // Refresh dashboard data to update My Skills tab with new progress calculations
+        this.fetchDashboardData();
       },
       error: (err) => {
         this.isSubmittingFeedback = false;
