@@ -198,6 +198,8 @@ async def get_my_assigned_trainings(
             "training_type": td.training_type,
             "seats": td.seats,
             "assessment_details": td.assessment_details,
+            "lecture_url": td.lecture_url,  # Include lecture URL for recorded trainings
+            "description": td.description,  # Include description for recorded trainings
             "attendance_marked": attendance_marked,  # Whether trainer has marked attendance
             "attendance_attended": attendance_attended,  # Whether employee attended (True) or not (False)
             "target_date": to_iso(assignment.target_date) if assignment.target_date else None  # Target completion date set by manager

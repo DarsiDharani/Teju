@@ -2777,21 +2777,21 @@
         </div>
     </div>
 </div>
-<!-- Report Generation Modal -->
+<!-- Enhanced Report Generation Modal -->
 <div *ngIf="showReportModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
     <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" (click)="closeReportModal()"></div>
 
-    <div class="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden border-t-4 border-rose-500">
+    <div class="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden border-t-4 border-rose-500">
         <!-- Header -->
         <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-rose-900 px-6 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <div class="w-11 h-11 bg-rose-500/20 rounded-xl flex items-center justify-center border border-rose-400/30 backdrop-blur-sm">
-                        <i class="fa-solid fa-file-arrow-down text-rose-400 text-lg"></i>
+                        <i class="fa-solid fa-chart-line text-rose-400 text-lg"></i>
                     </div>
                     <div>
-                        <div class="text-lg font-semibold text-white">Generate Report</div>
-                        <div class="text-xs text-rose-300">Select report type and download</div>
+                        <div class="text-lg font-semibold text-white">Generate Reports & Analytics</div>
+                        <div class="text-xs text-rose-300">View insights and download comprehensive reports</div>
                     </div>
                 </div>
                 <button (click)="closeReportModal()" class="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-lg flex items-center justify-center transition-colors">
@@ -2803,56 +2803,616 @@
         <!-- Body -->
         <div class="p-6 max-h-[70vh] overflow-y-auto">
             <div class="mb-4">
-                <h3 class="text-sm font-semibold text-slate-700 mb-2">Select Report Type</h3>
-                <p class="text-xs text-slate-500">Choose the type of report you want to generate and download as CSV</p>
+                <h3 class="text-sm font-semibold text-slate-700 mb-2">Available Reports</h3>
+                <p class="text-xs text-slate-500">Select a report type to view insights or download Excel/CSV</p>
             </div>
 
-            <!-- Report Type Cards -->
+            <!-- Enhanced Report Type Cards -->
             <div class="grid grid-cols-2 gap-3">
-                <div *ngFor="let reportType of reportTypes" 
-                     (click)="selectReportType(reportType.value)"
+                <!-- Users Report -->
+                <div (click)="selectReportType('users')"
                      class="p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg"
-                     [ngClass]="selectedReportType === reportType.value ? 'border-rose-500 bg-rose-50' : 'border-slate-200 hover:border-rose-300'">
+                     [ngClass]="selectedReportType === 'users' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300'">
                     <div class="flex items-start gap-3">
                         <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                             [ngClass]="selectedReportType === reportType.value ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-600'">
-                            <i class="fa-solid {{ reportType.icon }}"></i>
+                             [ngClass]="selectedReportType === 'users' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-600'">
+                            <i class="fa-solid fa-users"></i>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-sm text-slate-800 mb-1">{{ reportType.label }}</div>
-                            <div class="text-xs text-slate-500">{{ reportType.description }}</div>
+                            <div class="font-semibold text-sm text-slate-800 mb-1">Users Overview</div>
+                            <div class="text-xs text-slate-500">User distribution, roles & trends</div>
+                            <div class="text-xs text-blue-600 font-semibold mt-1">📊 Charts Available</div>
                         </div>
-                        <div *ngIf="selectedReportType === reportType.value" class="flex-shrink-0">
+                        <div *ngIf="selectedReportType === 'users'" class="flex-shrink-0">
+                            <i class="fa-solid fa-check-circle text-blue-500 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trainings Report -->
+                <div (click)="selectReportType('trainings')"
+                     class="p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg"
+                     [ngClass]="selectedReportType === 'trainings' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                             [ngClass]="selectedReportType === 'trainings' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm text-slate-800 mb-1">Training Performance</div>
+                            <div class="text-xs text-slate-500">Completion rates & popularity</div>
+                            <div class="text-xs text-emerald-600 font-semibold mt-1">📊 Charts Available</div>
+                        </div>
+                        <div *ngIf="selectedReportType === 'trainings'" class="flex-shrink-0">
+                            <i class="fa-solid fa-check-circle text-emerald-500 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Report -->
+                <div (click)="selectReportType('feedback')"
+                     class="p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg"
+                     [ngClass]="selectedReportType === 'feedback' ? 'border-amber-500 bg-amber-50' : 'border-slate-200 hover:border-amber-300'">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                             [ngClass]="selectedReportType === 'feedback' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600'">
+                            <i class="fa-solid fa-comment-dots"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm text-slate-800 mb-1">Feedback Analysis</div>
+                            <div class="text-xs text-slate-500">Response rates & trends</div>
+                            <div class="text-xs text-amber-600 font-semibold mt-1">📊 Charts Available</div>
+                        </div>
+                        <div *ngIf="selectedReportType === 'feedback'" class="flex-shrink-0">
+                            <i class="fa-solid fa-check-circle text-amber-500 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills Gap Report -->
+                <div (click)="selectReportType('skills')"
+                     class="p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg"
+                     [ngClass]="selectedReportType === 'skills' ? 'border-purple-500 bg-purple-50' : 'border-slate-200 hover:border-purple-300'">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                             [ngClass]="selectedReportType === 'skills' ? 'bg-purple-500 text-white' : 'bg-slate-100 text-slate-600'">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm text-slate-800 mb-1">Skills Gap Analysis</div>
+                            <div class="text-xs text-slate-500">Competency gaps & targets</div>
+                            <div class="text-xs text-purple-600 font-semibold mt-1">📊 Charts Available</div>
+                        </div>
+                        <div *ngIf="selectedReportType === 'skills'" class="flex-shrink-0">
+                            <i class="fa-solid fa-check-circle text-purple-500 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Usage Report -->
+                <div (click)="selectReportType('system')"
+                     class="p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg"
+                     [ngClass]="selectedReportType === 'system' ? 'border-cyan-500 bg-cyan-50' : 'border-slate-200 hover:border-cyan-300'">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                             [ngClass]="selectedReportType === 'system' ? 'bg-cyan-500 text-white' : 'bg-slate-100 text-slate-600'">
+                            <i class="fa-solid fa-chart-bar"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm text-slate-800 mb-1">System Analytics</div>
+                            <div class="text-xs text-slate-500">Usage patterns & activity</div>
+                            <div class="text-xs text-cyan-600 font-semibold mt-1">📊 Charts Available</div>
+                        </div>
+                        <div *ngIf="selectedReportType === 'system'" class="flex-shrink-0">
+                            <i class="fa-solid fa-check-circle text-cyan-500 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complete Report -->
+                <div (click)="selectReportType('all')"
+                     class="p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-lg"
+                     [ngClass]="selectedReportType === 'all' ? 'border-rose-500 bg-rose-50' : 'border-slate-200 hover:border-rose-300'">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                             [ngClass]="selectedReportType === 'all' ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-600'">
+                            <i class="fa-solid fa-database"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-semibold text-sm text-slate-800 mb-1">Complete Report</div>
+                            <div class="text-xs text-slate-500">All data in multi-sheet Excel</div>
+                            <div class="text-xs text-rose-600 font-semibold mt-1">📄 Excel Export Only</div>
+                        </div>
+                        <div *ngIf="selectedReportType === 'all'" class="flex-shrink-0">
                             <i class="fa-solid fa-check-circle text-rose-500 text-lg"></i>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Selected Report Info -->
-            <div *ngIf="selectedReportType" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div class="flex items-center gap-2 text-sm">
-                    <i class="fa-solid fa-info-circle text-blue-600"></i>
-                    <span class="text-blue-800">
-                        <strong>Selected:</strong> {{ (reportTypes | filter: selectedReportType : ['value'])[0]?.label }}
-                    </span>
+            <!-- Selected Report Actions -->
+            <div *ngIf="selectedReportType" class="mt-4 p-4 bg-gradient-to-r from-slate-50 to-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-circle-check text-blue-600"></i>
+                        <span class="text-slate-700 font-medium">Report Selected</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button *ngIf="selectedReportType !== 'all'" 
+                                (click)="viewReportVisualization(selectedReportType)"
+                                class="px-3 py-1.5 bg-white border border-blue-300 text-blue-600 rounded-lg text-xs font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1.5">
+                            <i class="fa-solid fa-chart-pie"></i>
+                            View Charts
+                        </button>
+                        <button (click)="downloadExcelReport(selectedReportType)"
+                                [disabled]="generatingReport"
+                                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5"
+                                [ngClass]="generatingReport ? 'bg-slate-300 text-slate-500' : 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700'">
+                            <i class="fa-solid" [ngClass]="generatingReport ? 'fa-spinner fa-spin' : 'fa-file-excel'"></i>
+                            {{ generatingReport ? 'Preparing...' : 'Download Excel' }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Footer -->
-        <div class="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between gap-3">
+        <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between">
+            <div class="text-xs text-slate-500">
+                <i class="fa-solid fa-info-circle mr-1"></i>
+                Reports include visualizations, detailed tables, and insights
+            </div>
             <button (click)="closeReportModal()" 
-                    class="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors">
-                Cancel
+                    class="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
+                Close
             </button>
-            <button (click)="generateReport()" 
-                    [disabled]="!selectedReportType || generatingReport"
-                    class="px-6 py-2 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2"
-                    [ngClass]="!selectedReportType || generatingReport ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-gradient-to-r from-rose-500 to-rose-600 text-white hover:from-rose-600 hover:to-rose-700 shadow-lg hover:shadow-xl'">
-                <i class="fa-solid" [ngClass]="generatingReport ? 'fa-spinner fa-spin' : 'fa-download'"></i>
-                <span>{{ generatingReport ? 'Generating...' : 'Generate Report' }}</span>
-            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Report Visualization Modal -->
+<div *ngIf="showReportVisualizationModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" (click)="closeReportVisualizationModal()"></div>
+
+    <div class="relative w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden border-t-4 border-blue-500 max-h-[90vh] flex flex-col">
+        <!-- Header -->
+        <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 px-6 py-4 flex-shrink-0">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 bg-blue-500/20 rounded-xl flex items-center justify-center border border-blue-400/30 backdrop-blur-sm">
+                        <i class="fa-solid fa-chart-pie text-blue-400 text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="text-lg font-semibold text-white">Report Insights & Analytics</div>
+                        <div class="text-xs text-blue-300">{{ selectedReportForVisualization | titlecase }} Report</div>
+                    </div>
+                </div>
+                <button (click)="closeReportVisualizationModal()" class="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-lg flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-times text-white"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Body - Scrollable -->
+        <div class="p-6 overflow-y-auto flex-1">
+            <!-- Loading State -->
+            <div *ngIf="loadingReportData" class="flex flex-col items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mb-4"></div>
+                <p class="text-slate-600">Loading report data...</p>
+            </div>
+
+            <!-- Report Data -->
+            <div *ngIf="!loadingReportData && reportOverviews[selectedReportForVisualization]" class="space-y-6">
+                <!-- Metrics Summary -->
+                <div class="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-bar text-blue-600"></i>
+                        Key Metrics
+                    </h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div *ngFor="let metric of getMetricsArray(selectedReportForVisualization)" 
+                             class="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+                            <div class="text-xs text-slate-600 mb-1 uppercase tracking-wide">{{ metric.label }}</div>
+                            <div class="text-2xl font-bold text-blue-600">{{ metric.value }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Users Report Charts -->
+                <div *ngIf="selectedReportForVisualization === 'users'">
+                    <!-- Main Chart with Type Switcher -->
+                    <div *ngIf="reportChartsData[selectedReportForVisualization]?.chartData" 
+                         class="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-blue-600"></i>
+                                {{ reportChartsData[selectedReportForVisualization].chartData.title }}
+                            </h4>
+                            <div class="flex items-center gap-2">
+                                <!-- Chart Type Switcher -->
+                                <div class="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                                    <button (click)="switchChartType('users', 'pie')"
+                                            [ngClass]="currentChartType['users'] === 'pie' ? 'bg-blue-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5"
+                                            title="Pie Chart">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                        Pie
+                                    </button>
+                                    <button (click)="switchChartType('users', 'bar')"
+                                            [ngClass]="currentChartType['users'] === 'bar' ? 'bg-blue-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5"
+                                            title="Bar Chart">
+                                        <i class="fa-solid fa-chart-bar"></i>
+                                        Bar
+                                    </button>
+                                    <button (click)="switchChartType('users', 'doughnut')"
+                                            [ngClass]="currentChartType['users'] === 'doughnut' ? 'bg-blue-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5"
+                                            title="Doughnut Chart">
+                                        <i class="fa-solid fa-circle-notch"></i>
+                                        Doughnut
+                                    </button>
+                                </div>
+                                <button (click)="downloadChartAsImage()" 
+                                        class="px-3 py-1.5 bg-blue-500 text-white rounded-lg text-xs font-semibold hover:bg-blue-600 transition-colors flex items-center gap-1.5">
+                                    <i class="fa-solid fa-download"></i>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center" style="height: 400px;">
+                            <canvas id="usersMainChart" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Registration Trend -->
+                    <div *ngIf="reportChartsData[selectedReportForVisualization]?.registrationTrend" 
+                         class="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+                        <h4 class="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-line text-emerald-600"></i>
+                            {{ reportChartsData[selectedReportForVisualization].registrationTrend.title }}
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-100">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-slate-700">Month</th>
+                                        <th class="px-4 py-2 text-right text-sm font-semibold text-slate-700">New Users</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let month of reportChartsData[selectedReportForVisualization].registrationTrend.labels; let i = index"
+                                        class="border-t border-slate-200 hover:bg-slate-50">
+                                        <td class="px-4 py-2 text-sm text-slate-700">{{ month }}</td>
+                                        <td class="px-4 py-2 text-right text-sm font-semibold text-blue-600">
+                                            {{ reportChartsData[selectedReportForVisualization].registrationTrend.data[i] }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trainings Report Charts -->
+                <div *ngIf="selectedReportForVisualization === 'trainings'">
+                    <!-- Main Chart with Type Switcher -->
+                    <div *ngIf="reportChartsData[selectedReportForVisualization]?.departmentChart" 
+                         class="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-building text-emerald-600"></i>
+                                {{ reportChartsData[selectedReportForVisualization].departmentChart.title }}
+                            </h4>
+                            <div class="flex items-center gap-2">
+                                <!-- Chart Type Switcher -->
+                                <div class="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                                    <button (click)="switchChartType('trainings', 'bar')"
+                                            [ngClass]="currentChartType['trainings'] === 'bar' ? 'bg-emerald-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-bar"></i>
+                                        Bar
+                                    </button>
+                                    <button (click)="switchChartType('trainings', 'pie')"
+                                            [ngClass]="currentChartType['trainings'] === 'pie' ? 'bg-emerald-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                        Pie
+                                    </button>
+                                    <button (click)="switchChartType('trainings', 'line')"
+                                            [ngClass]="currentChartType['trainings'] === 'line' ? 'bg-emerald-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-line"></i>
+                                        Line
+                                    </button>
+                                </div>
+                                <button (click)="downloadChartAsImage()" 
+                                        class="px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-semibold hover:bg-emerald-600 transition-colors flex items-center gap-1.5">
+                                    <i class="fa-solid fa-download"></i>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center" style="height: 400px;">
+                            <canvas id="trainingsMainChart" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Trainings -->
+                    <div *ngIf="reportChartsData[selectedReportForVisualization]?.topTrainings" 
+                         class="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+                        <h4 class="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-trophy text-amber-600"></i>
+                            Top Trainings by Enrollment
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-100">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-slate-700">Training</th>
+                                        <th class="px-4 py-2 text-right text-sm font-semibold text-slate-700">Assigned</th>
+                                        <th class="px-4 py-2 text-right text-sm font-semibold text-slate-700">Attended</th>
+                                        <th class="px-4 py-2 text-right text-sm font-semibold text-slate-700">Completion</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let training of reportChartsData[selectedReportForVisualization].topTrainings; let i = index"
+                                        class="border-t border-slate-200 hover:bg-slate-50">
+                                        <td class="px-4 py-2 text-sm text-slate-700">{{ training.name }}</td>
+                                        <td class="px-4 py-2 text-right text-sm font-semibold text-blue-600">{{ training.assigned }}</td>
+                                        <td class="px-4 py-2 text-right text-sm font-semibold text-emerald-600">{{ training.attended }}</td>
+                                        <td class="px-4 py-2 text-right text-sm font-semibold text-amber-600">{{ training.completion_rate }}%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Report Charts -->
+                <div *ngIf="selectedReportForVisualization === 'feedback'">
+                    <!-- Feedback Trend Chart with Type Switcher -->
+                    <div *ngIf="reportChartsData[selectedReportForVisualization]?.feedbackTrendChart" 
+                         class="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-amber-600"></i>
+                                {{ reportChartsData[selectedReportForVisualization].feedbackTrendChart.title }}
+                            </h4>
+                            <div class="flex items-center gap-2">
+                                <!-- Chart Type Switcher -->
+                                <div class="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                                    <button (click)="switchChartType('feedback', 'line')"
+                                            [ngClass]="currentChartType['feedback'] === 'line' ? 'bg-amber-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-line"></i>
+                                        Line
+                                    </button>
+                                    <button (click)="switchChartType('feedback', 'bar')"
+                                            [ngClass]="currentChartType['feedback'] === 'bar' ? 'bg-amber-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-bar"></i>
+                                        Bar
+                                    </button>
+                                    <button (click)="switchChartType('feedback', 'pie')"
+                                            [ngClass]="currentChartType['feedback'] === 'pie' ? 'bg-amber-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                        Pie
+                                    </button>
+                                </div>
+                                <button (click)="downloadChartAsImage()" 
+                                        class="px-3 py-1.5 bg-amber-500 text-white rounded-lg text-xs font-semibold hover:bg-amber-600 transition-colors flex items-center gap-1.5">
+                                    <i class="fa-solid fa-download"></i>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center" style="height: 400px;">
+                            <canvas id="feedbackMainChart" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Top Feedback Trainings -->
+                    <div *ngIf="reportChartsData[selectedReportForVisualization]?.topFeedbackTrainings" 
+                         class="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+                        <h4 class="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-comment-dots text-amber-600"></i>
+                            Top Trainings by Feedback Count
+                        </h4>
+                        <div class="space-y-3">
+                            <div *ngFor="let training of reportChartsData[selectedReportForVisualization].topFeedbackTrainings; let i = index"
+                                 class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm">
+                                    {{ i + 1 }}
+                                </div>
+                                <div class="flex-1 text-sm font-medium text-slate-700">{{ training.training_name }}</div>
+                                <div class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-bold">
+                                    {{ training.feedback_count }} feedbacks
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills Report Charts -->
+                <div *ngIf="selectedReportForVisualization === 'skills'">
+                    <!-- Gap Overview Chart with Type Switcher -->
+                    <div *ngIf="reportChartsData[selectedReportForVisualization]?.gapOverviewChart" 
+                         class="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-purple-600"></i>
+                                {{ reportChartsData[selectedReportForVisualization].gapOverviewChart.title }}
+                            </h4>
+                            <div class="flex items-center gap-2">
+                                <!-- Chart Type Switcher -->
+                                <div class="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                                    <button (click)="switchChartType('skills', 'pie')"
+                                            [ngClass]="currentChartType['skills'] === 'pie' ? 'bg-purple-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                        Pie
+                                    </button>
+                                    <button (click)="switchChartType('skills', 'doughnut')"
+                                            [ngClass]="currentChartType['skills'] === 'doughnut' ? 'bg-purple-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-circle-notch"></i>
+                                        Doughnut
+                                    </button>
+                                    <button (click)="switchChartType('skills', 'bar')"
+                                            [ngClass]="currentChartType['skills'] === 'bar' ? 'bg-purple-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-bar"></i>
+                                        Bar
+                                    </button>
+                                </div>
+                                <button (click)="downloadChartAsImage()" 
+                                        class="px-3 py-1.5 bg-purple-500 text-white rounded-lg text-xs font-semibold hover:bg-purple-600 transition-colors flex items-center gap-1.5">
+                                    <i class="fa-solid fa-download"></i>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center" style="height: 400px;">
+                            <canvas id="skillsMainChart" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Top Gap Skills -->
+                    <div *ngIf="reportChartsData[selectedReportForVisualization]?.topGapSkills" 
+                         class="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+                        <h4 class="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-exclamation-triangle text-red-600"></i>
+                            Skills with Highest Gaps
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-100">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-sm font-semibold text-slate-700">Skill</th>
+                                        <th class="px-4 py-2 text-right text-sm font-semibold text-slate-700">Employees</th>
+                                        <th class="px-4 py-2 text-right text-sm font-semibold text-slate-700">Avg Gap</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let skill of reportChartsData[selectedReportForVisualization].topGapSkills"
+                                        class="border-t border-slate-200 hover:bg-slate-50">
+                                        <td class="px-4 py-2 text-sm text-slate-700">{{ skill.skill }}</td>
+                                        <td class="px-4 py-2 text-right text-sm font-semibold text-purple-600">{{ skill.employees_with_gap }}</td>
+                                        <td class="px-4 py-2 text-right text-sm font-semibold text-red-600">{{ skill.average_gap }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Expertise Distribution Chart -->
+                    <div *ngIf="reportChartsData[selectedReportForVisualization]?.expertiseDistributionChart" 
+                         class="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+                        <h4 class="text-md font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-indigo-600"></i>
+                            {{ reportChartsData[selectedReportForVisualization].expertiseDistributionChart.title }}
+                        </h4>
+                        <div class="space-y-4">
+                            <div *ngFor="let label of reportChartsData[selectedReportForVisualization].expertiseDistributionChart.labels; let i = index">
+                                <div class="text-sm font-semibold text-slate-700 mb-2">{{ label }}</div>
+                                <div class="flex items-center gap-3">
+                                    <div class="text-xs text-slate-600 w-20">Current:</div>
+                                    <div class="flex-1 bg-slate-200 rounded-full h-6 overflow-hidden">
+                                        <div class="bg-blue-500 h-full flex items-center justify-end px-2 text-white text-xs font-bold"
+                                             [style.width.%]="getExpertiseBarWidth(selectedReportForVisualization, 0, i)">
+                                            {{ reportChartsData[selectedReportForVisualization].expertiseDistributionChart.datasets[0].data[i] }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3 mt-1">
+                                    <div class="text-xs text-slate-600 w-20">Target:</div>
+                                    <div class="flex-1 bg-slate-200 rounded-full h-6 overflow-hidden">
+                                        <div class="bg-emerald-500 h-full flex items-center justify-end px-2 text-white text-xs font-bold"
+                                             [style.width.%]="getExpertiseBarWidth(selectedReportForVisualization, 1, i)">
+                                            {{ reportChartsData[selectedReportForVisualization].expertiseDistributionChart.datasets[1].data[i] }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Analytics Charts -->
+                <div *ngIf="selectedReportForVisualization === 'system'">
+                    <!-- Request Status Chart with Type Switcher -->
+                    <div *ngIf="reportChartsData[selectedReportForVisualization]?.requestStatusChart" 
+                         class="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-tasks text-cyan-600"></i>
+                                {{ reportChartsData[selectedReportForVisualization].requestStatusChart.title }}
+                            </h4>
+                            <div class="flex items-center gap-2">
+                                <!-- Chart Type Switcher -->
+                                <div class="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                                    <button (click)="switchChartType('system', 'doughnut')"
+                                            [ngClass]="currentChartType['system'] === 'doughnut' ? 'bg-cyan-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-circle-notch"></i>
+                                        Doughnut
+                                    </button>
+                                    <button (click)="switchChartType('system', 'pie')"
+                                            [ngClass]="currentChartType['system'] === 'pie' ? 'bg-cyan-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-pie"></i>
+                                        Pie
+                                    </button>
+                                    <button (click)="switchChartType('system', 'bar')"
+                                            [ngClass]="currentChartType['system'] === 'bar' ? 'bg-cyan-500 text-white' : 'bg-transparent text-slate-600 hover:bg-slate-200'"
+                                            class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all duration-200 flex items-center gap-1.5">
+                                        <i class="fa-solid fa-chart-bar"></i>
+                                        Bar
+                                    </button>
+                                </div>
+                                <button (click)="downloadChartAsImage()" 
+                                        class="px-3 py-1.5 bg-cyan-500 text-white rounded-lg text-xs font-semibold hover:bg-cyan-600 transition-colors flex items-center gap-1.5">
+                                    <i class="fa-solid fa-download"></i>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-center items-center" style="height: 400px;">
+                            <canvas id="systemMainChart" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- No Data State -->
+            <div *ngIf="!loadingReportData && !reportOverviews[selectedReportForVisualization]" 
+                 class="flex flex-col items-center justify-center py-12">
+                <i class="fa-solid fa-chart-line text-slate-300 text-6xl mb-4"></i>
+                <p class="text-slate-600 text-lg">No data available for this report</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
+            <div class="text-xs text-slate-500">
+                <i class="fa-solid fa-info-circle mr-1"></i>
+                Visual representation of report data and key insights
+            </div>
+            <div class="flex gap-2">
+                <button (click)="downloadExcelReport(selectedReportForVisualization)"
+                        [disabled]="generatingReport"
+                        class="px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
+                        [ngClass]="generatingReport ? 'bg-slate-300 text-slate-500' : 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700'">
+                    <i class="fa-solid" [ngClass]="generatingReport ? 'fa-spinner fa-spin' : 'fa-file-excel'"></i>
+                    Download Excel
+                </button>
+                <button (click)="closeReportVisualizationModal()" 
+                        class="px-4 py-2 bg-white border-2 border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-colors">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
 </div>

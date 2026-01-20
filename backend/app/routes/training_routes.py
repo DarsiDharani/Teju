@@ -30,6 +30,9 @@ from app.database import get_db_async
 from app.models import TrainingDetail, User, ManagerEmployee, TrainingAssignment, TrainingRecording
 from app.schemas import TrainingCreate, TrainingResponse, TrainingRecordingResponse
 from app.auth_utils import get_current_active_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/trainings", tags=["Trainings"])
 

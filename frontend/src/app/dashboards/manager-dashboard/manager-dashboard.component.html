@@ -272,6 +272,11 @@
               <input type="date" [(ngModel)]="catalogDateFilter"
                 class="w-auto min-w-[130px] pl-8 pr-8 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-xs">
             </div>
+            <app-searchable-dropdown [(ngModel)]="catalogMonthFilter" [options]="monthNames"
+              placeholder="All Months" allOptionLabel="All Months" allOptionValue="All" iconClass="fa-calendar"
+              [multiple]="true"
+              width="w-auto min-w-[120px] text-xs">
+            </app-searchable-dropdown>
             <button (click)="resetCatalogFilters()" title="Reset Filters"
               class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors flex-shrink-0">
               <i class="fa-solid fa-rotate-right"></i>
@@ -312,6 +317,11 @@
             </app-searchable-dropdown>
             <input type="date" [(ngModel)]="assignedDateFilter"
               class="w-full sm:w-auto px-3 py-1 rounded-md border border-slate-300 focus:ring-2 focus:ring-sky-500 outline-none bg-white text-sm">
+            <app-searchable-dropdown [(ngModel)]="assignedMonthFilter" [options]="monthNames"
+              placeholder="All Months" allOptionLabel="All Months" allOptionValue="All" iconClass="fa-calendar"
+              [multiple]="true"
+              width="w-full sm:w-auto min-w-[140px]">
+            </app-searchable-dropdown>
             <button (click)="resetAssignedTrainingFilters()" title="Reset Filters"
               class="w-7 h-7 flex items-center justify-center text-blue-200 hover:text-white hover:bg-blue-500 rounded-md transition-colors">
               <i class="fa-solid fa-rotate-right"></i>
@@ -390,7 +400,7 @@
             </div>
             <div class="flex items-center gap-2">
               <p class="hidden lg:block text-white/90 text-lg font-bold tracking-tight">
-                <b><span *ngIf="dashboardView === 'personal'">Personal development overview</span><span *ngIf="dashboardView === 'team'">Team management overview</span></b>
+                <b><span *ngIf="dashboardView === 'personal'">Personal Development Overview</span><span *ngIf="dashboardView === 'team'">Team management overview</span></b>
               </p>
               <div class="relative">
                 <div
@@ -443,7 +453,9 @@
                       class="w-8 h-8 mb-1 rounded-full flex items-center justify-center bg-gradient-to-br from-sky-100 to-sky-50 group-hover:scale-110 transition-transform">
                       <i [ngClass]="getTrainingCardIcon(section.title)" class="text-sky-600"></i>
                     </div>
-                    <div class="font-semibold text-slate-800 text-[11px] leading-tight">{{ section.title }}</div>
+                    <div class="font-semibold text-slate-800 text-[11px] leading-tight">
+                      {{ section.title }}<span *ngIf="getCurrentLevelForSkill(section.title)"> - {{ getCurrentLevelForSkill(section.title) }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -466,10 +478,10 @@
                   </div>
                 </div>
                 <div class="w-full">
-                  <h3 class="text-base font-bold text-slate-900 mb-1 text-center sm:text-left"><b>Skills On Track</b>
+                  <h3 class="text-base font-bold text-slate-900 mb-1 text-center sm:text-left"><b>Core Skills On Track</b>
                   </h3>
                   <p class="text-sm text-slate-600 text-center sm:text-left"><span
-                      class="font-bold text-slate-800">{{ getPersonalSkillsOnTrack() }}</span> skills on track with <span
+                      class="font-bold text-slate-800">{{ getPersonalSkillsOnTrack() }}</span> core skills on track with <span
                       class="font-bold text-slate-800">{{ getPersonalAvgProgressOnTrack() }}%</span> average progress</p>
                 </div>
               </div>
@@ -490,8 +502,7 @@
                     <div class="w-8 h-8 mb-1 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-50 group-hover:scale-110 transition-transform">
                       <i class="fa-solid fa-graduation-cap text-blue-600"></i>
                     </div>
-                    <div class="font-semibold text-slate-800 text-[11px] leading-tight">{{ skill.skill }}</div>
-                    <div class="text-[9px] text-slate-800 font-medium mt-0.5">{{ skill.current_expertise }}</div>
+                    <div class="font-semibold text-slate-800 text-[11px] leading-tight">{{ skill.skill }} - {{ skill.current_expertise }}</div>
                   </div>
                   <!-- Regular additional skills -->
                   <div *ngFor="let skill of additionalSkills"
@@ -1802,13 +1813,13 @@
               class="group bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 overflow-hidden transform transition-all duration-300 ease-in-out flex flex-col relative"
               [ngClass]="{
                 'hover:-translate-y-1.5 hover:shadow-2xl': hoveredTrainingId !== training.id,
-                'scale-105 -translate-y-2 shadow-2xl bg-gradient-to-br from-sky-50 to-blue-50 border-sky-300': hoveredTrainingId === training.id || selectedTrainingIdForEnrollment === training.id,
+                'scale-105 -translate-y-2 shadow-2xl bg-gradient-to-br from-sky-50 to-blue-50 border-sky-300': hoveredTrainingId === training.id,
                 'ring-4 ring-amber-400 shadow-amber-300/50': selectedTrainingFromCalendar === training.id
               }"
               (mouseenter)="hoveredTrainingId = training.id"
               (mouseleave)="hoveredTrainingId = null">
               <!-- Glow effect layer -->
-              <div *ngIf="hoveredTrainingId === training.id || selectedTrainingIdForEnrollment === training.id" 
+              <div *ngIf="hoveredTrainingId === training.id" 
                 class="absolute inset-0 bg-gradient-to-r from-sky-400/20 to-cyan-400/20 rounded-xl blur-lg opacity-75 -z-10 animate-pulse"></div>
               <div class="h-1.5 bg-gradient-to-r from-sky-500 to-cyan-400"></div>
               <div class="p-2 flex-grow flex flex-col">
@@ -1849,12 +1860,6 @@
                       <span class="font-medium text-slate-800">{{ training.time || 'Time TBD' }}</span>
                     </div>
                   </div>
-                </div>
-                <div class="pt-2 mt-2 border-t border-slate-200/80">
-                  <button (click)="enrollInTraining(training)"
-                    class="w-full bg-sky-600 text-white font-semibold py-1 rounded-lg hover:bg-sky-700 transition-colors duration-200 text-xs">
-                    <i class="fa-solid fa-user-plus mr-2"></i>Enroll
-                  </button>
                 </div>
               </div>
             </div>
@@ -1972,9 +1977,9 @@
                   </p>
                 </div>
                 <div class="pt-2 mt-auto border-t border-slate-200/80">
-                  <button (click)="openRecordedTraining(training.lecture_url)"
-                    class="w-full bg-cyan-600 text-white font-semibold py-1 rounded-lg hover:bg-cyan-700 transition-colors duration-200 text-xs flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-play mr-1"></i>Watch Now
+                  <button (click)="requestEnrollment(training)"
+                    class="w-full bg-gradient-to-r from-emerald-500 to-green-500 text-white font-semibold py-1 rounded-lg hover:from-emerald-600 hover:to-green-600 transition-all duration-200 text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
+                    <i class="fa-solid fa-user-plus mr-1"></i>Enroll
                   </button>
                 </div>
               </div>
@@ -3482,6 +3487,13 @@
                     <span class="font-medium">{{ training.time || 'Time TBD' }}</span>
                   </div>
                 </div>
+
+                <!-- Watch Now Button for Recorded Trainings -->
+                <button *ngIf="training.lecture_url" 
+                    (click)="openRecordedTraining(training.lecture_url)" 
+                    class="w-full mt-3 bg-gradient-to-r from-cyan-500 to-teal-400 text-white font-semibold py-2 rounded-lg hover:from-cyan-600 hover:to-teal-500 transition-all duration-200 text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg">
+                    <i class="fa-solid fa-play"></i>Watch Now
+                </button>
               </div>
             </div>
           </div>

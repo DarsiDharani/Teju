@@ -43,7 +43,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 import traceback
 
-from app.routes import register, login, dashboard_routes, additional_skills, training_routes, assignment_routes, training_requests, shared_content_routes, training_files_routes, notifications, admin_routes
+from app.routes import register, login, dashboard_routes, additional_skills, training_routes, assignment_routes, training_requests, shared_content_routes, training_files_routes, notifications, admin_routes, report_routes
 from app.auth_utils import get_current_active_admin
 from app.database import AsyncSessionLocal, create_db_and_tables
 from app.excel_loader import load_all_from_excel, load_manager_employee_from_csv
@@ -151,6 +151,7 @@ app.include_router(shared_content_routes.router)
 app.include_router(training_files_routes.router)
 app.include_router(notifications.router)
 app.include_router(admin_routes.router)
+app.include_router(report_routes.router)
 
 # <<< NEW: Root Endpoint for Welcome Message >>>
 @app.get("/", tags=["Default"])

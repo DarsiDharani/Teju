@@ -246,6 +246,11 @@ export class EngineerDashboardComponent implements OnInit {
   assignedLevelFilter: string[] = [];
   assignedDateFilter: string = '';
   assignedTrainingsView: 'list' | 'calendar' = 'list';
+  
+  // --- Month Filters ---
+  trainingMonthFilter: string[] = []; // Array of selected months for training catalog
+  assignedMonthFilter: string[] = []; // Array of selected months for assigned trainings
+  monthNames: string[] = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   // --- Training Requests Filters ---
   requestStatusFilter: string = 'all';
@@ -1859,6 +1864,18 @@ export class EngineerDashboardComponent implements OnInit {
           return trainingDateObj >= filterDateObj;
         });
     }
+    
+    // Month filter
+    if (this.trainingMonthFilter && this.trainingMonthFilter.length > 0) {
+      list = list.filter(t => {
+        if (!t.training_date) return false;
+        const trainingDate = new Date(t.training_date);
+        if (isNaN(trainingDate.getTime())) return false;
+        const monthName = this.monthNames[trainingDate.getMonth()];
+        return this.trainingMonthFilter.includes(monthName);
+      });
+    }
+    
     list.sort((a, b) => {
         const dateA = a.training_date ? new Date(a.training_date).getTime() : Infinity;
         const dateB = b.training_date ? new Date(b.training_date).getTime() : Infinity;
@@ -2039,6 +2056,18 @@ export class EngineerDashboardComponent implements OnInit {
           return trainingDateObj >= filterDateObj;
         });
       }
+      
+      // Month filter
+      if (this.assignedMonthFilter && this.assignedMonthFilter.length > 0) {
+        list = list.filter(t => {
+          if (!t.training_date) return false;
+          const trainingDate = new Date(t.training_date);
+          if (isNaN(trainingDate.getTime())) return false;
+          const monthName = this.monthNames[trainingDate.getMonth()];
+          return this.assignedMonthFilter.includes(monthName);
+        });
+      }
+      
       list.sort((a, b) => {
         const dateA = a.training_date ? new Date(a.training_date).getTime() : Infinity;
         const dateB = b.training_date ? new Date(b.training_date).getTime() : Infinity;
@@ -2700,6 +2729,7 @@ export class EngineerDashboardComponent implements OnInit {
     this.trainingSkillFilter = [];
     this.trainingLevelFilter = [];
     this.trainingDateFilter = '';
+    this.trainingMonthFilter = [];
     this.focusedCatalogTrainingId = null;
   }
 
@@ -2708,7 +2738,33 @@ export class EngineerDashboardComponent implements OnInit {
     this.assignedSkillFilter = [];
     this.assignedLevelFilter = [];
     this.assignedDateFilter = '';
+    this.assignedMonthFilter = [];
     this.focusedAssignedTrainingId = null;
+  }
+  
+  // --- Month Filter Toggle Methods ---
+  toggleTrainingMonth(month: string): void {
+    const index = this.trainingMonthFilter.indexOf(month);
+    if (index > -1) {
+      this.trainingMonthFilter.splice(index, 1);
+    } else {
+      this.trainingMonthFilter.push(month);
+    }
+  }
+
+  toggleAssignedMonth(month: string): void {
+    const index = this.assignedMonthFilter.indexOf(month);
+    if (index > -1) {
+      this.assignedMonthFilter.splice(index, 1);
+    } else {
+      this.assignedMonthFilter.push(month);
+    }
+  }
+
+  isMonthSelected(month: string, filterType: 'training' | 'assigned'): boolean {
+    return filterType === 'training' 
+      ? this.trainingMonthFilter.includes(month)
+      : this.assignedMonthFilter.includes(month);
   }
   
   // --- View Toggle Logic ---
@@ -2750,7 +2806,7 @@ export class EngineerDashboardComponent implements OnInit {
     this.http.get<any[]>(this.apiService.getUrl('/trainings/recorded'), { headers }).subscribe({
       next: (response) => {
         this.recordedTrainings = (response || []).map(r => ({
-          id: r.id,
+          id: r.training_id,  // Use training_id for enrollment requests, not recording id
           training_name: r.training_name || '',
           skill: r.skill || '',
           skill_category: r.skill_category || '',
@@ -2808,6 +2864,51 @@ export class EngineerDashboardComponent implements OnInit {
     if (url) {
       window.open(url, '_blank');
     }
+  }
+
+  /**
+   * Request enrollment for a recorded training
+   * This will send an approval request to the manager
+   */
+  requestEnrollment(training: TrainingDetail): void {
+    // Set the selected training for highlighting
+    this.selectedTrainingIdForEnrollment = training.id;
+
+    const token = this.authService.getToken();
+    if (!token) {
+      // Silently redirect to login on token expiration
+      this.authService.logout();
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+    const requestData = { training_id: training.id };
+
+    this.http.post<TrainingRequest>(this.apiService.getUrl('/training-requests/'), requestData, { headers }).subscribe({
+      next: (response) => {
+        this.toastService.success(`Enrollment request submitted successfully! Your manager will review your request for "${training.training_name}".`);
+        // Keep highlight visible for 2 seconds, then clear
+        setTimeout(() => {
+          this.selectedTrainingIdForEnrollment = null;
+        }, 2000);
+        this.fetchTrainingRequests(); // Refresh the requests list
+      },
+      error: (err) => {
+        console.error('Failed to submit enrollment request:', err);
+        // Keep highlight visible for 2 seconds even on error, then clear
+        setTimeout(() => {
+          this.selectedTrainingIdForEnrollment = null;
+        }, 2000);
+        if (err.status === 400) {
+          this.toastService.warning(err.error?.detail || 'You have already requested this training.');
+        } else if (err.status === 404) {
+          this.toastService.error('No manager found for your account. Please contact HR.');
+        } else {
+          this.toastService.error(`Failed to submit enrollment request. Error: ${err.statusText || 'Unknown error'}`);
+        }
+      }
+    });
   }
 
   // --- User Actions ---
@@ -3813,11 +3914,90 @@ export class EngineerDashboardComponent implements OnInit {
   getAdditionalLeadershipSkillsCount = () => this.additionalSkills.filter(s => s.skill_category === 'Leadership').length;
 
   /**
-   * Get skills that were moved from core competencies (current value but N/A target).
-   * These skills have the from_competency flag set to true.
+   * Normalize skill name for matching
+   * Handles variations between Excel and frontend (e.g., "Azure" <-> "Azure DevOps")
+   */
+  normalizeSkillName(skillName: string): string {
+    if (!skillName) return '';
+    const normalized = skillName.toLowerCase().trim();
+    
+    // Map Excel names to frontend section names
+    const mappings: { [key: string]: string } = {
+      'azure': 'azure devops',
+      'cpp': 'c++ (cpp)',
+      'c++': 'c++ (cpp)',
+      'matlab': 'matlab',
+      'smart git': 'smart git',
+      'smartgit': 'smart git'
+    };
+    
+    return mappings[normalized] || normalized;
+  }
+
+  /**
+   * Check if two skill names match (handles variations)
+   */
+  skillNamesMatch(name1: string, name2: string): boolean {
+    if (!name1 || !name2) return false;
+    return this.normalizeSkillName(name1) === this.normalizeSkillName(name2);
+  }
+
+  /**
+   * Get skills that were moved from core competencies.
+   * Includes: 1) current has value but target is N/A
+   *          2) current equals target (both have same value like L3=L3)
+   *          3) both are N/A
    */
   getSkillsFromCompetency(): any[] {
-    return this.additionalSkills.filter(skill => skill.from_competency === true);
+    const movedSkills: any[] = [];
+    const addedSkillNames = new Set<string>();
+    
+    // Get list of core skill names (from sections) - normalized
+    const coreSkillNames = this.sections.map(s => this.normalizeSkillName(s.title));
+    
+    // Helper to normalize expertise value (handle NA, N/A, empty, null, etc)
+    const normalizeExpertise = (val: any): string => {
+      if (!val || val === null || val === undefined) return 'na';
+      const v = String(val).toLowerCase().trim();
+      if (v === '' || v === 'n/a' || v === 'na' || v === 'null') return 'na';
+      return v;
+    };
+    
+    // First, add skills already marked as from_competency from backend
+    this.additionalSkills.filter(skill => skill.from_competency === true).forEach(skill => {
+      const skillNameNormalized = this.normalizeSkillName(skill.skill_name);
+      if (skillNameNormalized && !addedSkillNames.has(skillNameNormalized)) {
+        movedSkills.push(skill);
+        addedSkillNames.add(skillNameNormalized);
+      }
+    });
+    
+    // Check all skills from competency data
+    if (this.skills && this.skills.length > 0) {
+      this.skills.forEach(skill => {
+        const skillNameNormalized = this.normalizeSkillName(skill.skill);
+        
+        // Skip if not a core skill or already added
+        if (!skillNameNormalized || !coreSkillNames.includes(skillNameNormalized) || addedSkillNames.has(skillNameNormalized)) {
+          return;
+        }
+        
+        const currentNormalized = normalizeExpertise(skill.current_expertise);
+        const targetNormalized = normalizeExpertise(skill.target_expertise);
+        
+        // Move to additional if current equals target (including na = na)
+        if (currentNormalized === targetNormalized) {
+          movedSkills.push({
+            skill_name: skill.skill,
+            skill_level: skill.current_expertise || 'N/A',
+            from_competency: true
+          });
+          addedSkillNames.add(skillNameNormalized);
+        }
+      });
+    }
+    
+    return movedSkills;
   }
 
   /**
@@ -3830,17 +4010,32 @@ export class EngineerDashboardComponent implements OnInit {
 
   /**
    * Get core skill sections that should be displayed in the dashboard.
-   * Filters out skills that have been moved to additional skills (N/A targets with current values).
+   * Filters out skills that have been moved to additional skills (N/A targets OR current equals target).
    */
   getCoreSkillSections(): Section[] {
-    // Get list of skills moved to additional (from competency with N/A targets)
-    const movedSkillNames = this.getSkillsFromCompetency().map(s => s.skill_name.toLowerCase().trim());
+    // Get list of skills moved to additional (from competency with N/A targets or current equals target)
+    const movedSkills = this.getSkillsFromCompetency();
+    const movedSkillNamesNormalized = movedSkills.map(s => this.normalizeSkillName(s.skill_name));
     
     // Filter sections to exclude skills that have been moved
     return this.sections.filter(section => {
-      const sectionTitle = section.title.toLowerCase().trim();
-      return !movedSkillNames.includes(sectionTitle);
+      const sectionTitleNormalized = this.normalizeSkillName(section.title);
+      return !movedSkillNamesNormalized.includes(sectionTitleNormalized);
     });
+  }
+
+  /**
+   * Get the current level for a specific core skill
+   * Returns the current_expertise level or null if not found
+   */
+  getCurrentLevelForSkill(skillName: string): string | null {
+    if (!this.skills || this.skills.length === 0) return null;
+    
+    const skill = this.skills.find(s => 
+      this.skillNamesMatch(s.skill, skillName)
+    );
+    
+    return skill?.current_expertise || null;
   }
 
   // --- Additional Skills CRUD ---

@@ -12,13 +12,17 @@
  * @date 2025
  */
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
 import { trigger, style, animate, transition } from '@angular/animations';
 import { ToastService } from '../../services/toast.service';
+import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
+
+// Register Chart.js components
+Chart.register(...registerables);
 
 interface User {
   username: string;
@@ -129,7 +133,29 @@ interface FeedbackRating {
     ])
   ]
 })
-export class AdminDashboardComponent implements OnInit {
+export class AdminDashboardComponent implements OnInit, AfterViewChecked {
+  // ViewChild references for chart canvases
+  @ViewChild('roleChartCanvas') roleChartCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('gapChartCanvas') gapChartCanvas!: ElementRef<HTMLCanvasElement>;
+  
+  // Chart instances
+  private roleChart: any = null;
+  private gapChart: any = null;
+  private trainingChart: any = null;
+  private feedbackChart: any = null;
+  private systemChart: any = null;
+  private pendingChartData: { reportType: string, data: any } | null = null;
+  private chartCreationAttempted: boolean = false;
+  
+  // Chart type control
+  currentChartType: { [key: string]: 'pie' | 'bar' | 'line' | 'doughnut' } = {
+    users: 'pie',
+    trainings: 'bar',
+    feedback: 'line',
+    skills: 'pie',
+    system: 'doughnut'
+  };
+  
   // Component state
   activeTab: string = 'dashboard';
   adminName: string = 'Admin';
@@ -342,7 +368,8 @@ export class AdminDashboardComponent implements OnInit {
     private router: Router,
     private authService: AuthService,
     private apiService: ApiService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -366,6 +393,19 @@ export class AdminDashboardComponent implements OnInit {
     this.loadGapAnalysis();
     this.loadAdditionalDashboardCards();
     this.loadFeedbackRatings();
+  }
+
+  ngAfterViewChecked(): void {
+    // If we have pending chart data and haven't attempted creation yet, try to create the chart
+    if (this.pendingChartData && !this.chartCreationAttempted && this.showReportVisualizationModal) {
+      this.chartCreationAttempted = true;
+      // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
+      setTimeout(() => {
+        if (this.pendingChartData) {
+          this.createChartNow(this.pendingChartData.reportType, this.pendingChartData.data);
+        }
+      }, 100);
+    }
   }
 
   getHeaders(): HttpHeaders {
@@ -2017,6 +2057,13 @@ export class AdminDashboardComponent implements OnInit {
 
   // ==================== REPORT GENERATION ====================
   
+  // Enhanced reporting properties
+  reportOverviews: any = {};
+  reportChartsData: any = {};
+  loadingReportData: boolean = false;
+  selectedReportForVisualization: string = '';
+  showReportVisualizationModal: boolean = false;
+  
   openReportModal(): void {
     this.showReportModal = true;
     this.selectedReportType = '';
@@ -2029,6 +2076,568 @@ export class AdminDashboardComponent implements OnInit {
 
   selectReportType(reportType: string): void {
     this.selectedReportType = reportType;
+  }
+  
+  // Load report overview data for visualization
+  loadReportOverview(reportType: string): void {
+    if (!this.authService.isLoggedIn()) {
+      this.toastService.show('Please log in to continue', 'error');
+      this.router.navigate(['/login']);
+      return;
+    }
+    
+    this.loadingReportData = true;
+    const token = this.authService.getToken();
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+    
+    // Map report types to API endpoints
+    const endpointMap: {[key: string]: string} = {
+      'users': `${this.apiService.baseUrl}/reports/users-overview`,
+      'trainings': `${this.apiService.baseUrl}/reports/trainings-performance`,
+      'feedback': `${this.apiService.baseUrl}/reports/feedback-analysis`,
+      'skills': `${this.apiService.baseUrl}/reports/skills-gap-analysis`,
+      'system': `${this.apiService.baseUrl}/reports/system-usage-analytics`
+    };
+    
+    const endpoint = endpointMap[reportType];
+    if (!endpoint) {
+      this.loadingReportData = false;
+      return;
+    }
+    
+    this.http.get<any>(endpoint, { headers }).subscribe({
+      next: (data) => {
+        this.reportOverviews[reportType] = data;
+        this.reportChartsData[reportType] = data;
+        this.updatePieChartData(reportType, data);
+        this.loadingReportData = false;
+      },
+      error: (err) => {
+        console.error(`Error loading ${reportType} report overview:`, err);
+        this.toastService.show(`Failed to load ${reportType} report data`, 'error');
+        this.loadingReportData = false;
+      }
+    });
+  }
+  
+  // View report visualization before downloading
+  viewReportVisualization(reportType: string): void {
+    this.selectedReportForVisualization = reportType;
+    this.showReportVisualizationModal = true;
+    this.loadReportOverview(reportType);
+  }
+  
+  closeReportVisualizationModal(): void {
+    this.showReportVisualizationModal = false;
+    this.selectedReportForVisualization = '';
+    this.chartCreationAttempted = false;
+    this.pendingChartData = null;
+    
+    // Destroy all charts when closing modal
+    if (this.roleChart) {
+      this.roleChart.destroy();
+      this.roleChart = null;
+    }
+    if (this.gapChart) {
+      this.gapChart.destroy();
+      this.gapChart = null;
+    }
+    if (this.trainingChart) {
+      this.trainingChart.destroy();
+      this.trainingChart = null;
+    }
+    if (this.feedbackChart) {
+      this.feedbackChart.destroy();
+      this.feedbackChart = null;
+    }
+    if (this.systemChart) {
+      this.systemChart.destroy();
+      this.systemChart = null;
+    }
+  }
+  
+  // Download Excel report with charts
+  downloadExcelReport(reportType: string): void {
+    if (!this.authService.isLoggedIn()) {
+      this.toastService.show('Please log in to continue', 'error');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.generatingReport = true;
+    const token = this.authService.getToken();
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+    
+    const url = `${this.apiService.baseUrl}/reports/export/excel?report_type=${reportType}`;
+
+    this.http.get(url, {
+      headers: headers,
+      responseType: 'blob',
+      observe: 'response'
+    }).subscribe({
+      next: (response: any) => {
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `SkillOrbit_Report_${reportType}_${new Date().getTime()}.xlsx`;
+        
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+          if (filenameMatch && filenameMatch[1]) {
+            filename = filenameMatch[1];
+          }
+        }
+
+        const blob = new Blob([response.body], { 
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        });
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+
+        this.toastService.show('Excel report downloaded successfully', 'success');
+        this.generatingReport = false;
+      },
+      error: (err) => {
+        console.error('Error downloading Excel report:', err);
+        this.toastService.show('Failed to download Excel report', 'error');
+        this.generatingReport = false;
+      }
+    });
+  }
+  
+  // Helper method to convert metrics object to array for template iteration
+  getMetricsArray(reportType: string): Array<{label: string, value: any}> {
+    if (!this.reportOverviews[reportType]?.metrics) {
+      return [];
+    }
+    
+    const metrics = this.reportOverviews[reportType].metrics;
+    return Object.keys(metrics).map(key => ({
+      label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      value: metrics[key]
+    }));
+  }
+  
+  // Helper method to get max value from array for chart scaling
+  
+  // Update chart data based on report type
+  updatePieChartData(reportType: string, data: any): void {
+    // Destroy all existing charts before creating new ones
+    this.destroyAllCharts();
+    
+    console.log('updatePieChartData called with reportType:', reportType, 'data:', data);
+    
+    // Set pending data and reset the flag
+    this.pendingChartData = { reportType, data };
+    this.chartCreationAttempted = false;
+    
+    // Try to create with longer timeout for canvas to be ready
+    setTimeout(() => {
+      console.log('Timeout triggered, attempting to create chart...');
+      this.createChartNow(reportType, data);
+    }, 600);
+  }
+  
+  // Helper to destroy all chart instances
+  destroyAllCharts(): void {
+    if (this.roleChart) {
+      this.roleChart.destroy();
+      this.roleChart = null;
+    }
+    if (this.gapChart) {
+      this.gapChart.destroy();
+      this.gapChart = null;
+    }
+    if (this.trainingChart) {
+      this.trainingChart.destroy();
+      this.trainingChart = null;
+    }
+    if (this.feedbackChart) {
+      this.feedbackChart.destroy();
+      this.feedbackChart = null;
+    }
+    if (this.systemChart) {
+      this.systemChart.destroy();
+      this.systemChart = null;
+    }
+  }
+  
+  createChartNow(reportType: string, data: any): void {
+    console.log('=== createChartNow called ===');
+    console.log('Report Type:', reportType);
+    console.log('Data:', data);
+    
+    try {
+      // Users Report Chart
+      if (reportType === 'users' && data.chartData) {
+        console.log('Creating users chart...');
+        const canvas = document.getElementById('usersMainChart') as HTMLCanvasElement;
+        console.log('Canvas found:', !!canvas);
+        
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          console.log('Context found:', !!ctx);
+          
+          if (ctx) {
+            if (this.roleChart) {
+              this.roleChart.destroy();
+            }
+            const chartType = this.currentChartType['users'];
+            this.roleChart = new Chart(ctx, {
+              type: chartType as any,
+              data: {
+                labels: data.chartData.labels,
+                datasets: [{
+                  label: 'User Distribution',
+                  data: data.chartData.datasets[0].data,
+                  backgroundColor: chartType === 'line' ? 'rgba(59, 130, 246, 0.2)' : ['#3B82F6', '#10B981', '#F59E0B'],
+                  borderColor: chartType === 'line' ? '#3B82F6' : '#fff',
+                  borderWidth: 2,
+                  fill: chartType === 'line'
+                }]
+              },
+              options: this.getChartOptions(chartType)
+            });
+            console.log('✓ Users chart created successfully!');
+            this.cdr.detectChanges();
+          } else {
+            console.error('✗ Failed to get 2D context');
+          }
+        } else {
+          console.error('✗ Canvas element not found!');
+        }
+      }
+      
+      // Trainings Report Chart
+      else if (reportType === 'trainings' && data.departmentChart) {
+        console.log('Creating trainings chart...');
+        const canvas = document.getElementById('trainingsMainChart') as HTMLCanvasElement;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            if (this.trainingChart) {
+              this.trainingChart.destroy();
+            }
+            const chartType = this.currentChartType['trainings'];
+            this.trainingChart = new Chart(ctx, {
+              type: chartType as any,
+              data: {
+                labels: data.departmentChart.labels,
+                datasets: [{
+                  label: 'Trainings by Department',
+                  data: data.departmentChart.datasets[0].data,
+                  backgroundColor: this.getChartColors(data.departmentChart.labels.length, chartType),
+                  borderColor: chartType === 'line' ? '#10B981' : '#fff',
+                  borderWidth: 2,
+                  fill: chartType === 'line'
+                }]
+              },
+              options: this.getChartOptions(chartType)
+            });
+            console.log('✓ Trainings chart created successfully!');
+            this.cdr.detectChanges();
+          }
+        }
+      }
+      
+      // Feedback Report Chart
+      else if (reportType === 'feedback' && data.feedbackTrendChart) {
+        console.log('Creating feedback chart...');
+        const canvas = document.getElementById('feedbackMainChart') as HTMLCanvasElement;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            if (this.feedbackChart) {
+              this.feedbackChart.destroy();
+            }
+            const chartType = this.currentChartType['feedback'];
+            this.feedbackChart = new Chart(ctx, {
+              type: chartType as any,
+              data: {
+                labels: data.feedbackTrendChart.labels,
+                datasets: [{
+                  label: 'Feedback Submissions',
+                  data: data.feedbackTrendChart.datasets[0].data,
+                  backgroundColor: chartType === 'line' ? 'rgba(245, 158, 11, 0.2)' : this.getChartColors(data.feedbackTrendChart.labels.length, chartType),
+                  borderColor: '#F59E0B',
+                  borderWidth: 2,
+                  fill: chartType === 'line',
+                  tension: 0.4
+                }]
+              },
+              options: this.getChartOptions(chartType)
+            });
+            console.log('✓ Feedback chart created successfully!');
+            this.cdr.detectChanges();
+          }
+        }
+      }
+      
+      // Skills Gap Report Chart
+      else if (reportType === 'skills' && data.gapOverviewChart) {
+        console.log('Creating skills chart...');
+        const canvas = document.getElementById('skillsMainChart') as HTMLCanvasElement;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            if (this.gapChart) {
+              this.gapChart.destroy();
+            }
+            const chartType = this.currentChartType['skills'];
+            this.gapChart = new Chart(ctx, {
+              type: chartType as any,
+              data: {
+                labels: data.gapOverviewChart.labels,
+                datasets: [{
+                  label: 'Skills Gap Overview',
+                  data: data.gapOverviewChart.datasets[0].data,
+                  backgroundColor: chartType === 'line' ? 'rgba(139, 92, 246, 0.2)' : ['#10B981', '#EF4444'],
+                  borderColor: chartType === 'line' ? '#8B5CF6' : '#fff',
+                  borderWidth: 2,
+                  fill: chartType === 'line'
+                }]
+              },
+              options: this.getChartOptions(chartType)
+            });
+            console.log('✓ Skills chart created successfully!');
+            this.cdr.detectChanges();
+          }
+        }
+      }
+      
+      // System Analytics Chart
+      else if (reportType === 'system' && data.requestStatusChart) {
+        console.log('Creating system chart...');
+        const canvas = document.getElementById('systemMainChart') as HTMLCanvasElement;
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            if (this.systemChart) {
+              this.systemChart.destroy();
+            }
+            const chartType = this.currentChartType['system'];
+            this.systemChart = new Chart(ctx, {
+              type: chartType as any,
+              data: {
+                labels: data.requestStatusChart.labels,
+                datasets: [{
+                  label: 'Training Request Status',
+                  data: data.requestStatusChart.datasets[0].data,
+                  backgroundColor: chartType === 'line' ? 'rgba(6, 182, 212, 0.2)' : ['#F59E0B', '#10B981', '#EF4444'],
+                  borderColor: chartType === 'line' ? '#06B6D4' : '#fff',
+                  borderWidth: 2,
+                  fill: chartType === 'line'
+                }]
+              },
+              options: this.getChartOptions(chartType)
+            });
+            console.log('✓ System chart created successfully!');
+            this.cdr.detectChanges();
+          }
+        }
+      }
+      
+      this.pendingChartData = null;
+    } catch (error) {
+      console.error('✗ Error creating chart:', error);
+    }
+  }
+  
+  // Get chart configuration options based on chart type
+  getChartOptions(chartType: 'pie' | 'bar' | 'line' | 'doughnut'): any {
+    const baseOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom' as const,
+          labels: {
+            font: {
+              size: 12,
+              family: 'Inter, system-ui, sans-serif'
+            },
+            padding: 15,
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: 12,
+          titleFont: {
+            size: 14,
+            weight: 'bold' as const
+          },
+          bodyFont: {
+            size: 13
+          },
+          cornerRadius: 8
+        }
+      }
+    };
+    
+    if (chartType === 'bar') {
+      return {
+        ...baseOptions,
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            },
+            ticks: {
+              font: {
+                size: 11
+              }
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              font: {
+                size: 11
+              }
+            }
+          }
+        }
+      };
+    } else if (chartType === 'line') {
+      return {
+        ...baseOptions,
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            },
+            ticks: {
+              font: {
+                size: 11
+              }
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(0, 0, 0, 0.05)'
+            },
+            ticks: {
+              font: {
+                size: 11
+              }
+            }
+          }
+        },
+        elements: {
+          line: {
+            tension: 0.4
+          },
+          point: {
+            radius: 4,
+            hoverRadius: 6
+          }
+        }
+      };
+    }
+    
+    return baseOptions;
+  }
+  
+  // Get appropriate colors based on data length and chart type
+  getChartColors(count: number, chartType: string): string[] {
+    const colors = [
+      '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', 
+      '#EC4899', '#06B6D4', '#14B8A6', '#F97316', '#84CC16'
+    ];
+    
+    if (chartType === 'line') {
+      return colors.slice(0, count).map(c => c.replace('#', 'rgba(') + ', 0.2)');
+    }
+    
+    return colors.slice(0, count);
+  }
+  
+  // Switch chart type for a report
+  switchChartType(reportType: string, newType: 'pie' | 'bar' | 'line' | 'doughnut'): void {
+    this.currentChartType[reportType] = newType;
+    
+    // Get current data and recreate chart
+    const data = this.reportChartsData[reportType];
+    if (data) {
+      this.createChartNow(reportType, data);
+    }
+  }
+  
+  // Download chart as image
+  downloadChartAsImage(): void {
+    let chartElement: HTMLCanvasElement | null = null;
+    
+    // Determine which canvas to download based on selected report type
+    switch (this.selectedReportForVisualization) {
+      case 'users':
+        chartElement = document.getElementById('usersMainChart') as HTMLCanvasElement;
+        break;
+      case 'trainings':
+        chartElement = document.getElementById('trainingsMainChart') as HTMLCanvasElement;
+        break;
+      case 'feedback':
+        chartElement = document.getElementById('feedbackMainChart') as HTMLCanvasElement;
+        break;
+      case 'skills':
+        chartElement = document.getElementById('skillsMainChart') as HTMLCanvasElement;
+        break;
+      case 'system':
+        chartElement = document.getElementById('systemMainChart') as HTMLCanvasElement;
+        break;
+    }
+    
+    if (chartElement) {
+      const url = chartElement.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = `${this.selectedReportForVisualization}_chart_${new Date().getTime()}.png`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      this.toastService.show('Chart downloaded successfully', 'success');
+    } else {
+      this.toastService.show('No chart available to download', 'error');
+    }
+  }
+  getMaxValue(data: number[]): number {
+    return Math.max(...data, 1); // Minimum 1 to avoid division by zero
+  }
+  
+  // Get max value from expertise distribution for percentage calculation
+  getExpertiseMaxValue(reportType: string): number {
+    const chartData = this.reportChartsData[reportType]?.expertiseDistributionChart;
+    if (!chartData || !chartData.datasets || chartData.datasets.length < 2) {
+      return 1;
+    }
+    const dataset0 = chartData.datasets[0]?.data || [];
+    const dataset1 = chartData.datasets[1]?.data || [];
+    const allValues = [...dataset0, ...dataset1];
+    return Math.max(...allValues, 1);
+  }
+  
+  // Calculate width percentage for expertise distribution bars
+  getExpertiseBarWidth(reportType: string, datasetIndex: number, index: number): number {
+    const chartData = this.reportChartsData[reportType]?.expertiseDistributionChart;
+    if (!chartData || !chartData.datasets || !chartData.datasets[datasetIndex]) {
+      return 0;
+    }
+    const value = chartData.datasets[datasetIndex].data[index] || 0;
+    const maxValue = this.getExpertiseMaxValue(reportType);
+    return (value / maxValue) * 100;
   }
 
   generateReport(): void {

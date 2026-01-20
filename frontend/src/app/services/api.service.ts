@@ -10,7 +10,8 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class ApiService {
-  private readonly baseUrl: string;
+  // Make baseUrl public so components can access it
+  public readonly baseUrl: string;
 
   constructor() {
     // Use environment configuration, fallback to localhost if not set
