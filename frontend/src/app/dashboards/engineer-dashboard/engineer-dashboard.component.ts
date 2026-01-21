@@ -246,6 +246,7 @@ export class EngineerDashboardComponent implements OnInit {
   assignedLevelFilter: string[] = [];
   assignedDateFilter: string = '';
   assignedTrainingsView: 'list' | 'calendar' = 'list';
+  assignedTrainingTypeFilter: 'all' | 'live' | 'recorded' = 'all';
   
   // --- Month Filters ---
   trainingMonthFilter: string[] = []; // Array of selected months for training catalog
@@ -2016,6 +2017,15 @@ export class EngineerDashboardComponent implements OnInit {
         return list.filter(t => t.id === this.focusedAssignedTrainingId);
       }
 
+      // Filter by training type (Classroom/Live vs Recorded)
+      if (this.assignedTrainingTypeFilter !== 'all') {
+        if (this.assignedTrainingTypeFilter === 'live') {
+          list = list.filter(t => t.training_type && t.training_type.toLowerCase() !== 'recorded');
+        } else if (this.assignedTrainingTypeFilter === 'recorded') {
+          list = list.filter(t => t.training_type && t.training_type.toLowerCase() === 'recorded');
+        }
+      }
+
       if (this.assignedSearch && this.assignedSearch.trim()) {
         const q = this.assignedSearch.trim().toLowerCase();
         list = list.filter(t =>
@@ -2739,6 +2749,7 @@ export class EngineerDashboardComponent implements OnInit {
     this.assignedLevelFilter = [];
     this.assignedDateFilter = '';
     this.assignedMonthFilter = [];
+    this.assignedTrainingTypeFilter = 'all';
     this.focusedAssignedTrainingId = null;
   }
   

@@ -303,6 +303,39 @@
                 <i class="fa-solid fa-calendar-days mr-1.5"></i>Calendar
               </button>
             </div>
+            <!-- Training Type Toggle -->
+            <div class="relative">
+              <div class="bg-indigo-900/40 backdrop-blur-sm rounded-2xl p-0.5 border border-white/30 ring-1 ring-white/20 shadow-lg">
+                <div class="absolute top-0.5 bottom-0.5 w-1/3 bg-gradient-to-r from-emerald-400 to-green-400 rounded-xl transition-all duration-500 ease-out shadow-xl"
+                  [style.transform]="assignedTrainingTypeFilter === 'all' ? 'translateX(0)' : assignedTrainingTypeFilter === 'live' ? 'translateX(100%)' : 'translateX(200%)'"></div>
+                <div class="relative flex">
+                  <button (click)="assignedTrainingTypeFilter = 'all'" 
+                    class="relative z-10 px-3 py-1.5 rounded-xl text-[10px] font-semibold transition-all duration-300"
+                    [ngClass]="{
+                      'text-indigo-900': assignedTrainingTypeFilter === 'all',
+                      'text-white hover:text-blue-200': assignedTrainingTypeFilter !== 'all'
+                    }">
+                    All
+                  </button>
+                  <button (click)="assignedTrainingTypeFilter = 'live'" 
+                    class="relative z-10 px-3 py-1.5 rounded-xl text-[10px] font-semibold transition-all duration-300"
+                    [ngClass]="{
+                      'text-indigo-900': assignedTrainingTypeFilter === 'live',
+                      'text-white hover:text-blue-200': assignedTrainingTypeFilter !== 'live'
+                    }">
+                    Class
+                  </button>
+                  <button (click)="assignedTrainingTypeFilter = 'recorded'" 
+                    class="relative z-10 px-3 py-1.5 rounded-xl text-[10px] font-semibold transition-all duration-300"
+                    [ngClass]="{
+                      'text-indigo-900': assignedTrainingTypeFilter === 'recorded',
+                      'text-white hover:text-blue-200': assignedTrainingTypeFilter !== 'recorded'
+                    }">
+                    Recorded
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="flex flex-wrap items-center gap-1.5">
             <app-searchable-dropdown [(ngModel)]="assignedSkillFilter" [options]="uniqueMySkills"
@@ -596,12 +629,24 @@
                   <tr class="border-b-2 border-slate-200">
                     <th class="text-left py-2 px-3 text-xs font-semibold text-slate-700 bg-slate-50 sticky left-0 z-20 border-r-2 border-slate-200">Team Member</th>
                     <th *ngFor="let skillName of getAllUniqueSkills()" 
-                        class="text-center py-2 px-2 text-xs font-semibold text-slate-700 min-w-[120px] border-r border-slate-100">
-                      <div class="flex flex-col items-center gap-1">
+                        colspan="2"
+                        class="text-center py-1 px-1 text-xs font-semibold text-slate-700 min-w-[140px] border-r-2 border-slate-300 bg-slate-50">
+                      <div class="flex flex-col items-center gap-0.5">
                         <i class="fa-solid fa-graduation-cap text-slate-600 text-[10px]"></i>
                         <span class="whitespace-nowrap">{{ skillName }}</span>
                       </div>
                     </th>
+                  </tr>
+                  <tr class="border-b border-slate-200 bg-slate-50/70">
+                    <th class="text-left py-1.5 px-3 text-[10px] font-medium text-slate-600 bg-slate-50 sticky left-0 z-20 border-r-2 border-slate-200"></th>
+                    <ng-container *ngFor="let skillName of getAllUniqueSkills()">
+                      <th class="text-center py-1.5 px-1 text-[10px] font-medium text-slate-600 border-r border-slate-200">
+                        <i class="fa-solid fa-bullseye mr-0.5 text-indigo-500"></i>Target
+                      </th>
+                      <th class="text-center py-1.5 px-1 text-[10px] font-medium text-slate-600 border-r-2 border-slate-300">
+                        <i class="fa-solid fa-chart-line mr-0.5 text-emerald-500"></i>Progress
+                      </th>
+                    </ng-container>
                   </tr>
                 </thead>
                 <tbody>
@@ -614,30 +659,41 @@
                         <span class="text-xs font-medium text-slate-800">{{ member.name }}</span>
                       </div>
                     </td>
-                    <td *ngFor="let skillName of getAllUniqueSkills()" 
-                        class="py-2 px-2 text-center border-r border-slate-100">
-                      <ng-container *ngIf="getMemberSkillByName(member, skillName) as skill; else noSkill">
-                        <div class="flex flex-col items-center gap-1">
-                          <span class="text-[10px] font-semibold"
+                    <ng-container *ngFor="let skillName of getAllUniqueSkills()">
+                      <ng-container *ngIf="getMemberSkillByName(member, skillName) as skill; else noSkillData">
+                        <td class="py-2 px-2 text-center border-r border-slate-200">
+                          <span class="text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">
+                            {{ skill?.target_expertise || 'N/A' }}
+                          </span>
+                        </td>
+                        <td class="py-2 px-2 text-center border-r-2 border-slate-300">
+                          <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded"
                             [ngClass]="{
-                              'text-emerald-600': getTimelineStatus(skill, member.skills) === 'Completed',
-                              'text-sky-600': getTimelineStatus(skill, member.skills) === 'On Track',
-                              'text-orange-600': getTimelineStatus(skill, member.skills) === 'Behind',
-                              'text-slate-500': getTimelineStatus(skill, member.skills) === 'Not Started'
+                              'text-emerald-700 bg-emerald-50': getTimelineStatus(skill, member.skills) === 'Completed',
+                              'text-sky-700 bg-sky-50': getTimelineStatus(skill, member.skills) === 'On Track',
+                              'text-orange-700 bg-orange-50': getTimelineStatus(skill, member.skills) === 'Behind',
+                              'text-slate-600 bg-slate-50': getTimelineStatus(skill, member.skills) === 'Not Started'
                             }">
                             {{ getSkillProgress(skill) }}%
                           </span>
-                        </div>
+                        </td>
                       </ng-container>
-                      <ng-template #noSkill>
-                        <div class="text-slate-300">
-                          <i class="fa-solid fa-minus text-xs"></i>
-                        </div>
+                      <ng-template #noSkillData>
+                        <td class="py-2 px-2 text-center border-r border-slate-200">
+                          <div class="text-slate-300">
+                            <i class="fa-solid fa-minus text-xs"></i>
+                          </div>
+                        </td>
+                        <td class="py-2 px-2 text-center border-r-2 border-slate-300">
+                          <div class="text-slate-300">
+                            <i class="fa-solid fa-minus text-xs"></i>
+                          </div>
+                        </td>
                       </ng-template>
-                    </td>
+                    </ng-container>
                   </tr>
                   <tr *ngIf="!manager || !manager.team || manager.team.length === 0" class="border-b border-slate-100">
-                    <td [attr.colspan]="getAllUniqueSkills().length + 1" class="py-6 text-center text-slate-500">
+                    <td [attr.colspan]="(getAllUniqueSkills().length * 2) + 1" class="py-6 text-center text-slate-500">
                       <i class="fa-solid fa-users text-xl mb-2 block"></i>
                       <p class="text-xs">No team members found</p>
                     </td>
@@ -645,13 +701,17 @@
                 </tbody>
                 <tfoot class="sticky bottom-0 bg-slate-50">
                   <tr class="bg-slate-50 border-t-2 border-slate-200">
-                    <td class="py-2 px-3 text-xs font-bold text-slate-800 sticky left-0 z-10 border-r-2 border-slate-200">Progress</td>
-                    <td *ngFor="let skillName of getAllUniqueSkills()" 
-                        class="py-2 px-2 text-center border-r border-slate-100">
-                      <span class="text-xs font-bold text-slate-700">
-                        {{ getSkillAverageProgress(skillName) }}%
-                      </span>
-                    </td>
+                    <td class="py-2 px-3 text-xs font-bold text-slate-800 sticky left-0 z-10 border-r-2 border-slate-200">Team Average</td>
+                    <ng-container *ngFor="let skillName of getAllUniqueSkills()">
+                      <td class="py-2 px-2 text-center border-r border-slate-200">
+                        <span class="text-[10px] text-slate-500 italic">-</span>
+                      </td>
+                      <td class="py-2 px-2 text-center border-r-2 border-slate-300">
+                        <span class="text-xs font-bold text-slate-700">
+                          {{ getSkillAverageProgress(skillName) }}%
+                        </span>
+                      </td>
+                    </ng-container>
                   </tr>
                   <tr class="bg-slate-50">
                     <td class="py-2 px-3 text-xs font-bold text-slate-800 sticky left-0 z-10 border-r-2 border-slate-200">
@@ -676,12 +736,81 @@
                     title="Refresh submissions">
                     <i class="fa-solid fa-rotate-right text-white text-sm"></i>
                   </button>
-                  <h3 class="text-lg font-bold text-slate-900">Assignments</h3>
+                  <h3 class="text-lg font-bold text-slate-900">Assignments-Manager Feedback</h3>
                 </div>
                 <span *ngIf="!isLoadingSubmissions"
                   class="bg-green-100 text-green-800 text-xs rounded-full px-2 py-1 font-semibold">
-                  {{ teamAssignmentSubmissions.length }}
+                  {{ filteredTeamAssignmentSubmissions.length }}
                 </span>
+              </div>
+
+              <!-- Filters Section -->
+              <div *ngIf="teamAssignmentSubmissions.length > 0" class="mb-3 flex-shrink-0">
+                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-200">
+                  <div class="grid grid-cols-3 gap-3 items-end">
+                    <!-- Member Filter -->
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        <i class="fa-solid fa-user mr-1 text-indigo-600"></i>Filter by Team Member
+                      </label>
+                      <app-searchable-dropdown
+                        [options]="uniqueAssignmentMemberNames"
+                        [(ngModel)]="teamAssignmentMemberFilter"
+                        [multiple]="true"
+                        placeholder="All Members"
+                        searchPlaceholder="Search members..."
+                        allOptionLabel="All Members"
+                        iconClass="fa-user"
+                        size="small"
+                        width="w-full">
+                      </app-searchable-dropdown>
+                    </div>
+
+                    <!-- Training Filter -->
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        <i class="fa-solid fa-book mr-1 text-green-600"></i>Filter by Training
+                      </label>
+                      <app-searchable-dropdown
+                        [options]="uniqueAssignmentTrainingNames"
+                        [(ngModel)]="teamAssignmentTrainingFilter"
+                        [multiple]="true"
+                        placeholder="All Trainings"
+                        searchPlaceholder="Search trainings..."
+                        allOptionLabel="All Trainings"
+                        iconClass="fa-book"
+                        size="small"
+                        width="w-full">
+                      </app-searchable-dropdown>
+                    </div>
+
+                    <!-- Skill Filter -->
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        <i class="fa-solid fa-star mr-1 text-amber-600"></i>Filter by Skill
+                      </label>
+                      <app-searchable-dropdown
+                        [options]="uniqueAssignmentSkills"
+                        [(ngModel)]="teamAssignmentSkillFilter"
+                        [multiple]="true"
+                        placeholder="All Skills"
+                        searchPlaceholder="Search skills..."
+                        allOptionLabel="All Skills"
+                        iconClass="fa-star"
+                        size="small"
+                        width="w-full">
+                      </app-searchable-dropdown>
+                    </div>
+                  </div>
+
+                  <!-- Clear Filters -->
+                  <button *ngIf="teamAssignmentMemberFilter.length > 0 || teamAssignmentTrainingFilter.length > 0 || teamAssignmentSkillFilter.length > 0"
+                    (click)="teamAssignmentMemberFilter = []; teamAssignmentTrainingFilter = []; teamAssignmentSkillFilter = [];"
+                    class="w-full text-xs bg-white hover:bg-slate-50 text-slate-700 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 border border-slate-300 shadow-sm mt-3">
+                    <i class="fa-solid fa-times-circle text-red-500"></i>
+                    <span class="font-semibold">Clear All Filters</span>
+                  </button>
+                </div>
               </div>
 
               <div *ngIf="isLoadingSubmissions" class="text-center py-6 flex-shrink-0">
@@ -690,14 +819,21 @@
               </div>
 
               <div
-                *ngIf="!isLoadingSubmissions && teamAssignmentSubmissions.length === 0"
+                *ngIf="!isLoadingSubmissions && filteredTeamAssignmentSubmissions.length === 0 && teamAssignmentSubmissions.length === 0"
                 class="text-center py-6 flex-shrink-0">
                 <i class="fa-solid fa-inbox text-3xl text-slate-400 mb-2"></i>
                 <p class="text-slate-600 text-xs">No assignment submissions yet</p>
               </div>
 
-              <div *ngIf="!isLoadingSubmissions && teamAssignmentSubmissions.length > 0" class="space-y-2 overflow-y-auto flex-1 pr-1 submission-scrollbar">
-                <div *ngFor="let submission of teamAssignmentSubmissions"
+              <div
+                *ngIf="!isLoadingSubmissions && filteredTeamAssignmentSubmissions.length === 0 && teamAssignmentSubmissions.length > 0"
+                class="text-center py-6 flex-shrink-0">
+                <i class="fa-solid fa-filter text-3xl text-slate-400 mb-2"></i>
+                <p class="text-slate-600 text-xs">No submissions match the selected filters</p>
+              </div>
+
+              <div *ngIf="!isLoadingSubmissions && filteredTeamAssignmentSubmissions.length > 0" class="space-y-2 overflow-y-auto flex-1 pr-1 submission-scrollbar">
+                <div *ngFor="let submission of filteredTeamAssignmentSubmissions"
                   class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-3 border border-green-200 hover:shadow-md transition-all">
                   <div class="flex items-start justify-between gap-3">
                     <div class="flex-1 min-w-0">
@@ -752,12 +888,81 @@
                     title="Refresh submissions">
                     <i class="fa-solid fa-rotate-right text-white text-sm"></i>
                   </button>
-                  <h3 class="text-lg font-bold text-slate-900">Feedback</h3>
+                  <h3 class="text-lg font-bold text-slate-900">Training Feedback</h3>
                 </div>
                 <span *ngIf="!isLoadingSubmissions"
                   class="bg-amber-100 text-amber-800 text-xs rounded-full px-2 py-1 font-semibold">
-                  {{ teamFeedbackSubmissions.length }}
+                  {{ filteredTeamFeedbackSubmissions.length }}
                 </span>
+              </div>
+
+              <!-- Filters Section -->
+              <div *ngIf="teamFeedbackSubmissions.length > 0" class="mb-3 flex-shrink-0">
+                <div class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-3 border border-orange-200">
+                  <div class="grid grid-cols-3 gap-3 items-end">
+                    <!-- Member Filter -->
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        <i class="fa-solid fa-user mr-1 text-indigo-600"></i>Filter by Team Member
+                      </label>
+                      <app-searchable-dropdown
+                        [options]="uniqueFeedbackMemberNames"
+                        [(ngModel)]="teamFeedbackMemberFilter"
+                        [multiple]="true"
+                        placeholder="All Members"
+                        searchPlaceholder="Search members..."
+                        allOptionLabel="All Members"
+                        iconClass="fa-user"
+                        size="small"
+                        width="w-full">
+                      </app-searchable-dropdown>
+                    </div>
+
+                    <!-- Training Filter -->
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        <i class="fa-solid fa-book mr-1 text-green-600"></i>Filter by Training
+                      </label>
+                      <app-searchable-dropdown
+                        [options]="uniqueFeedbackTrainingNames"
+                        [(ngModel)]="teamFeedbackTrainingFilter"
+                        [multiple]="true"
+                        placeholder="All Trainings"
+                        searchPlaceholder="Search trainings..."
+                        allOptionLabel="All Trainings"
+                        iconClass="fa-book"
+                        size="small"
+                        width="w-full">
+                      </app-searchable-dropdown>
+                    </div>
+
+                    <!-- Skill Filter -->
+                    <div>
+                      <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+                        <i class="fa-solid fa-star mr-1 text-amber-600"></i>Filter by Skill
+                      </label>
+                      <app-searchable-dropdown
+                        [options]="uniqueFeedbackSkills"
+                        [(ngModel)]="teamFeedbackSkillFilter"
+                        [multiple]="true"
+                        placeholder="All Skills"
+                        searchPlaceholder="Search skills..."
+                        allOptionLabel="All Skills"
+                        iconClass="fa-star"
+                        size="small"
+                        width="w-full">
+                      </app-searchable-dropdown>
+                    </div>
+                  </div>
+
+                  <!-- Clear Filters -->
+                  <button *ngIf="teamFeedbackMemberFilter.length > 0 || teamFeedbackTrainingFilter.length > 0 || teamFeedbackSkillFilter.length > 0"
+                    (click)="teamFeedbackMemberFilter = []; teamFeedbackTrainingFilter = []; teamFeedbackSkillFilter = [];"
+                    class="w-full text-xs bg-white hover:bg-slate-50 text-slate-700 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 border border-slate-300 shadow-sm mt-3">
+                    <i class="fa-solid fa-times-circle text-red-500"></i>
+                    <span class="font-semibold">Clear All Filters</span>
+                  </button>
+                </div>
               </div>
 
               <div *ngIf="isLoadingSubmissions" class="text-center py-6 flex-shrink-0">
@@ -766,14 +971,21 @@
               </div>
 
               <div
-                *ngIf="!isLoadingSubmissions && teamFeedbackSubmissions.length === 0"
+                *ngIf="!isLoadingSubmissions && filteredTeamFeedbackSubmissions.length === 0 && teamFeedbackSubmissions.length === 0"
                 class="text-center py-6 flex-shrink-0">
                 <i class="fa-solid fa-inbox text-3xl text-slate-400 mb-2"></i>
                 <p class="text-slate-600 text-xs">No feedback submissions yet</p>
               </div>
 
-              <div *ngIf="!isLoadingSubmissions && teamFeedbackSubmissions.length > 0" class="space-y-2 overflow-y-auto flex-1 pr-1 submission-scrollbar">
-                <div *ngFor="let submission of teamFeedbackSubmissions"
+              <div
+                *ngIf="!isLoadingSubmissions && filteredTeamFeedbackSubmissions.length === 0 && teamFeedbackSubmissions.length > 0"
+                class="text-center py-6 flex-shrink-0">
+                <i class="fa-solid fa-filter text-3xl text-slate-400 mb-2"></i>
+                <p class="text-slate-600 text-xs">No submissions match the selected filters</p>
+              </div>
+
+              <div *ngIf="!isLoadingSubmissions && filteredTeamFeedbackSubmissions.length > 0" class="space-y-2 overflow-y-auto flex-1 pr-1 submission-scrollbar">
+                <div *ngFor="let submission of filteredTeamFeedbackSubmissions"
                   class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-200 hover:shadow-md transition-all">
                   <div class="flex items-start justify-between">
                     <div class="flex-1 min-w-0">

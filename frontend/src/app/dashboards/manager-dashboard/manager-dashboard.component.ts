@@ -346,6 +346,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   assignedLevelFilter: string[] = [];
   assignedDateFilter: string = '';
   assignedTrainingsView: 'list' | 'calendar' = 'list';
+  assignedTrainingTypeFilter: 'all' | 'live' | 'recorded' = 'all';
   trainingCatalogView: 'list' | 'calendar' = 'list';
   trainingCatalogType: 'live' | 'recorded' = 'live'; // Toggle between live and recorded trainings
   // Assign Training selector type (controls left pane source for Assign Training tab)
@@ -476,6 +477,14 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   teamAssignmentSubmissions: TeamAssignmentSubmission[] = [];
   teamFeedbackSubmissions: TeamFeedbackSubmission[] = [];
   isLoadingSubmissions: boolean = false;
+
+  // Team submissions filters
+  teamAssignmentMemberFilter: string[] = [];
+  teamAssignmentTrainingFilter: string[] = [];
+  teamAssignmentSkillFilter: string[] = [];
+  teamFeedbackMemberFilter: string[] = [];
+  teamFeedbackTrainingFilter: string[] = [];
+  teamFeedbackSkillFilter: string[] = [];
 
   // Performance feedback
   showFeedbackModal: boolean = false;
@@ -1073,6 +1082,132 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         this.isLoadingSubmissions = false;
       }
     });
+  }
+
+  // Get filtered team assignment submissions
+  get filteredTeamAssignmentSubmissions(): TeamAssignmentSubmission[] {
+    let list = [...this.teamAssignmentSubmissions];
+
+    // Filter by team member name
+    if (this.teamAssignmentMemberFilter && this.teamAssignmentMemberFilter.length > 0) {
+      list = list.filter(submission =>
+        this.teamAssignmentMemberFilter.includes(submission.employee_name)
+      );
+    }
+
+    // Filter by training name
+    if (this.teamAssignmentTrainingFilter && this.teamAssignmentTrainingFilter.length > 0) {
+      list = list.filter(submission =>
+        this.teamAssignmentTrainingFilter.includes(submission.training_name)
+      );
+    }
+
+    // Filter by skill (match training with catalog to get skill)
+    if (this.teamAssignmentSkillFilter && this.teamAssignmentSkillFilter.length > 0) {
+      list = list.filter(submission => {
+        const training = this.allTrainings.find(t => t.id === submission.training_id);
+        return training && training.skill && this.teamAssignmentSkillFilter.includes(training.skill);
+      });
+    }
+
+    return list;
+  }
+
+  // Get filtered team feedback submissions
+  get filteredTeamFeedbackSubmissions(): TeamFeedbackSubmission[] {
+    let list = [...this.teamFeedbackSubmissions];
+
+    // Filter by team member name
+    if (this.teamFeedbackMemberFilter && this.teamFeedbackMemberFilter.length > 0) {
+      list = list.filter(submission =>
+        this.teamFeedbackMemberFilter.includes(submission.employee_name)
+      );
+    }
+
+    // Filter by training name
+    if (this.teamFeedbackTrainingFilter && this.teamFeedbackTrainingFilter.length > 0) {
+      list = list.filter(submission =>
+        this.teamFeedbackTrainingFilter.includes(submission.training_name)
+      );
+    }
+
+    // Filter by skill (match training with catalog to get skill)
+    if (this.teamFeedbackSkillFilter && this.teamFeedbackSkillFilter.length > 0) {
+      list = list.filter(submission => {
+        const training = this.allTrainings.find(t => t.id === submission.training_id);
+        return training && training.skill && this.teamFeedbackSkillFilter.includes(training.skill);
+      });
+    }
+
+    return list;
+  }
+
+  // Get unique team member names from assignment submissions
+  get uniqueAssignmentMemberNames(): string[] {
+    const names = new Set<string>();
+    this.teamAssignmentSubmissions.forEach(submission => {
+      if (submission.employee_name) {
+        names.add(submission.employee_name);
+      }
+    });
+    return Array.from(names).sort();
+  }
+
+  // Get unique training names from assignment submissions
+  get uniqueAssignmentTrainingNames(): string[] {
+    const names = new Set<string>();
+    this.teamAssignmentSubmissions.forEach(submission => {
+      if (submission.training_name) {
+        names.add(submission.training_name);
+      }
+    });
+    return Array.from(names).sort();
+  }
+
+  // Get unique skills from assignment submissions
+  get uniqueAssignmentSkills(): string[] {
+    const skills = new Set<string>();
+    this.teamAssignmentSubmissions.forEach(submission => {
+      const training = this.allTrainings.find(t => t.id === submission.training_id);
+      if (training && training.skill) {
+        skills.add(training.skill);
+      }
+    });
+    return Array.from(skills).sort();
+  }
+
+  // Get unique team member names from feedback submissions
+  get uniqueFeedbackMemberNames(): string[] {
+    const names = new Set<string>();
+    this.teamFeedbackSubmissions.forEach(submission => {
+      if (submission.employee_name) {
+        names.add(submission.employee_name);
+      }
+    });
+    return Array.from(names).sort();
+  }
+
+  // Get unique training names from feedback submissions
+  get uniqueFeedbackTrainingNames(): string[] {
+    const names = new Set<string>();
+    this.teamFeedbackSubmissions.forEach(submission => {
+      if (submission.training_name) {
+        names.add(submission.training_name);
+      }
+    });
+    return Array.from(names).sort();
+  }
+
+  // Get unique skills from feedback submissions
+  get uniqueFeedbackSkills(): string[] {
+    const skills = new Set<string>();
+    this.teamFeedbackSubmissions.forEach(submission => {
+      const training = this.allTrainings.find(t => t.id === submission.training_id);
+      if (training && training.skill) {
+        skills.add(training.skill);
+      }
+    });
+    return Array.from(skills).sort();
   }
 
   // Open feedback modal for a submission
@@ -3445,6 +3580,15 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       return list.filter(t => t.id === this.focusedAssignedTrainingId);
     }
 
+    // Filter by training type (Classroom/Live vs Recorded)
+    if (this.assignedTrainingTypeFilter !== 'all') {
+      if (this.assignedTrainingTypeFilter === 'live') {
+        list = list.filter(t => t.training_type && t.training_type.toLowerCase() !== 'recorded');
+      } else if (this.assignedTrainingTypeFilter === 'recorded') {
+        list = list.filter(t => t.training_type && t.training_type.toLowerCase() === 'recorded');
+      }
+    }
+
     if (this.assignedSearch && this.assignedSearch.trim()) {
       const q = this.assignedSearch.trim().toLowerCase();
       list = list.filter(t =>
@@ -3780,6 +3924,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.assignedLevelFilter = [];
     this.assignedDateFilter = '';
     this.assignedMonthFilter = [];
+    this.assignedTrainingTypeFilter = 'all';
     this.focusedAssignedTrainingId = null;
   }
 
