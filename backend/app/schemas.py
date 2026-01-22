@@ -88,6 +88,25 @@ class TrainingCreate(BaseModel):
     # Optional free-form description / summary
     description: Optional[str] = None
 
+class TrainingUpdate(BaseModel):
+    """Schema for partial training updates (e.g., rescheduling)"""
+    division: Optional[str] = None
+    department: Optional[str] = None
+    competency: Optional[str] = None
+    skill: Optional[str] = None
+    training_name: Optional[str] = None
+    training_topics: Optional[str] = None
+    prerequisites: Optional[str] = None
+    skill_category: Optional[str] = None
+    training_date: Optional[date] = None
+    duration: Optional[str] = None
+    time: Optional[str] = None
+    training_type: Optional[str] = None
+    seats: Optional[str] = None
+    assessment_details: Optional[str] = None
+    lecture_url: Optional[str] = None
+    description: Optional[str] = None
+
 class TrainingResponse(TrainingCreate):
     id: int
     trainer_name: Optional[str] = None 

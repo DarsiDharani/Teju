@@ -160,8 +160,8 @@
             <ng-container *ngIf="mySkillsView === 'core'">
               <!-- Color Code Legend -->
               <div class="text-xs text-blue-100 font-medium flex items-center gap-2">
-                <span class="inline-flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:#60a5fa"></span>Expected</span>
-                <span class="inline-flex items-center gap-1"><span class="w-4 h-2 rounded" style="background:#a855f7;box-shadow:0 0 6px rgba(168,85,247,0.6)"></span>Actual</span>
+                <span class="inline-flex items-center gap-1"><span class="w-4 h-3 rounded" style="background:#a855f7"></span>Expected</span>
+                <span class="inline-flex items-center gap-1"><span class="w-4 h-2 rounded" style="background:#86efac;box-shadow:0 0 6px rgba(134,239,172,0.6)"></span>Actual</span>
               </div>
               <!-- Skill Name Filter: Searchable dropdown to filter by specific skill name -->
               <app-searchable-dropdown
@@ -1441,6 +1441,11 @@
                         class="flex-1 bg-teal-500 text-white font-semibold py-1.5 rounded-lg hover:bg-teal-700 transition-colors duration-200 text-xs">
                         <i class="fa-solid fa-eye mr-1.5"></i>Solutions
                       </button>
+                      <!-- Reschedule Training -->
+                      <button (click)="startRescheduleTraining(training.id)"
+                        class="flex-1 bg-orange-500 text-white font-semibold py-1.5 rounded-lg hover:bg-orange-700 transition-colors duration-200 text-xs">
+                        <i class="fa-solid fa-calendar-alt mr-1.5"></i>Reschedule
+                      </button>
                     </div>
                     <!-- Sharing Actions Row -->
                     <div class="flex items-center gap-2">
@@ -1897,7 +1902,7 @@
                     </tr>
                   </thead>
                   <tbody class="bg-white divide-y divide-slate-200">
-                    <ng-container *ngFor="let skill of selectedTeamMember.skills; let i = index">
+                    <ng-container *ngFor="let skill of getTeamCoreSkillsOnly(selectedTeamMember); let i = index">
                       <tr [ngClass]="{'bg-indigo-50': isEditingSkill(selectedTeamMember.id, i)}">
                         <td class="px-6 py-4 whitespace-nowrap">
                           <div class="text-sm font-semibold text-slate-900">{{ skill.skill }}</div>
@@ -1906,11 +1911,11 @@
                         <td class="px-6 py-4 whitespace-nowrap">
                           <div class="min-w-[180px]">
                             <div class="flex items-center justify-between mb-1">
-                              <span class="text-[10px] font-semibold text-slate-600">Exp: {{ getExpectedProgress(skill, selectedTeamMember.skills) }}% • Act: {{ getSkillProgress(skill) }}%</span>
+                              <span class="text-[10px] font-semibold text-slate-600">Exp: {{ getExpectedProgress(skill, getTeamCoreSkillsOnly(selectedTeamMember)) }}% • Act: {{ getSkillProgress(skill) }}%</span>
                             </div>
                             <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner relative border border-slate-300 progress-track">
                               <div class="progress-expected"
-                                [style.--expected-width.%]="getExpectedProgress(skill, selectedTeamMember.skills)">
+                                [style.--expected-width.%]="getExpectedProgress(skill, getTeamCoreSkillsOnly(selectedTeamMember))">
                               </div>
                               <div class="progress-actual"
                                 [style.width.%]="getSkillProgress(skill)">
@@ -1937,12 +1942,12 @@
                         <td class="px-6 py-4 whitespace-nowrap"><span
                             class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
                             [ngClass]="{
-                              'bg-slate-100 text-slate-700': getTimelineStatus(skill, selectedTeamMember.skills) === 'Not Started',
-                              'bg-orange-100 text-orange-800': getTimelineStatus(skill, selectedTeamMember.skills) === 'Behind',
-                              'bg-sky-100 text-sky-800': getTimelineStatus(skill, selectedTeamMember.skills) === 'On Track',
-                              'bg-emerald-100 text-emerald-800': getTimelineStatus(skill, selectedTeamMember.skills) === 'Completed'
+                              'bg-slate-100 text-slate-700': getTimelineStatus(skill, getTeamCoreSkillsOnly(selectedTeamMember)) === 'Not Started',
+                              'bg-orange-100 text-orange-800': getTimelineStatus(skill, getTeamCoreSkillsOnly(selectedTeamMember)) === 'Behind',
+                              'bg-sky-100 text-sky-800': getTimelineStatus(skill, getTeamCoreSkillsOnly(selectedTeamMember)) === 'On Track',
+                              'bg-emerald-100 text-emerald-800': getTimelineStatus(skill, getTeamCoreSkillsOnly(selectedTeamMember)) === 'Completed'
                             }">{{
-                            getTimelineStatus(skill, selectedTeamMember.skills) }}</span></td>
+                            getTimelineStatus(skill, getTeamCoreSkillsOnly(selectedTeamMember)) }}</span></td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <ng-container *ngIf="!isEditingSkill(selectedTeamMember.id, i)">
                             <button (click)="startEditSkill(selectedTeamMember.id, i)"
@@ -1965,35 +1970,138 @@
             </div>
             <div class="mt-8">
               <h3 class="text-2xl font-bold text-slate-800 mb-4">Additional Skills</h3>
-              <div *ngIf="selectedTeamMember.additional_skills && selectedTeamMember.additional_skills.length > 0"
-                class="space-y-3">
-                <div *ngFor="let skill of selectedTeamMember.additional_skills"
-                  class="bg-white/80 border border-slate-200/80 rounded-lg p-4 hover:shadow-sm transition-all duration-200">
-                  <div class="flex items-center justify-between">
-                    <div class="flex-1">
-                      <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-slate-100 rounded-lg flex items-center justify-center"><i
-                            class="fa-solid fa-star text-slate-600 text-sm"></i></div>
-                        <div>
-                          <h4 class="font-semibold text-slate-900">{{ skill.skill_name }}</h4>
-                          <div class="flex items-center space-x-2 mt-1">
-                            <span class="px-2 py-1 rounded text-xs font-medium"
-                              [ngClass]="getSkillLevelColor(skill.skill_level)">{{ skill.skill_level }}</span>
-                            <span class="px-2 py-1 rounded text-xs font-medium"
-                              [ngClass]="getCategoryColor(skill.skill_category)">{{ skill.skill_category }}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <p *ngIf="skill.description" class="text-slate-600 text-sm ml-11 mt-2">{{ skill.description }}
-                      </p>
-                    </div>
-                  </div>
+              <!-- Additional skills (moved from core) shown with same UI as core -->
+              <div *ngIf="getTeamMemberSkillsMovedToAdditional(selectedTeamMember).length > 0" class="mb-10">
+                <div class="shadow overflow-hidden border border-slate-200 sm:rounded-lg">
+                  <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                      <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Skill</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Competency</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Progress</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Current Level</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Target Level</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-200">
+                      <ng-container *ngFor="let skill of getTeamMemberSkillsMovedToAdditional(selectedTeamMember)">
+                        <tr>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-semibold text-slate-900">{{ skill.skill }}</div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{{ skill.competency }}</td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="min-w-[180px]">
+                              <div class="flex items-center justify-between mb-1">
+                                <span class="text-[10px] font-semibold text-slate-600">Exp: {{ getExpectedProgress(skill, selectedTeamMember.skills) }}% • Act: {{ getSkillProgress(skill) }}%</span>
+                              </div>
+                              <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner relative border border-slate-300 progress-track">
+                                <div class="progress-expected" [style.--expected-width.%]="getExpectedProgress(skill, selectedTeamMember.skills)"></div>
+                                <div class="progress-actual" [style.width.%]="getSkillProgress(skill)"></div>
+                              </div>
+                            </div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                            <span *ngIf="!isEditingSkill(selectedTeamMember.id, getMemberSkillIndex(selectedTeamMember, skill))">{{ skill.current_expertise }}</span>
+                            <select *ngIf="isEditingSkill(selectedTeamMember.id, getMemberSkillIndex(selectedTeamMember, skill))"
+                              [(ngModel)]="editSkillData.current_expertise"
+                              class="rounded-lg border-slate-300 text-sm px-3 py-2">
+                              <option *ngFor="let level of skillLevels" [value]="level">{{ level }}</option>
+                            </select>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                            <span *ngIf="!isEditingSkill(selectedTeamMember.id, getMemberSkillIndex(selectedTeamMember, skill))">{{ skill.target_expertise }}</span>
+                            <select *ngIf="isEditingSkill(selectedTeamMember.id, getMemberSkillIndex(selectedTeamMember, skill))"
+                              [(ngModel)]="editSkillData.target_expertise"
+                              class="rounded-lg border-slate-300 text-sm px-3 py-2">
+                              <option *ngFor="let level of skillLevels" [value]="level">{{ level }}</option>
+                            </select>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                            [ngClass]="{
+                              'bg-slate-100 text-slate-700': getTimelineStatus(skill, selectedTeamMember.skills) === 'Not Started',
+                              'bg-orange-100 text-orange-800': getTimelineStatus(skill, selectedTeamMember.skills) === 'Behind',
+                              'bg-sky-100 text-sky-800': getTimelineStatus(skill, selectedTeamMember.skills) === 'On Track',
+                              'bg-emerald-100 text-emerald-800': getTimelineStatus(skill, selectedTeamMember.skills) === 'Completed'
+                            }">{{ getTimelineStatus(skill, selectedTeamMember.skills) }}</span></td>
+                          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <ng-container *ngIf="!isEditingSkill(selectedTeamMember.id, getMemberSkillIndex(selectedTeamMember, skill))">
+                              <button (click)="startEditSkill(selectedTeamMember.id, getMemberSkillIndex(selectedTeamMember, skill))"
+                                class="text-indigo-600 hover:text-indigo-900 transition-colors">Edit</button>
+                            </ng-container>
+                            <ng-container *ngIf="isEditingSkill(selectedTeamMember.id, getMemberSkillIndex(selectedTeamMember, skill))">
+                              <div class="flex space-x-2">
+                                <button (click)="saveSkillEdit()"
+                                  class="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm transition-colors">Save</button>
+                                <button (click)="cancelEditSkill()"
+                                  class="px-3 py-1 text-slate-600 border border-slate-300 rounded-md hover:bg-slate-100 text-sm transition-colors">Cancel</button>
+                              </div>
+                            </ng-container>
+                          </td>
+                        </tr>
+                      </ng-container>
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <div *ngIf="!selectedTeamMember.additional_skills || selectedTeamMember.additional_skills.length === 0"
+
+              <!-- Self-reported Additional Skills: table UI like Core Skills -->
+              <div *ngIf="selectedTeamMember.additional_skills && selectedTeamMember.additional_skills.length > 0" class="mb-4">
+                <h4 class="text-base font-bold text-slate-900 mb-3">Self-Reported Additional Skills</h4>
+                <div class="shadow overflow-hidden border border-slate-200 sm:rounded-lg">
+                  <table class="min-w-full divide-y divide-slate-200">
+                    <thead class="bg-slate-50">
+                      <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Skill</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Category</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Progress</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Current Level</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Target Level</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-slate-200">
+                      <ng-container *ngFor="let skill of selectedTeamMember.additional_skills">
+                        <tr>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-semibold text-slate-900">{{ skill.skill_name }}</div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="getCategoryColor(skill.skill_category)">{{ skill.skill_category }}</span>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="min-w-[180px]">
+                              <div class="flex items-center justify-between mb-1">
+                                <span class="text-[10px] font-semibold text-slate-600">Exp: 0% • Act: 0%</span>
+                              </div>
+                              <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner relative border border-slate-300 progress-track">
+                                <div class="progress-expected" [style.--expected-width.%]="0"></div>
+                                <div class="progress-actual" [style.width.%]="0"></div>
+                              </div>
+                            </div>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 rounded text-xs font-medium" [ngClass]="getSkillLevelColor(skill.skill_level)">{{ skill.skill_level }}</span>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">N/A</td>
+                          <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">Additional</span>
+                          </td>
+                          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button (click)="editAdditionalSkill(skill)" class="text-indigo-600 hover:text-indigo-900 transition-colors">Edit</button>
+                          </td>
+                        </tr>
+                      </ng-container>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div *ngIf="(!selectedTeamMember.additional_skills || selectedTeamMember.additional_skills.length === 0) && getTeamMemberSkillsMovedToAdditional(selectedTeamMember).length === 0"
                 class="text-center py-12 bg-white/80 rounded-lg border-2 border-dashed border-slate-300">
-                <div class="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mx-auto mb-4"><i
-                    class="fa-solid fa-folder-open text-slate-500 text-lg"></i></div>
+                <div class="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-folder-open text-slate-500 text-lg"></i></div>
                 <h4 class="text-lg font-semibold text-slate-900">No Additional Skills</h4>
                 <p class="text-slate-600">This team member has not added any additional skills.</p>
               </div>
@@ -4688,6 +4796,52 @@
       <button (click)="closeCompletedTrainingsModal()"
         class="px-6 py-2.5 font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
         <i class="fa-solid fa-times mr-2"></i>Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Reschedule Training Modal -->
+<div *ngIf="showRescheduleModal" @fadeIn
+  class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
+  <div @modalScale class="bg-white rounded-2xl shadow-2xl w-full max-w-md m-4" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between p-6 bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-2xl border-b border-orange-200">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
+          <i class="fa-solid fa-calendar-day text-2xl"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">Reschedule Training</h3>
+          <p class="text-sm text-slate-600">Select a new training date</p>
+        </div>
+      </div>
+      <button (click)="closeRescheduleModal()"
+        class="w-9 h-9 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full flex items-center justify-center transition-colors">
+        <i class="fa-solid fa-times text-lg"></i>
+      </button>
+    </div>
+    <div class="p-6">
+      <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+        <p class="text-sm text-blue-800">
+          <i class="fa-solid fa-info-circle mr-2"></i>
+          The new date will be updated in the Training Catalog for all users.
+        </p>
+      </div>
+      <label class="block text-sm font-semibold text-slate-700 mb-2">New Training Date</label>
+      <input type="date" [(ngModel)]="newTrainingDate" name="newTrainingDate"
+        class="w-full px-4 py-3 rounded-lg border-2 border-slate-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all">
+      <p class="text-xs text-slate-500 mt-2">
+        <i class="fa-solid fa-calendar mr-1"></i>Format: YYYY-MM-DD
+      </p>
+    </div>
+    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 px-6 pb-6">
+      <button (click)="closeRescheduleModal()"
+        class="px-5 py-2.5 font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+        Cancel
+      </button>
+      <button (click)="rescheduleTraining()" [disabled]="!newTrainingDate"
+        class="px-5 py-2.5 font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors shadow-md hover:shadow-lg disabled:bg-slate-400 disabled:cursor-not-allowed">
+        <i class="fa-solid fa-calendar-check mr-2"></i>Reschedule
       </button>
     </div>
   </div>

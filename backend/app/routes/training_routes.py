@@ -28,7 +28,7 @@ from datetime import date, datetime
 
 from app.database import get_db_async
 from app.models import TrainingDetail, User, ManagerEmployee, TrainingAssignment, TrainingRecording
-from app.schemas import TrainingCreate, TrainingResponse, TrainingRecordingResponse
+from app.schemas import TrainingCreate, TrainingResponse, TrainingRecordingResponse, TrainingUpdate
 from app.auth_utils import get_current_active_user
 import logging
 
@@ -237,4 +237,72 @@ async def get_my_trainings(
     my_trainings.sort(key=lambda t: t.training_date if t.training_date else date.min, reverse=True)
     
     return my_trainings
+
+
+@router.put("/{training_id}", response_model=TrainingResponse)
+async def update_training_by_trainer(
+    training_id: int,
+    training_data: TrainingUpdate,
+    db: AsyncSession = Depends(get_db_async),
+    current_user: dict = Depends(get_current_active_user)
+):
+    """
+    Endpoint for trainers to update their own training sessions.
+    Trainers can only update trainings where they are listed as the trainer.
+    """
+    current_username = current_user.get("username")
+    if not current_username:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+    
+    # Get the training
+    training_stmt = select(TrainingDetail).where(TrainingDetail.id == training_id)
+    training_result = await db.execute(training_stmt)
+    training = training_result.scalars().first()
+    
+    if not training:
+        raise HTTPException(status_code=404, detail="Training not found")
+    
+    # Verify the current user is the trainer for this training
+    trainer_name = str(training.trainer_name or "").strip().lower()
+    trainer_username = current_username.lower()
+    
+    # Build a set of possible display names for the current user using org mappings
+    possible_names = set()
+    possible_names.add(trainer_username)
+    # Fetch any org relationships that include this user and gather their stored names
+    rel_stmt = select(ManagerEmployee).where(
+        (ManagerEmployee.manager_empid == current_username) | (ManagerEmployee.employee_empid == current_username)
+    )
+    rel_result = await db.execute(rel_stmt)
+    for rel in rel_result.scalars().all():
+        if rel.manager_empid == current_username and rel.manager_name:
+            possible_names.add(rel.manager_name.strip().lower())
+        if rel.employee_empid == current_username and rel.employee_name:
+            possible_names.add(rel.employee_name.strip().lower())
+    
+    # Determine trainer match by exact or containment match with any possible name
+    is_trainer = False
+    for name in possible_names:
+        if not name:
+            continue
+        if name == trainer_name or name in trainer_name or trainer_name in name:
+            is_trainer = True
+            break
+    
+    if not is_trainer:
+        raise HTTPException(
+            status_code=403, 
+            detail="You can only update your own training sessions"
+        )
+    
+    # Update only the fields that are provided (not None)
+    for key, value in training_data.dict(exclude_unset=True).items():
+        if value is not None:
+            setattr(training, key, value)
+    
+    await db.commit()
+    await db.refresh(training)
+    
+    return training
+
 

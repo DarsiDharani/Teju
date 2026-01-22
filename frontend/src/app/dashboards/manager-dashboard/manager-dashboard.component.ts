@@ -417,6 +417,11 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   solutionsList: any[] = [];
   isLoadingSolutions: boolean = false;
 
+  // Reschedule Modal
+  showRescheduleModal: boolean = false;
+  selectedTrainingForReschedule: number | null = null;
+  newTrainingDate: string = '';
+
   // Assignment and Feedback Forms
   newAssignment: Assignment = {
     trainingId: null,
@@ -2933,6 +2938,16 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   }
 
   /**
+   * Get original index of a team member's skill within member.skills array.
+   * Useful when rendering filtered lists (e.g., moved-to-additional) and reusing
+   * core edit handlers that require the original index.
+   */
+  getMemberSkillIndex(member: TeamMember, skill: Competency): number {
+    if (!member || !member.skills) return -1;
+    return member.skills.findIndex(s => this.skillNamesMatch(s.skill, skill.skill) && s.competency === skill.competency);
+  }
+
+  /**
    * Get manager's own skills that should be treated as additional skills.
    * Includes: 1) current has value but target is N/A
    *          2) current equals target (both have same value like L3=L3)
@@ -5041,6 +5056,65 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.selectedTrainingForSolutions = trainingId;
     this.showSolutionsModal = true;
     this.loadSolutions(trainingId);
+  }
+
+  startRescheduleTraining(trainingId: number): void {
+    const training = this.myTrainings.find(t => t.id === trainingId);
+    if (!training) return;
+    
+    this.selectedTrainingForReschedule = trainingId;
+    this.newTrainingDate = training.training_date || '';
+    this.showRescheduleModal = true;
+  }
+
+  closeRescheduleModal(): void {
+    this.showRescheduleModal = false;
+    this.selectedTrainingForReschedule = null;
+    this.newTrainingDate = '';
+  }
+
+  rescheduleTraining(): void {
+    if (!this.selectedTrainingForReschedule || !this.newTrainingDate) return;
+    
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(this.newTrainingDate)) {
+      this.toastService.error('Invalid date format. Please use YYYY-MM-DD format.');
+      return;
+    }
+
+    const token = this.authService.getToken();
+    if (!token) {
+      this.toastService.error('Authentication error. Please log in again.');
+      return;
+    }
+
+    const headers = new HttpHeaders({ 
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    const updateData = { training_date: this.newTrainingDate };
+
+    this.http.put(this.apiService.trainingUrl(this.selectedTrainingForReschedule), updateData, { headers }).subscribe({
+      next: (response: any) => {
+        // Update local training data in Trainer Zone
+        const training = this.myTrainings.find(t => t.id === this.selectedTrainingForReschedule);
+        if (training) {
+          training.training_date = this.newTrainingDate;
+        }
+        
+        // Refresh Training Catalog to show updated date for everyone
+        this.fetchTrainingCatalog();
+        
+        this.toastService.success('Training rescheduled successfully! Training Catalog updated.');
+        this.closeRescheduleModal();
+      },
+      error: (err) => {
+        console.error('Failed to reschedule training:', err);
+        this.toastService.error(err.error?.detail || 'Failed to reschedule training');
+      }
+    });
   }
 
   loadSolutions(trainingId: number): void {
