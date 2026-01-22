@@ -137,7 +137,7 @@
             <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <i class="fa-solid fa-graduation-cap text-white text-sm"></i>
             </div>
-            <h2 class="text-sm font-semibold text-white">My Skills</h2>
+            <h2 class="text-sm font-semibold text-white mt-3 leading-tight">My Skills</h2>
             <!-- View Toggle: Switch between Core Skills and Additional Skills -->
             <div class="inline-flex rounded-lg shadow-sm bg-blue-700 p-1">
               <!-- Core Skills Button: Shows job-required skills from API -->
@@ -209,7 +209,7 @@
             <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <i class="fa-solid fa-book-open text-white text-sm"></i>
             </div>
-            <h2 class="text-sm font-semibold text-white">Training Catalog</h2>
+            <h2 class="text-sm font-semibold text-white mt-3 leading-tight">Training Catalog</h2>
             <div class="relative">
               <div
                 class="bg-indigo-900/50 backdrop-blur-sm rounded-2xl p-1 border border-white/30 ring-1 ring-white/50">
@@ -290,7 +290,7 @@
             <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <i class="fa-solid fa-paperclip text-white text-sm"></i>
             </div>
-            <h2 class="text-sm font-semibold text-white">Assigned Trainings</h2>
+            <h2 class="text-sm font-semibold text-white mt-3 leading-tight">Assigned Trainings</h2>
             <div class="inline-flex rounded-lg shadow-sm bg-blue-700 p-1">
               <button (click)="setAssignedTrainingsView('list')"
                 class="px-3 py-1 text-xs rounded-md transition-colors duration-200"
@@ -368,7 +368,7 @@
             <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <i class="fa-solid fa-clock-rotate-left text-white text-sm"></i>
             </div>
-            <h2 class="text-sm font-semibold text-white">My Training Requests</h2>
+            <h2 class="text-sm font-semibold text-white mt-3 leading-tight">My Training Requests</h2>
             <div class="inline-flex rounded-lg shadow-sm bg-blue-700 p-1">
               <button (click)="requestStatusFilter = 'all'"
                 class="px-3 py-1 text-xs font-semibold rounded-md transition-colors duration-200"
@@ -1161,19 +1161,18 @@
                   </div>
 
                   <div class="space-y-2">
-                    <div class="flex justify-between items-center text-xs text-slate-500 font-medium">
-                      <span>Current: <span class="font-bold text-slate-700">{{ competency.current_expertise
-                          }}</span></span>
-                      <span>Target: <span class="font-bold text-slate-700">{{ competency.target_expertise
-                          }}</span></span>
-                    </div>
-                    <!-- Target Completion Date -->
-                    <div *ngIf="competency.target_completion_date" class="text-[11px] text-slate-600 bg-blue-50/60 px-2 py-1 rounded border border-blue-200/40">
-                      <strong class="text-slate-700">Target Date:</strong> {{ competency.target_completion_date | date:'short' }}
+                    <div class="flex justify-between items-start text-xs text-slate-500 font-medium">
+                      <span>Current: <span class="font-bold text-slate-700">{{ competency.current_expertise }}</span></span>
+                      <span class="text-right">
+                        Target: <span class="font-bold text-slate-700">{{ competency.target_expertise }}</span>
+                        <div *ngIf="competency.target_completion_date" class="mt-1 text-[11px] text-slate-600 bg-blue-50/60 px-2 py-1 rounded border border-blue-200/40">
+                          <strong class="text-slate-700">Target Date:</strong> {{ competency.target_completion_date | date:'shortDate' }}
+                        </div>
+                      </span>
                     </div>
                     <div>
                       <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Progress</span>
+                        <span class="text-xs font-bold text-slate-700 tracking-wider">Progress</span>
                         <span class="text-[10px] font-semibold text-slate-600">Exp: {{ getExpectedProgress(competency) }}% • Act: {{ getSkillProgress(competency) }}%</span>
                       </div>
                       <!-- Single Progress Bar with Two Light Colors -->
@@ -1343,7 +1342,7 @@
                     <i class="fa-solid fa-chalkboard-user text-white text-sm"></i>
                   </div>
                   <div class="flex flex-col leading-tight">
-                    <h2 class="text-sm font-semibold">Trainer Zone</h2>
+                    <h2 class="text-sm font-semibold mt-3 leading-tight">Trainer Zone</h2>
                     <h3 class="text-base font-bold">My Scheduled Training Sessions</h3>
                   </div>
                 </div>
@@ -1755,7 +1754,7 @@
             <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <i class="fa-solid fa-users text-white text-sm"></i>
             </div>
-            <h2 class="text-sm font-semibold text-white">Team Skills Management</h2>
+            <h2 class="text-sm font-semibold text-white mt-3 leading-tight">Team Skills Management</h2>
           </div>
         </div>
         <div #animatedElement
@@ -1833,8 +1832,8 @@
                       class="fa-solid fa-check"></i></span>
                 </div>
                 <h3 class="font-bold text-xl text-slate-900">{{ member.name }}</h3>
-                <p class="text-sm text-slate-500 mt-1"><span class="font-semibold">{{ getTeamSkillsMetCount(member)
-                  }}</span> out of <span class="font-semibold">{{ member.skills.length }}</span> skills completed</p>
+                <p class="text-sm text-slate-500 mt-1"><span class="font-semibold">{{ getTeamCoreSkillsMetCount(member)
+                  }}</span> out of <span class="font-semibold">{{ getTeamCoreSkillsTotalCount(member) }}</span> core skills completed</p>
                 <div class="relative w-24 h-24 my-3 flex items-center justify-center">
                   <svg class="w-full h-full transform -rotate-90">
                     <circle class="text-slate-200" stroke-width="12" stroke="currentColor" fill="transparent" r="42"
@@ -2208,7 +2207,7 @@
               <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                 <i class="fa-solid fa-paper-plane text-white text-sm"></i>
               </div>
-              <h2 class="text-sm font-semibold text-white">Assign Training</h2>
+              <h2 class="text-sm font-semibold text-white mt-3 leading-tight">Assign Training</h2>
             </div>
             <div class="flex items-center gap-3">
               <div class="relative">

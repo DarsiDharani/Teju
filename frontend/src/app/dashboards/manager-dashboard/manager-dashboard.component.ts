@@ -3340,6 +3340,36 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     return member.skills.filter(s => this.getTimelineStatus(s, member.skills) === 'Completed').length;
   }
 
+  /**
+   * Get only a team member's core skills (excluding those moved to additional).
+   */
+  getTeamCoreSkillsOnly(member: TeamMember): Competency[] {
+    if (!member || !member.skills || member.skills.length === 0) {
+      return [];
+    }
+    const skillsToExclude = new Set(
+      this.getTeamMemberSkillsMovedToAdditional(member).map(s => `${s.skill}_${s.competency}`)
+    );
+    return member.skills.filter(
+      skill => !skillsToExclude.has(`${skill.skill}_${skill.competency}`)
+    );
+  }
+
+  /**
+   * Count completed core skills for a team member.
+   */
+  getTeamCoreSkillsMetCount(member: TeamMember): number {
+    const coreSkills = this.getTeamCoreSkillsOnly(member);
+    return coreSkills.filter(s => this.getTimelineStatus(s, coreSkills) === 'Completed').length;
+  }
+
+  /**
+   * Get total core skills for a team member.
+   */
+  getTeamCoreSkillsTotalCount(member: TeamMember): number {
+    return this.getTeamCoreSkillsOnly(member).length;
+  }
+
   getTeamSkillsGapCount(member: TeamMember): number {
     return member.skills.filter(s => this.getTimelineStatus(s, member.skills) === 'Behind').length;
   }
