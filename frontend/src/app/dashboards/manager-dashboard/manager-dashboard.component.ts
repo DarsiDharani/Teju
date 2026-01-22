@@ -365,6 +365,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   selectedRequestForApproval: TrainingRequest | null = null;
   approvalTargetDate: string = '';
   approvalNotes: string = '';
+  // Team Requests Modal
+  showTeamRequestsModal: boolean = false;
 
   // --- Badges Properties ---
   badges: any[] = [];
@@ -1458,6 +1460,17 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.selectedRequestForApproval = null;
     this.approvalTargetDate = '';
     this.approvalNotes = '';
+  }
+
+  // Open/Close team training requests modal
+  openTeamRequestsModal(): void {
+    // Ensure latest pending requests are loaded
+    this.fetchPendingRequests();
+    this.showTeamRequestsModal = true;
+  }
+
+  closeTeamRequestsModal(): void {
+    this.showTeamRequestsModal = false;
   }
 
   // Confirm approval with target date
