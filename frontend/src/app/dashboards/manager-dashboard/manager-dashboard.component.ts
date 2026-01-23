@@ -316,6 +316,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   skillFeedbackByType: Map<string, ManagerPerformanceFeedback[]> = new Map();
 
   showScheduleTrainingModal = false;
+  // When true, schedule modal is opened to create a new training as a reschedule
+  isRescheduleCreate: boolean = false;
+  originalTrainingId: number | null = null;
   trainingCatalog: TrainingDetail[] = [];
   allTrainings: TrainingDetail[] = [];
   assignedTrainings: TrainingDetail[] = [];
@@ -335,6 +338,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     lecture_url?: string;
     description?: string;
   }> = [];
+  // Grouping and selection for Trainer Zone reschedule instances
+  groupedMyTrainingsCache: { key: string; instances: TrainingDetail[] }[] | null = null;
+  selectedInstanceByGroup: Map<string, number> = new Map();
   catalogSearch: string = '';
   catalogTypeFilter: string[] = [];
   catalogCategoryFilter: string[] = [];
@@ -441,15 +447,15 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
   defaultFeedbackQuestions: FeedbackQuestion[] = [
     { text: "How would you rate your overall experience with this training?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
-    { text: "Was the content relevant and applicable to your role?", options: ['Yes', 'No', 'Partially'], isDefault: true },
-    { text: "Was the material presented in a clear and understandable way?", options: ['Yes', 'No', 'Somewhat'], isDefault: true },
-    { text: "Did the training meet your expectations?", options: ['Yes', 'No', 'Partially'], isDefault: true },
-    { text: "Was the depth of the content appropriate?", options: ['Appropriate', 'Too basic', 'Too advanced'], isDefault: true },
-    { text: "Was the trainer able to explain concepts clearly?", options: ['Yes', 'No', 'Somewhat'], isDefault: true },
-    { text: "Did the trainer engage participants effectively?", options: ['Yes', 'No', 'Somewhat'], isDefault: true },
-    { text: "Will this training improve your day-to-day job performance?", options: ['Yes', 'No', 'Maybe'], isDefault: true },
-    { text: "Was the pace of the training comfortable?", options: ['Comfortable', 'Too fast', 'Too slow'], isDefault: true },
-    { text: "Were the training materials/resources useful?", options: ['Yes', 'No', 'Somewhat'], isDefault: true }
+    { text: "Was the content relevant and applicable to your role?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
+    { text: "Was the material presented in a clear and understandable way?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
+    { text: "Did the training meet your expectations?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
+    { text: "Was the depth of the content appropriate?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
+    { text: "Was the trainer able to explain concepts clearly?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
+    { text: "Did the trainer engage participants effectively?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
+    { text: "Will this training improve your day-to-day job performance?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
+    { text: "Was the pace of the training comfortable?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true },
+    { text: "Were the training materials/resources useful?", options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'], isDefault: true }
   ];
   newFeedback = {
     trainingId: null as number | null,
@@ -1984,6 +1990,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       seats: '',
       assessment_details: ''
     };
+    // reset reschedule flags
+    this.isRescheduleCreate = false;
+    this.originalTrainingId = null;
   }
 
   // New Modal Methods
@@ -2080,10 +2089,16 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
 
     this.http.post(this.apiService.trainingsUrl, payload, { headers }).subscribe({
       next: (response) => {
-        this.toastService.success('Training scheduled successfully!');
+        if (this.isRescheduleCreate) {
+          this.toastService.success('Training rescheduled — new session created successfully!');
+        } else {
+          this.toastService.success('Training scheduled successfully!');
+        }
         this.closeScheduleTrainingModal();
         this.fetchTrainingCatalog();
         this.fetchScheduledTrainings();
+        // reset grouped cache so UI updates grouping
+        this.groupedMyTrainingsCache = null;
       },
       error: (err) => {
         if (err.status === 401) {
@@ -2448,6 +2463,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         this.extractUniqueCompetencies();
         this.extractUniqueCurrentLevels();
         this.loadAdditionalSkills();
+        // Force recalculation of core/additional skills for UI refresh
+        this.getMyCoreSkillsOnly();
+        this.getMySkillsMovedToAdditional();
         this.isLoading = false;
         this.errorMessage = '';
       },
@@ -2970,10 +2988,10 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     if (!this.manager || !this.manager.skills || this.manager.skills.length === 0) {
       return [];
     }
-    
+
     // Get list of core skill names (from sections) - normalized
     const coreSkillNames = this.sections.map(s => this.normalizeSkillName(s.title));
-    
+
     // Helper to normalize expertise value (handle NA, N/A, empty, null, etc)
     const normalizeExpertise = (val: any): string => {
       if (!val || val === null || val === undefined) return 'na';
@@ -2981,20 +2999,16 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
       if (v === '' || v === 'n/a' || v === 'na' || v === 'null') return 'na';
       return v;
     };
-    
+
     return this.manager.skills.filter(skill => {
       const skillNameNormalized = this.normalizeSkillName(skill.skill);
-      
       // Only process core skills
       if (!skillNameNormalized || !coreSkillNames.includes(skillNameNormalized)) {
         return false;
       }
-      
-      const currentNormalized = normalizeExpertise(skill.current_expertise);
       const targetNormalized = normalizeExpertise(skill.target_expertise);
-      
-      // Move to additional if current equals target (including na = na)
-      return currentNormalized === targetNormalized;
+      // Only move to additional if target is N/A (na)
+      return targetNormalized === 'na';
     });
   }
 
@@ -3022,17 +3036,13 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     
     return member.skills.filter(skill => {
       const skillNameNormalized = this.normalizeSkillName(skill.skill);
-      
       // Only process core skills
       if (!skillNameNormalized || !coreSkillNames.includes(skillNameNormalized)) {
         return false;
       }
-      
-      const currentNormalized = normalizeExpertise(skill.current_expertise);
       const targetNormalized = normalizeExpertise(skill.target_expertise);
-      
-      // Move to additional if current equals target (including na = na)
-      return currentNormalized === targetNormalized;
+      // Only move to additional if target is N/A (na)
+      return targetNormalized === 'na';
     });
   }
 
@@ -3760,6 +3770,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             skill.target_expertise = response.target_expertise;
             skill.status = response.status;
             this.processDashboardData();
+            this.fetchDashboardData(); // Ensure all linked views are refreshed
             this.cancelEditSkill();
             this.successMessage = `Skill "${skill.skill}" updated successfully!`;
             setTimeout(() => { this.successMessage = ''; }, 3000);
@@ -4467,7 +4478,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             // Load existing feedback data
             this.newFeedback.customQuestions = (response.customQuestions || []).map((q: any) => ({
               text: q.text || '',
-              options: q.options || [],
+              options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'],
               isDefault: q.isDefault || false
             }));
 
@@ -4726,7 +4737,7 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
   addCustomQuestion(): void {
     this.newFeedback.customQuestions.push({
       text: '',
-      options: [''],
+      options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'],
       isDefault: false
     });
   }
@@ -5071,13 +5082,72 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.loadSolutions(trainingId);
   }
 
+  // Group myTrainings by training name so reschedules appear as date lists
+  getGroupedMyTrainings(): { key: string; instances: TrainingDetail[] }[] {
+    if (this.groupedMyTrainingsCache) return this.groupedMyTrainingsCache;
+    const map = new Map<string, TrainingDetail[]>();
+    (this.myTrainings || []).forEach(t => {
+      const key = (t.training_name || 'Untitled').trim();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(t);
+    });
+    const grouped: { key: string; instances: TrainingDetail[] }[] = [];
+    map.forEach((instances, key) => {
+      // sort by date ascending
+      instances.sort((a,b) => {
+        const da = a.training_date ? new Date(a.training_date).getTime() : 0;
+        const db = b.training_date ? new Date(b.training_date).getTime() : 0;
+        return da - db;
+      });
+      grouped.push({ key, instances });
+      // initialize selection if missing
+      if (!this.selectedInstanceByGroup.has(key) && instances.length > 0) {
+        this.selectedInstanceByGroup.set(key, instances[0].id);
+      }
+    });
+    this.groupedMyTrainingsCache = grouped;
+    return grouped;
+  }
+
+  selectInstance(groupKey: string, instanceId: number): void {
+    this.selectedInstanceByGroup.set(groupKey, instanceId);
+  }
+
+  getSelectedInstance(groupKey: string): TrainingDetail | null {
+    const grouped = this.getGroupedMyTrainings();
+    const group = (grouped || []).find(g => g.key === groupKey);
+    if (!group) return null;
+    const selId = this.selectedInstanceByGroup.get(groupKey) || (group.instances.length > 0 ? group.instances[0].id : null);
+    return group.instances.find(i => i.id === selId) || null;
+  }
+
   startRescheduleTraining(trainingId: number): void {
     const training = this.myTrainings.find(t => t.id === trainingId);
     if (!training) return;
-    
-    this.selectedTrainingForReschedule = trainingId;
-    this.newTrainingDate = training.training_date || '';
-    this.showRescheduleModal = true;
+
+    // Prefill schedule modal with existing training data so trainer can edit details
+    this.newTraining = {
+      division: training.division || '',
+      department: training.department || '',
+      competency: training.competency || '',
+      skill: training.skill || '',
+      training_name: training.training_name || '',
+      training_topics: training.training_topics || '',
+      prerequisites: training.prerequisites || '',
+      skill_category: training.skill_category || 'L1',
+      trainer_name: training.trainer_name || (this.managerDisplayName || this.manager?.name || this.authService.getUsername() || ''),
+      email: training.email || '',
+      training_date: training.training_date ? new Date(training.training_date).toISOString().slice(0,10) : '',
+      duration: training.duration || '',
+      time: training.time || '',
+      training_type: training.training_type || 'Online',
+      seats: training.seats || '',
+      assessment_details: training.assessment_details || ''
+    };
+
+    this.isRescheduleCreate = true;
+    this.originalTrainingId = trainingId;
+    this.showScheduleTrainingModal = true;
   }
 
   closeRescheduleModal(): void {
@@ -5119,6 +5189,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         
         // Refresh Training Catalog to show updated date for everyone
         this.fetchTrainingCatalog();
+        // reset grouped cache so UI updates grouping
+        this.groupedMyTrainingsCache = null;
         
         this.toastService.success('Training rescheduled successfully! Training Catalog updated.');
         this.closeRescheduleModal();

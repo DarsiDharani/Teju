@@ -158,6 +158,35 @@ export class EngineerDashboardComponent implements OnInit {
 
   // --- Additional (Self-Reported) Skills ---
   additionalSkills: any[] = [];
+
+  /**
+   * Returns core skills whose target expertise is N/A (na, n/a, empty, null, etc).
+   * Only these are moved to additional skills.
+   */
+  getSkillsMovedToAdditional(): Skill[] {
+    if (!this.skills || this.skills.length === 0) {
+      return [];
+    }
+    // Get list of core skill names (from sections) - normalized
+    const coreSkillNames = this.sections.map(s => this.normalizeSkillName(s.title));
+    // Helper to normalize expertise value (handle NA, N/A, empty, null, etc)
+    const normalizeExpertise = (val: any): string => {
+      if (!val || val === null || val === undefined) return 'na';
+      const v = String(val).toLowerCase().trim();
+      if (v === '' || v === 'n/a' || v === 'na' || v === 'null') return 'na';
+      return v;
+    };
+    return this.skills.filter(skill => {
+      const skillNameNormalized = this.normalizeSkillName(skill.skill);
+      // Only process core skills
+      if (!skillNameNormalized || !coreSkillNames.includes(skillNameNormalized)) {
+        return false;
+      }
+      const targetNormalized = normalizeExpertise(skill.target_expertise);
+      // Only move to additional if target is N/A (na)
+      return targetNormalized === 'na';
+    });
+  }
   newSkill = {
     name: '',
     level: 'Beginner',
@@ -195,6 +224,9 @@ export class EngineerDashboardComponent implements OnInit {
   myTrainingsFromBackend: TrainingDetail[] = []; // Trainings where user is trainer (from backend)
   private _myTrainingsCache: TrainingDetail[] = [];
   private _myTrainingsCacheKey: string = '';
+  // Grouping cache and selected-instance map for Trainer Zone grouping
+  groupedMyTrainingsCache: { key: string; instances: TrainingDetail[] }[] | null = null;
+  selectedInstanceByGroup: Map<string, number> = new Map();
   assignedTrainings: TrainingDetail[] = [];
   
   // --- Recorded Trainings ---
@@ -272,6 +304,9 @@ export class EngineerDashboardComponent implements OnInit {
   isTrainer: boolean = false;
   trainerZoneView: 'overview' | 'assignmentForm' | 'feedbackForm' = 'overview';
   showScheduleTrainingModal: boolean = false;
+  // When true, schedule modal is opened to create a new training as a reschedule
+  isRescheduleCreate: boolean = false;
+  originalTrainingId: number | null = null;
   sharedAssignments: Map<number, boolean> = new Map(); // Track which trainings have assignments shared
   sharedFeedback: Map<number, boolean> = new Map(); // Track which trainings have feedback shared
   assignmentSharedBy: Map<number, string> = new Map(); // Track who shared the assignment
@@ -1203,6 +1238,9 @@ export class EngineerDashboardComponent implements OnInit {
         // Clear cache when trainings are updated
         this._myTrainingsCache = [];
         this._myTrainingsCacheKey = '';
+        // Invalidate grouping cache and reset selected-instance map
+        this.groupedMyTrainingsCache = null;
+        this.selectedInstanceByGroup = new Map();
         this.allTrainingsCalendarEvents = this.allTrainings
           .filter(t => t.training_date)
           .map(t => ({
@@ -2117,6 +2155,9 @@ export class EngineerDashboardComponent implements OnInit {
       seats: '',
       assessment_details: ''
     };
+    // reset reschedule flags
+    this.isRescheduleCreate = false;
+    this.originalTrainingId = null;
   }
 
   scheduleTraining(): void {
@@ -2160,7 +2201,11 @@ export class EngineerDashboardComponent implements OnInit {
 
     this.http.post(this.apiService.getUrl('/trainings/'), payload, { headers }).subscribe({
       next: () => {
-        this.toastService.success('Training scheduled successfully!');
+        if (this.isRescheduleCreate) {
+          this.toastService.success('Training rescheduled — new session created successfully!');
+        } else {
+          this.toastService.success('Training scheduled successfully!');
+        }
         this.closeScheduleTrainingModal();
         this.fetchScheduledTrainings();
       },
@@ -2320,7 +2365,7 @@ export class EngineerDashboardComponent implements OnInit {
                 // Load existing feedback data
                 this.newFeedback.customQuestions = (response.customQuestions || []).map((q: any) => ({
                   text: q.text || '',
-                  options: q.options || [],
+                  options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'],
                   isDefault: q.isDefault || false
                 }));
                 
@@ -2355,7 +2400,7 @@ export class EngineerDashboardComponent implements OnInit {
                 }
                 this.newFeedback.customQuestions = (response.customQuestions || []).map((q: any) => ({
                   text: q.text || '',
-                  options: q.options || [],
+                  options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'],
                   isDefault: q.isDefault || false
                 }));
               } else {
@@ -2614,7 +2659,7 @@ export class EngineerDashboardComponent implements OnInit {
   addCustomQuestion(): void {
     this.newFeedback.customQuestions.push({
       text: '',
-      options: [''],
+      options: ['Excellent', 'Good', 'Average', 'Fair', 'Poor'],
       isDefault: false
     });
   }
@@ -3658,6 +3703,43 @@ export class EngineerDashboardComponent implements OnInit {
     return filtered;
   }
 
+  // Group myTrainings by training name so reschedules appear as date lists
+  getGroupedMyTrainings(): { key: string; instances: TrainingDetail[] }[] {
+    if (this.groupedMyTrainingsCache) return this.groupedMyTrainingsCache;
+    const map = new Map<string, TrainingDetail[]>();
+    (this.myTrainings || []).forEach(t => {
+      const key = (t.training_name || 'Untitled').trim();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(t);
+    });
+    const grouped: { key: string; instances: TrainingDetail[] }[] = [];
+    map.forEach((instances, key) => {
+      instances.sort((a,b) => {
+        const da = a.training_date ? new Date(a.training_date).getTime() : 0;
+        const db = b.training_date ? new Date(b.training_date).getTime() : 0;
+        return da - db;
+      });
+      grouped.push({ key, instances });
+      if (!this.selectedInstanceByGroup.has(key) && instances.length > 0) {
+        this.selectedInstanceByGroup.set(key, instances[0].id);
+      }
+    });
+    this.groupedMyTrainingsCache = grouped;
+    return grouped;
+  }
+
+  selectInstance(groupKey: string, instanceId: number): void {
+    this.selectedInstanceByGroup.set(groupKey, instanceId);
+  }
+
+  getSelectedInstance(groupKey: string): TrainingDetail | null {
+    const grouped = this.getGroupedMyTrainings();
+    const group = (grouped || []).find(g => g.key === groupKey);
+    if (!group) return null;
+    const selId = this.selectedInstanceByGroup.get(groupKey) || (group.instances.length > 0 ? group.instances[0].id : null);
+    return group.instances.find(i => i.id === selId) || null;
+  }
+
   getSkillProgress(competency: Skill | ModalSkill): number {
     /**
      * Returns weighted actual progress calculated by backend.
@@ -3992,17 +4074,13 @@ export class EngineerDashboardComponent implements OnInit {
     if (this.skills && this.skills.length > 0) {
       this.skills.forEach(skill => {
         const skillNameNormalized = this.normalizeSkillName(skill.skill);
-        
         // Skip if not a core skill or already added
         if (!skillNameNormalized || !coreSkillNames.includes(skillNameNormalized) || addedSkillNames.has(skillNameNormalized)) {
           return;
         }
-        
-        const currentNormalized = normalizeExpertise(skill.current_expertise);
         const targetNormalized = normalizeExpertise(skill.target_expertise);
-        
-        // Move to additional if current equals target (including na = na)
-        if (currentNormalized === targetNormalized) {
+        // Only move to additional if target is N/A (na)
+        if (targetNormalized === 'na') {
           movedSkills.push({
             skill_name: skill.skill,
             skill_level: skill.current_expertise || 'N/A',
@@ -4367,10 +4445,30 @@ export class EngineerDashboardComponent implements OnInit {
   startRescheduleTraining(trainingId: number): void {
     const training = this.myTrainings.find(t => t.id === trainingId);
     if (!training) return;
-    
-    this.selectedTrainingForReschedule = trainingId;
-    this.newTrainingDate = training.training_date || '';
-    this.showRescheduleModal = true;
+
+    // Prefill schedule modal with existing training data so trainer can edit details
+    this.newTraining = {
+      division: training.division || '',
+      department: training.department || '',
+      competency: training.competency || '',
+      skill: training.skill || '',
+      training_name: training.training_name || '',
+      training_topics: training.training_topics || '',
+      prerequisites: training.prerequisites || '',
+      skill_category: training.skill_category || 'L1',
+      trainer_name: training.trainer_name || (this.employeeName || this.employeeId || ''),
+      email: training.email || '',
+      training_date: training.training_date ? new Date(training.training_date).toISOString().slice(0,10) : '',
+      duration: training.duration || '',
+      time: training.time || '',
+      training_type: training.training_type || 'Online',
+      seats: training.seats || '',
+      assessment_details: training.assessment_details || ''
+    };
+
+    this.isRescheduleCreate = true;
+    this.originalTrainingId = trainingId;
+    this.showScheduleTrainingModal = true;
   }
 
   closeRescheduleModal(): void {
