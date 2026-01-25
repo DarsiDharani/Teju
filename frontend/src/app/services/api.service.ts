@@ -1,3 +1,4 @@
+
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 
@@ -10,6 +11,10 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class ApiService {
+    // Manager training feedback summary endpoint
+    get managerTrainingFeedbackSummaryUrl(): string {
+      return this.getUrl('/data/manager/training-feedback-summary');
+    }
   // Make baseUrl public so components can access it
   public readonly baseUrl: string;
 

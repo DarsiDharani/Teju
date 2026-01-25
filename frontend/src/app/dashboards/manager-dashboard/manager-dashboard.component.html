@@ -903,39 +903,23 @@
                 </div>
                 <span *ngIf="!isLoadingSubmissions"
                   class="bg-amber-100 text-amber-800 text-xs rounded-full px-2 py-1 font-semibold">
-                  {{ filteredTeamFeedbackSubmissions.length }}
+                  {{ filteredTeamTrainingFeedbackSummary.length }}
                 </span>
               </div>
 
               <!-- Filters Section -->
               <div *ngIf="teamFeedbackSubmissions.length > 0" class="mb-3 flex-shrink-0">
                 <div class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg p-3 border border-orange-200">
-                  <div class="grid grid-cols-3 gap-3 items-end">
-                    <!-- Member Filter -->
-                    <div>
-                      <label class="block text-[11px] font-semibold text-slate-700 mb-1">
-                        <i class="fa-solid fa-user mr-1 text-indigo-600"></i>Filter by Team Member
-                      </label>
-                      <app-searchable-dropdown
-                        [options]="uniqueFeedbackMemberNames"
-                        [(ngModel)]="teamFeedbackMemberFilter"
-                        [multiple]="true"
-                        placeholder="All Members"
-                        searchPlaceholder="Search members..."
-                        allOptionLabel="All Members"
-                        iconClass="fa-user"
-                        size="small"
-                        width="w-full">
-                      </app-searchable-dropdown>
-                    </div>
 
-                    <!-- Training Filter -->
+                  <div class="grid grid-cols-2 gap-3 items-end">
+
+                    <!-- Training Filter (All Trainings) -->
                     <div>
                       <label class="block text-[11px] font-semibold text-slate-700 mb-1">
                         <i class="fa-solid fa-book mr-1 text-green-600"></i>Filter by Training
                       </label>
                       <app-searchable-dropdown
-                        [options]="uniqueFeedbackTrainingNames"
+                        [options]="uniqueAllTrainings"
                         [(ngModel)]="teamFeedbackTrainingFilter"
                         [multiple]="true"
                         placeholder="All Trainings"
@@ -947,13 +931,13 @@
                       </app-searchable-dropdown>
                     </div>
 
-                    <!-- Skill Filter -->
+                    <!-- Skill Filter (All Skills) -->
                     <div>
                       <label class="block text-[11px] font-semibold text-slate-700 mb-1">
                         <i class="fa-solid fa-star mr-1 text-amber-600"></i>Filter by Skill
                       </label>
                       <app-searchable-dropdown
-                        [options]="uniqueFeedbackSkills"
+                        [options]="uniqueAllSkills"
                         [(ngModel)]="teamFeedbackSkillFilter"
                         [multiple]="true"
                         placeholder="All Skills"
@@ -967,8 +951,8 @@
                   </div>
 
                   <!-- Clear Filters -->
-                  <button *ngIf="teamFeedbackMemberFilter.length > 0 || teamFeedbackTrainingFilter.length > 0 || teamFeedbackSkillFilter.length > 0"
-                    (click)="teamFeedbackMemberFilter = []; teamFeedbackTrainingFilter = []; teamFeedbackSkillFilter = [];"
+                  <button *ngIf="teamFeedbackTrainingFilter.length > 0 || teamFeedbackSkillFilter.length > 0"
+                    (click)="teamFeedbackTrainingFilter = []; teamFeedbackSkillFilter = [];"
                     class="w-full text-xs bg-white hover:bg-slate-50 text-slate-700 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 border border-slate-300 shadow-sm mt-3">
                     <i class="fa-solid fa-times-circle text-red-500"></i>
                     <span class="font-semibold">Clear All Filters</span>
@@ -995,36 +979,30 @@
                 <p class="text-slate-600 text-xs">No submissions match the selected filters</p>
               </div>
 
-              <div *ngIf="!isLoadingSubmissions && filteredTeamFeedbackSubmissions.length > 0" class="space-y-2 overflow-y-auto flex-1 pr-1 submission-scrollbar">
-                <div *ngFor="let submission of filteredTeamFeedbackSubmissions"
+              <div *ngIf="!isLoadingSubmissions && teamTrainingFeedbackSummary.length > 0" class="space-y-2 overflow-y-auto flex-1 pr-1 submission-scrollbar">
+                <div *ngFor="let summary of teamTrainingFeedbackSummary"
                   class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-3 border border-amber-200 hover:shadow-md transition-all">
                   <div class="flex items-start justify-between">
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-                        <h5 class="font-bold text-slate-900 text-sm truncate">{{ submission.training_name }}</h5>
-                        <span
-                          class="px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0">
-                          {{ submission.responses.length }}
+                        <h5 class="font-bold text-slate-900 text-sm truncate">{{ summary.training_name }}</h5>
+                        <span class="px-2 py-0.5 text-xs font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0">
+                          {{ summary.total_responses }}
                         </span>
                       </div>
-                      <p class="text-xs text-slate-500 mb-2">
-                        <i class="fa-solid fa-clock mr-1"></i>
-                        {{ submission.submitted_at | date:'short' }}
-                      </p>
-                      <details class="mt-1">
-                        <summary class="text-xs font-medium text-indigo-600 cursor-pointer hover:text-indigo-700">
-                          View Responses
-                        </summary>
-                        <div class="mt-2 space-y-1.5 pl-3 border-l-2 border-amber-300">
-                          <div *ngFor="let response of submission.responses" class="bg-white rounded p-2 text-xs">
-                            <p class="font-medium text-slate-800 mb-0.5">{{ response.questionText }}</p>
-                            <p class="text-slate-600">
-                              <span class="font-semibold text-amber-700">Answer:</span> {{ response.selectedOption
-                              }}
-                            </p>
-                          </div>
-                        </div>
-                      </details>
+                      <div class="flex items-center gap-3 text-xs text-slate-600 mb-1">
+                        <span *ngIf="summary.average_rating !== null">
+                          <i class="fa-solid fa-star text-amber-400 mr-1"></i>
+                          Avg Rating: <b>{{ summary.average_rating }}</b>
+                        </span>
+                        <span *ngIf="summary.last_feedback_date">
+                          <i class="fa-solid fa-clock mr-1"></i>
+                          Last: {{ summary.last_feedback_date | date:'short' }}
+                        </span>
+                      </div>
+                      <button (click)="openFeedbackResponses(summary.training_id)" class="mt-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 underline">
+                        View Responses
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -2043,7 +2021,7 @@
 
         <!-- Live Trainings View -->
         <div *ngIf="trainingCatalogType === 'live' && trainingCatalogView === 'list'">
-          <div *ngIf="filteredCatalog.length === 0" #animatedElement
+          <div *ngIf="getFilteredCatalog().length === 0" #animatedElement
             class="animate-on-scroll text-center py-20 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-dashed border-slate-300">
             <div
               class="w-20 h-20 bg-gradient-to-br from-sky-100 to-sky-200 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -2053,10 +2031,10 @@
             <p class="text-slate-600 max-w-md mx-auto">No training sessions match your current filters. Try resetting
               the filters.</p>
           </div>
-          <div *ngIf="filteredCatalog.length > 0"
+          <div *ngIf="getFilteredCatalog().length > 0"
             class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
-            [@listStagger]="filteredCatalog.length">
-            <div *ngFor="let training of filteredCatalog"
+            [@listStagger]="getFilteredCatalog().length">
+            <div *ngFor="let training of getFilteredCatalog()"
               [attr.data-training-id]="training.id"
               class="group bg-white/70 backdrop-blur-sm rounded-xl shadow-lg border border-slate-200/60 overflow-hidden transform transition-all duration-300 ease-in-out flex flex-col relative"
               [ngClass]="{

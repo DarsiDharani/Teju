@@ -1,3 +1,13 @@
+// --- Feedback Summary Model ---
+export interface TrainingFeedbackSummary {
+  training_id: number;
+  training_name: string;
+  average_rating: number | null;
+  total_responses: number;
+  last_feedback_date: string | null;
+}
+
+
 /**
  * Manager Dashboard Component
  * 
@@ -216,6 +226,73 @@ type Section = { title: string; subtitle?: string; levels: LevelBlock[] };
   ]
 })
 export class ManagerDashboardComponent implements OnInit, AfterViewInit {
+    // Getter for filtered team training feedback summary (for count and display)
+    get filteredTeamTrainingFeedbackSummary(): TrainingFeedbackSummary[] {
+      let list = [...this.teamTrainingFeedbackSummary];
+      // Filter by training name
+      if (this.teamFeedbackTrainingFilter && this.teamFeedbackTrainingFilter.length > 0) {
+        list = list.filter(summary => this.teamFeedbackTrainingFilter.includes(summary.training_name));
+      }
+      // Filter by skill (if skill info is available in summary, otherwise skip)
+      // If TrainingFeedbackSummary has no skill, skip skill filter
+      // If you add skill to summary, enable below:
+      // if (this.teamFeedbackSkillFilter && this.teamFeedbackSkillFilter.length > 0) {
+      //   list = list.filter(summary => summary.skill && this.teamFeedbackSkillFilter.includes(summary.skill));
+      // }
+      return list;
+    }
+  // --- Feedback Summary Filters: Show all trainings and all skills ---
+  uniqueAllTrainings: string[] = [];
+  uniqueAllSkills: string[] = [];
+
+  // Populate uniqueAllTrainings and uniqueAllSkills for feedback summary filters
+  populateAllTrainingsAndSkills(): void {
+    // Collect all unique training names from allTrainings, assignedTrainings, trainingCatalog, teamAssignedTrainings
+    const allTrainingNames = [
+      ...(this.allTrainings || []).map((t: any) => t.training_name),
+      ...(this.assignedTrainings || []).map((t: any) => t.training_name),
+      ...(this.trainingCatalog || []).map((t: any) => t.training_name),
+      ...(this.teamAssignedTrainings || []).map((t: any) => t.training_name)
+    ];
+    this.uniqueAllTrainings = Array.from(new Set(allTrainingNames)).filter(Boolean).sort();
+
+    // Collect all unique skills from all team members and trainings
+    const allSkills = [
+      ...((this.manager?.skills || []).map((s: any) => s.skill)),
+      ...((this.manager?.team || []).flatMap((m: any) => (m.skills || []).map((s: any) => s.skill)))
+    ];
+    this.uniqueAllSkills = Array.from(new Set(allSkills)).filter(Boolean).sort();
+  }
+
+  // --- Team Feedback Summary ---
+  teamTrainingFeedbackSummary: TrainingFeedbackSummary[] = [];
+
+  // Fetch consolidated/average feedback for each training (for Team Dashboard)
+  fetchTeamTrainingFeedbackSummary(): void {
+    const token = this.authService.getToken();
+    if (!token) return;
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+    this.http.get<{ trainings: TrainingFeedbackSummary[] }>(this.apiService.managerTrainingFeedbackSummaryUrl, { headers }).subscribe({
+      next: (response) => {
+            this.teamTrainingFeedbackSummary = response.trainings || [];
+            this.populateAllTrainingsAndSkills();
+          },
+          error: (err) => {
+            console.error('Failed to fetch training feedback summary:', err);
+            this.teamTrainingFeedbackSummary = [];
+          }
+        });
+    }
+
+    // Open feedback responses for a specific training (drill-down)
+    openFeedbackResponses(trainingId: number): void {
+      // Optionally, you can filter teamFeedbackSubmissions by trainingId and show a modal or section
+      // For now, just filter and log to console (implement modal as needed)
+      const responses = this.teamFeedbackSubmissions.filter((fb: any) => fb.training_id === trainingId);
+      console.log('Feedback responses for training', trainingId, responses);
+      // TODO: Show modal or section with these responses
+      // Example: this.showFeedbackResponsesModal = true; this.selectedFeedbackResponses = responses;
+    }
   @ViewChildren('animatedElement') animatedElements!: QueryList<ElementRef>;
   private observer!: IntersectionObserver;
 
@@ -695,6 +772,8 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
     this.fetchTeamAssignedTrainings();
     this.fetchPendingRequests();
     this.fetchTeamSubmissions();
+    // If you have other async data loads, ensure populateAllTrainingsAndSkills is called after all are loaded
+    this.fetchTeamTrainingFeedbackSummary();
     // Initialize notifications
     this.notificationService.initialize();
     // Initialize sample recorded trainings data
@@ -708,6 +787,9 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
         this.setActiveTabFromRoute(tab);
       }
     });
+
+    // Populate all trainings and skills for feedback summary filters
+    this.populateAllTrainingsAndSkills();
   }
 
   /**
@@ -2198,10 +2280,12 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             trainer: t.trainer_name || 'N/A',
             trainingId: t.id
           }));
+        this.populateAllTrainingsAndSkills();
       },
       error: (err) => {
         console.error('Failed to load training catalog:', err);
         this.errorMessage = 'Failed to load training catalog.';
+        this.populateAllTrainingsAndSkills();
       }
     });
   }
@@ -2285,40 +2369,19 @@ export class ManagerDashboardComponent implements OnInit, AfterViewInit {
             trainingId: t.id
           }));
         this.generateCalendar();
+        this.populateAllTrainingsAndSkills();
       },
       error: (err) => {
         console.error('Failed to fetch assigned trainings:', err);
         this.assignedTrainings = [];
         this.assignedTrainingsCalendarEvents = [];
+        this.populateAllTrainingsAndSkills();
       }
     });
   }
 
-  get filteredCatalog(): TrainingDetail[] {
-    let list = [...(this.trainingCatalog || [])];
-
-    // Calendar focus mode: show only the selected training
-    if (this.focusedCatalogTrainingId !== null) {
-      return list.filter(t => t.id === this.focusedCatalogTrainingId);
-    }
-
-    if (this.catalogSearch && this.catalogSearch.trim()) {
-      const q = this.catalogSearch.trim().toLowerCase();
-      list = list.filter(t =>
-        (t.training_name || '').toLowerCase().includes(q) ||
-        (t.training_topics || '').toLowerCase().includes(q) ||
-        (t.trainer_name || '').toLowerCase().includes(q) ||
-        (t.skill || '').toLowerCase().includes(q)
-      );
-    }
-    if (this.catalogTypeFilter && this.catalogTypeFilter.length > 0) {
-      const types = new Set(this.catalogTypeFilter.map(t => t.toLowerCase()));
-      list = list.filter(t => t.training_type && types.has(t.training_type.toLowerCase()));
-    }
-    if (this.catalogCategoryFilter && this.catalogCategoryFilter.length > 0) {
-      const categories = new Set(this.catalogCategoryFilter.map(c => c.toLowerCase()));
-      list = list.filter(t => t.skill_category && categories.has(t.skill_category.toLowerCase()));
-    }
+  getFilteredCatalog(): TrainingDetail[] {
+    let list = this.trainingCatalog ? [...this.trainingCatalog] : [];
     if (this.catalogDateFilter) {
       // Normalize dates for comparison (extract YYYY-MM-DD from both)
       const normalizeDate = (date: any): string => {

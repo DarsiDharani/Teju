@@ -20,15 +20,101 @@ Endpoints:
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import update, func, and_
+from sqlalchemy import update, func, and_, desc
 from datetime import datetime, date
 from app.database import get_db_async
 # Ensure you import your AdditionalSkill model
 from app.models import (
     User, ManagerEmployee, EmployeeCompetency, AdditionalSkill, TrainingDetail, 
     TrainingAssignment, TrainingRequest, TrainingAttendance, AssignmentSubmission,
-    ManagerPerformanceFeedback
+    FeedbackSubmission, SharedFeedback, ManagerPerformanceFeedback
 )
+
+from app.auth_utils import get_current_active_user, get_current_active_manager, get_current_active_admin
+from app.utils import calculate_weighted_actual_progress
+from pydantic import BaseModel
+from sqlalchemy.orm import selectinload
+
+# Create a single router for both endpoints with a common prefix
+router = APIRouter(prefix="/data", tags=["Dashboard"])
+
+# Consolidated/Average Feedback for Each Training (for Team Dashboard)
+@router.get("/manager/training-feedback-summary")
+async def get_training_feedback_summary(
+    db: AsyncSession = Depends(get_db_async),
+    current_manager=Depends(get_current_active_manager)
+):
+    """
+    Returns a summary of feedback for each training assigned to the manager's team:
+    - training_id, training_name
+    - average rating (if numeric ratings are present)
+    - total responses
+    - last feedback date
+    """
+    # Get all feedback submissions with training info
+    feedback_result = await db.execute(
+        select(FeedbackSubmission).options(selectinload(FeedbackSubmission.training))
+    )
+    feedbacks = feedback_result.scalars().all()
+
+    # Aggregate by training, then by user (per-user average)
+    import json
+    summary_by_training = {}
+    for fb in feedbacks:
+        tid = fb.training_id
+        tname = fb.training.training_name if fb.training else "Unknown"
+        user = fb.employee_empid or fb.employee_name or fb.id  # fallback to id if no empid/name
+        if tid not in summary_by_training:
+            summary_by_training[tid] = {
+                "training_id": tid,
+                "training_name": tname,
+                "total_responses": 0,
+                "last_feedback_date": None,
+                "user_ratings": {},  # user: [ratings]
+            }
+        summary_by_training[tid]["total_responses"] += 1
+        if fb.submitted_at:
+            if (
+                summary_by_training[tid]["last_feedback_date"] is None
+                or fb.submitted_at > summary_by_training[tid]["last_feedback_date"]
+            ):
+                summary_by_training[tid]["last_feedback_date"] = fb.submitted_at
+        try:
+            responses = json.loads(fb.responses_data)
+            ratings = []
+            for r in responses:
+                val = r.get("selectedOption")
+                if isinstance(val, (int, float)):
+                    ratings.append(float(val))
+                elif isinstance(val, str):
+                    mapping = {"Excellent": 5, "Good": 4, "Average": 3, "Fair": 2, "Poor": 1}
+                    if val in mapping:
+                        ratings.append(mapping[val])
+            if ratings:
+                if user not in summary_by_training[tid]["user_ratings"]:
+                    summary_by_training[tid]["user_ratings"][user] = []
+                summary_by_training[tid]["user_ratings"][user].extend(ratings)
+        except Exception:
+            pass
+
+    # Prepare output: average per-user, then average those for training
+    result = []
+    for tid, data in summary_by_training.items():
+        user_averages = []
+        for ratings in data["user_ratings"].values():
+            if ratings:
+                user_averages.append(sum(ratings) / len(ratings))
+        avg_rating = round(sum(user_averages) / len(user_averages), 2) if user_averages else None
+        result.append({
+            "training_id": data["training_id"],
+            "training_name": data["training_name"],
+            "average_rating": avg_rating,
+            "total_responses": data["total_responses"],
+            "last_feedback_date": data["last_feedback_date"],
+        })
+    # Sort by last_feedback_date desc
+    result.sort(key=lambda x: x["last_feedback_date"] or "", reverse=True)
+    return {"trainings": result}
 from app.auth_utils import get_current_active_user, get_current_active_manager, get_current_active_admin
 from app.utils import calculate_weighted_actual_progress
 from pydantic import BaseModel
