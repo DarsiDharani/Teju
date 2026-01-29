@@ -127,6 +127,34 @@ type Section = { title: string; subtitle?: string; levels: LevelBlock[] };
   ]
 })
 export class EngineerDashboardComponent implements OnInit {
+    // --- Reschedule Options Modal State ---
+    showRescheduleOptionsModal: boolean = false;
+    rescheduleOptionsTrainingId: number | null = null;
+
+    openRescheduleOptions(trainingId: number): void {
+      this.rescheduleOptionsTrainingId = trainingId;
+      this.showRescheduleOptionsModal = true;
+    }
+
+    closeRescheduleOptionsModal(): void {
+      this.showRescheduleOptionsModal = false;
+      this.rescheduleOptionsTrainingId = null;
+    }
+
+    rescheduleDateOnly(): void {
+      if (this.rescheduleOptionsTrainingId != null) {
+        this.selectedTrainingForReschedule = this.rescheduleOptionsTrainingId;
+        this.showRescheduleModal = true;
+      }
+      this.closeRescheduleOptionsModal();
+    }
+
+    rescheduleCreateNew(): void {
+      if (this.rescheduleOptionsTrainingId != null) {
+        this.startRescheduleTraining(this.rescheduleOptionsTrainingId);
+      }
+      this.closeRescheduleOptionsModal();
+    }
   // --- Component State & Filters ---
   skillSearch: string = '';
   skillStatusFilter: string[] = [];

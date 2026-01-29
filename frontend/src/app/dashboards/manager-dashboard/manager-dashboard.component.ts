@@ -226,6 +226,34 @@ type Section = { title: string; subtitle?: string; levels: LevelBlock[] };
   ]
 })
 export class ManagerDashboardComponent implements OnInit, AfterViewInit {
+      // --- Reschedule Options Modal State ---
+      showRescheduleOptionsModal: boolean = false;
+      rescheduleOptionsTrainingId: number | null = null;
+
+      openRescheduleOptions(trainingId: number): void {
+        this.rescheduleOptionsTrainingId = trainingId;
+        this.showRescheduleOptionsModal = true;
+      }
+
+      closeRescheduleOptionsModal(): void {
+        this.showRescheduleOptionsModal = false;
+        this.rescheduleOptionsTrainingId = null;
+      }
+
+      rescheduleDateOnly(): void {
+        if (this.rescheduleOptionsTrainingId != null) {
+          this.selectedTrainingForReschedule = this.rescheduleOptionsTrainingId;
+          this.showRescheduleModal = true;
+        }
+        this.closeRescheduleOptionsModal();
+      }
+
+      rescheduleCreateNew(): void {
+        if (this.rescheduleOptionsTrainingId != null) {
+          this.startRescheduleTraining(this.rescheduleOptionsTrainingId);
+        }
+        this.closeRescheduleOptionsModal();
+      }
     // Getter for filtered team training feedback summary (for count and display)
     get filteredTeamTrainingFeedbackSummary(): TrainingFeedbackSummary[] {
       let list = [...this.teamTrainingFeedbackSummary];
